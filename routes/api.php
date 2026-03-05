@@ -104,11 +104,10 @@ Route::prefix('v1')->group(function () {
         'db_connection'     => env('DB_CONNECTION'),
         'db_uri_set'        => !empty(env('DB_URI')),
     ];
-
+});
     Route::get('/v1/debug-sanctum', function () {
     return [
         'token_model' => config('sanctum.personal_access_token_model'),
     ];
-});
 });
 });
