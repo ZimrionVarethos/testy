@@ -97,4 +97,12 @@ Route::prefix('v1')->group(function () {
             Route::post('{id}/toggle', [UserController::class, 'toggle']);
         });
     });
+
+    Route::get('/debug', function () {
+    return [
+        'mongodb_extension' => extension_loaded('mongodb'),
+        'db_connection'     => env('DB_CONNECTION'),
+        'db_uri_set'        => !empty(env('DB_URI')),
+    ];
+});
 });
