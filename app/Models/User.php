@@ -2,13 +2,14 @@
 namespace App\Models;
 
 use MongoDB\Laravel\Auth\User as Authenticatable;
-use MongoDB\Laravel\Sanctum\HasApiTokens; // ← GANTI ini
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
-class User extends Authenticatable
+class User extends Authenticatable implements MustVerifyEmail
 {
-    use HasApiTokens, HasFactory, Notifiable; // pakai HasApiTokens dari MongoDB
+    use HasApiTokens, HasFactory, Notifiable;
 
     protected $connection = 'mongodb';
     protected $collection = 'users';
@@ -22,7 +23,7 @@ class User extends Authenticatable
 
     protected $casts = [
         'email_verified_at' => 'datetime',
-        // 'password' => 'hashed', ← tetap hapus ini
+        'password'          => 'hashed',
         'is_active'         => 'boolean',
     ];
 }
