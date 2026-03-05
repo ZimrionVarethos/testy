@@ -67,6 +67,10 @@ COPY . .
 RUN composer dump-autoload --optimize --no-interaction \
     && php artisan package:discover --ansi || true
 
+RUN php artisan config:clear \
+    && php artisan cache:clear \
+    && php artisan route:clear
+
 # 7) build frontend assets
 RUN npm run build
 
@@ -75,6 +79,6 @@ RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cac
 
 # Expose & default command (use $PORT from host if provided)
 EXPOSE 8080
-CMD ["sh", "-lc", "php artisan migrate --force || true; php artisan serve --host=0.0.0.0 --port=${PORT:-8080}"]
+CMD ["sh", "-lc", "php artisan config:clear && php artisan cache:clear && php artisan migrate --force || true; php artisan serve --host=0.0.0.0 --port=${PORT:-8080}"]
 
 RUN update-ca-certificates
