@@ -17,7 +17,7 @@ return [
 
     // sanctum.php - tambahkan sebelum 'stateful'
 
-    'personal_access_token_model' => MongoDB\Laravel\Sanctum\PersonalAccessToken::class,
+    'personal_access_token_model' => App\Models\PersonalAccessToken::class,
 
     'stateful' => explode(',', env('SANCTUM_STATEFUL_DOMAINS', sprintf(
         '%s%s',
