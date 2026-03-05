@@ -105,9 +105,12 @@ Route::prefix('v1')->group(function () {
         'db_uri_set'        => !empty(env('DB_URI')),
     ];
 });
-    Route::get('/debug-sanctum', function () {
-    return [
-        'token_model' => config('sanctum.personal_access_token_model'),
-    ];
-});
+    // routes/api.php - sementara
+    Route::get('debug-sanctum-full', function() {
+        return [
+            'token_model' => config('sanctum.personal_access_token_model'),
+            'db_default' => config('database.default'),
+            'mongodb_connection' => config('database.connections.mongodb.driver'),
+        ];
+    });
 });

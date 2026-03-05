@@ -67,10 +67,6 @@ COPY . .
 RUN composer dump-autoload --optimize --no-interaction \
     && php artisan package:discover --ansi || true
 
-RUN php artisan config:clear \
-    && php artisan cache:clear \
-    && php artisan route:clear
-
 # 7) build frontend assets
 RUN npm run build
 
