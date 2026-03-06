@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Validation\ValidationException;
+use App\Models\PersonalAccessToken;
 
 class AuthController extends Controller
 {
@@ -63,7 +64,9 @@ class AuthController extends Controller
         }
 
         // Hapus token lama (opsional: single-session)
-        $user->tokens()->delete();
+        PersonalAccessToken::where('tokenable_id', (string) $user->getKey())
+                           ->where('tokenable_type', User::class)
+                           ->delete();
 
         $token = $user->createToken('mobile')->plainTextToken;
 

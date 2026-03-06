@@ -8,7 +8,7 @@ use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Str;
 
-// ✅ Custom NewAccessToken yang terima App\Models\PersonalAccessToken
+// Class ini tetap di file yang sama, sebelum class User
 class NewAccessToken
 {
     public function __construct(
@@ -37,6 +37,14 @@ class User extends Authenticatable implements MustVerifyEmail
         'is_active'         => 'boolean',
     ];
 
+    // ✅ Override tokens() agar tidak hit SQL
+    public function tokens()
+    {
+        return PersonalAccessToken::where('tokenable_id', (string) $this->getKey())
+                                   ->where('tokenable_type', static::class);
+    }
+
+    // ✅ Override createToken agar tidak hit SQL
     public function createToken(string $name, array $abilities = ['*'], ?\DateTimeInterface $expiresAt = null)
     {
         $plainTextToken = Str::random(40);
@@ -50,7 +58,6 @@ class User extends Authenticatable implements MustVerifyEmail
             'expires_at'     => $expiresAt,
         ]);
 
-        // ✅ Pakai custom NewAccessToken, bukan Laravel\Sanctum\NewAccessToken
         return new NewAccessToken($token, $token->getKey() . '|' . $plainTextToken);
     }
 }
