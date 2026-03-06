@@ -113,4 +113,26 @@ Route::prefix('v1')->group(function () {
             'mongodb_connection' => config('database.connections.mongodb.driver'),
         ];
     });
+
+        // routes/api.php - sementara
+    Route::get('debug-token-test', function() {
+        $user = App\Models\User::first();
+        if (!$user) return ['error' => 'no user'];
+        
+        try {
+            $token = $user->createToken('test');
+            return [
+                'success' => true,
+                'token_class' => get_class($token->accessToken),
+                'token_id' => $token->accessToken->getKey(),
+            ];
+        } catch (\Throwable $e) {
+            return [
+                'error' => $e->getMessage(),
+                'file'  => $e->getFile(),
+                'line'  => $e->getLine(),
+                'trace' => collect($e->getTrace())->take(5)->map(fn($t) => ($t['file'] ?? '').' :'.$t['line'])->toArray(),
+            ];
+        }
+    });
 });
