@@ -5,9 +5,17 @@ use MongoDB\Laravel\Auth\User as Authenticatable;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
-use Laravel\Sanctum\NewAccessToken;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Str;
+
+// ✅ Custom NewAccessToken yang terima App\Models\PersonalAccessToken
+class NewAccessToken
+{
+    public function __construct(
+        public PersonalAccessToken $accessToken,
+        public string $plainTextToken
+    ) {}
+}
 
 class User extends Authenticatable implements MustVerifyEmail
 {
@@ -29,7 +37,6 @@ class User extends Authenticatable implements MustVerifyEmail
         'is_active'         => 'boolean',
     ];
 
-    // ✅ Override createToken agar tidak hit SQL
     public function createToken(string $name, array $abilities = ['*'], ?\DateTimeInterface $expiresAt = null)
     {
         $plainTextToken = Str::random(40);
@@ -43,6 +50,7 @@ class User extends Authenticatable implements MustVerifyEmail
             'expires_at'     => $expiresAt,
         ]);
 
+        // ✅ Pakai custom NewAccessToken, bukan Laravel\Sanctum\NewAccessToken
         return new NewAccessToken($token, $token->getKey() . '|' . $plainTextToken);
     }
 }
