@@ -16,10 +16,7 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @stack('scripts')
 
-    {{-- 
-        Inject sidebar state SEBELUM render supaya tidak ada flash/geser.
-        Langsung tulis margin ke <style> berdasarkan localStorage.
-    --}}
+
     <script>
         (function() {
             var isDesktop = window.innerWidth >= 1024;

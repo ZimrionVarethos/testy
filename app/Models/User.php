@@ -37,14 +37,14 @@ class User extends Authenticatable implements MustVerifyEmail
         'is_active'         => 'boolean',
     ];
 
-    // ✅ Override tokens() agar tidak hit SQL
+    // Override tokens() agar tidak hit SQL
     public function tokens()
     {
         return PersonalAccessToken::where('tokenable_id', (string) $this->getKey())
                                    ->where('tokenable_type', static::class);
     }
 
-    // ✅ Override createToken agar tidak hit SQL
+    // Override createToken agar tidak hit SQL
     public function createToken(string $name, array $abilities = ['*'], ?\DateTimeInterface $expiresAt = null)
     {
         $plainTextToken = Str::random(40);

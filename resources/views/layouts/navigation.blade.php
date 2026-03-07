@@ -2,6 +2,12 @@
 
 @php $role = auth()->check() ? auth()->user()->role : null; @endphp
 
+<style>
+/* Sembunyikan scrollbar di semua browser, scroll tetap jalan */
+#sidebar-nav::-webkit-scrollbar { display: none; }
+#sidebar-nav { -ms-overflow-style: none; scrollbar-width: none; }
+</style>
+
 {{-- Overlay untuk mobile --}}
 <div x-show="!isDesktop && sidebarOpen"
      x-transition:enter="transition-opacity ease-linear duration-200"
@@ -29,18 +35,15 @@
     {{-- Logo / Brand --}}
     <div class="flex items-center h-16 border-b border-gray-700 shrink-0 overflow-hidden">
 
-        {{-- Satu elemen: icon selalu tampil, teks di-clip --}}
         <a href="{{ route('dashboard') }}" class="flex items-center shrink-0 pl-4">
             <x-application-logo class="h-8 w-8 fill-current text-white shrink-0" />
         </a>
 
-        {{-- Teks brand — di-clip saat sidebar tertutup --}}
         <div class="overflow-hidden transition-all duration-300 whitespace-nowrap"
-             :class="sidebarOpen ? 'opacity-100 max-w-xs ml-2' : 'opacity-0 max-w-0 ml-0'">
+             :class="sidebarOpen ? 'opacity-100 max-w-xs' : 'opacity-0 max-w-0'">
             <span class="font-semibold text-base tracking-tight">Bening Rental</span>
         </div>
 
-        {{-- Tombol close (mobile only) --}}
         <button @click="sidebarOpen = false; localStorage.setItem('sidebarOpen', false)"
                 class="ml-auto mr-3 lg:hidden text-gray-400 hover:text-white shrink-0 transition-all duration-300"
                 :class="sidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'">
@@ -51,50 +54,56 @@
 
     </div>
 
-    {{-- Navigation Menu --}}
-    <nav class="flex-1 overflow-y-auto overflow-x-hidden py-4 space-y-1 px-2">
+    {{-- Navigation Menu — id ditambah untuk target CSS --}}
+    <nav id="sidebar-nav" class="flex-1 overflow-y-auto overflow-x-hidden py-4 space-y-1 px-2">
 
         @if($role === 'admin')
 
-            <p class="pb-1 text-xs font-semibold text-gray-400 uppercase tracking-wider overflow-hidden whitespace-nowrap transition-all duration-300"
-               :class="sidebarOpen ? 'px-2 opacity-100 max-h-8 mb-1' : 'px-0 opacity-0 max-h-0 mb-0'">Utama</p>
+            <p class="px-2 pb-1 text-xs font-semibold text-gray-400 uppercase tracking-wider overflow-hidden whitespace-nowrap transition-[opacity,max-height] duration-300"
+               :class="sidebarOpen ? 'opacity-100 max-h-8' : 'opacity-0 max-h-0'">Utama</p>
             <x-sidebar-link :href="route('dashboard')" :active="request()->routeIs('dashboard')" icon="home">Dashboard</x-sidebar-link>
 
-            <p class="pt-3 pb-1 text-xs font-semibold text-gray-400 uppercase tracking-wider overflow-hidden whitespace-nowrap transition-all duration-300"
-               :class="sidebarOpen ? 'px-2 opacity-100 max-h-8' : 'px-0 opacity-0 max-h-0'">Kelola</p>
+            <p class="px-2 pt-3 pb-1 text-xs font-semibold text-gray-400 uppercase tracking-wider overflow-hidden whitespace-nowrap transition-[opacity,max-height] duration-300"
+               :class="sidebarOpen ? 'opacity-100 max-h-8' : 'opacity-0 max-h-0'">Kelola</p>
             <x-sidebar-link :href="route('admin.bookings.index')" :active="request()->routeIs('admin.bookings.*')" icon="clipboard-list">Pesanan</x-sidebar-link>
             <x-sidebar-link :href="route('admin.vehicles.index')" :active="request()->routeIs('admin.vehicles.*')" icon="truck">Kendaraan</x-sidebar-link>
             <x-sidebar-link :href="route('admin.drivers.index')" :active="request()->routeIs('admin.drivers.*')" icon="identification">Driver</x-sidebar-link>
             <x-sidebar-link :href="route('admin.users.index')" :active="request()->routeIs('admin.users.*')" icon="user-group">Pengguna</x-sidebar-link>
 
-            <p class="pt-3 pb-1 text-xs font-semibold text-gray-400 uppercase tracking-wider overflow-hidden whitespace-nowrap transition-all duration-300"
-               :class="sidebarOpen ? 'px-2 opacity-100 max-h-8' : 'px-0 opacity-0 max-h-0'">Laporan</p>
+            <p class="px-2 pt-3 pb-1 text-xs font-semibold text-gray-400 uppercase tracking-wider overflow-hidden whitespace-nowrap transition-[opacity,max-height] duration-300"
+               :class="sidebarOpen ? 'opacity-100 max-h-8' : 'opacity-0 max-h-0'">Laporan</p>
             <x-sidebar-link :href="route('admin.payments.index')" :active="request()->routeIs('admin.payments.*')" icon="credit-card">Pembayaran</x-sidebar-link>
             <x-sidebar-link :href="route('admin.reports.index')" :active="request()->routeIs('admin.reports.*')" icon="chart-bar">Laporan & Statistik</x-sidebar-link>
+            <x-sidebar-link :href="route('admin.maps.index')" :active="request()->routeIs('admin.maps.*')" icon="maps">Lokasi</x-sidebar-link>
+
+            {{-- Storage: hanya tampil untuk developer (email spesifik) --}}
+            @if(Auth::user()->email === 'mochfarelaz@gmail.com')
+            <x-sidebar-link :href="route('admin.storage.index')" :active="request()->routeIs('admin.storage.*')" icon="storage">Storage</x-sidebar-link>
+            @endif
 
         @elseif($role === 'pengguna' || $role === 'user')
 
-            <p class="pb-1 text-xs font-semibold text-gray-400 uppercase tracking-wider overflow-hidden whitespace-nowrap transition-all duration-300"
-               :class="sidebarOpen ? 'px-2 opacity-100 max-h-8' : 'px-0 opacity-0 max-h-0'">Menu</p>
+            <p class="px-2 pb-1 text-xs font-semibold text-gray-400 uppercase tracking-wider overflow-hidden whitespace-nowrap transition-[opacity,max-height] duration-300"
+               :class="sidebarOpen ? 'opacity-100 max-h-8' : 'opacity-0 max-h-0'">Menu</p>
             <x-sidebar-link :href="route('dashboard')" :active="request()->routeIs('dashboard')" icon="home">Dashboard</x-sidebar-link>
             <x-sidebar-link :href="route('bookings.index')" :active="request()->routeIs('bookings.*')" icon="clipboard-list">Pesanan Saya</x-sidebar-link>
             <x-sidebar-link :href="route('vehicles.index')" :active="request()->routeIs('vehicles.*')" icon="truck">Sewa Kendaraan</x-sidebar-link>
 
-            <p class="pt-3 pb-1 text-xs font-semibold text-gray-400 uppercase tracking-wider overflow-hidden whitespace-nowrap transition-all duration-300"
-               :class="sidebarOpen ? 'px-2 opacity-100 max-h-8' : 'px-0 opacity-0 max-h-0'">Lainnya</p>
+            <p class="px-2 pt-3 pb-1 text-xs font-semibold text-gray-400 uppercase tracking-wider overflow-hidden whitespace-nowrap transition-[opacity,max-height] duration-300"
+               :class="sidebarOpen ? 'opacity-100 max-h-8' : 'opacity-0 max-h-0'">Lainnya</p>
             <x-sidebar-link :href="route('payments.index')" :active="request()->routeIs('payments.*')" icon="credit-card">Riwayat Pembayaran</x-sidebar-link>
             <x-sidebar-link :href="route('notifications.index')" :active="request()->routeIs('notifications.*')" icon="bell">Notifikasi</x-sidebar-link>
 
         @elseif($role === 'driver')
 
-            <p class="pb-1 text-xs font-semibold text-gray-400 uppercase tracking-wider overflow-hidden whitespace-nowrap transition-all duration-300"
-               :class="sidebarOpen ? 'px-2 opacity-100 max-h-8' : 'px-0 opacity-0 max-h-0'">Menu Driver</p>
+            <p class="px-2 pb-1 text-xs font-semibold text-gray-400 uppercase tracking-wider overflow-hidden whitespace-nowrap transition-[opacity,max-height] duration-300"
+               :class="sidebarOpen ? 'opacity-100 max-h-8' : 'opacity-0 max-h-0'">Menu Driver</p>
             <x-sidebar-link :href="route('dashboard')" :active="request()->routeIs('dashboard')" icon="home">Dashboard</x-sidebar-link>
             <x-sidebar-link :href="route('driver.bookings.available')" :active="request()->routeIs('driver.bookings.available')" icon="clipboard-list">Pesanan Tersedia</x-sidebar-link>
             <x-sidebar-link :href="route('driver.bookings.index')" :active="request()->routeIs('driver.bookings.index')" icon="truck">Pesanan Saya</x-sidebar-link>
 
-            <p class="pt-3 pb-1 text-xs font-semibold text-gray-400 uppercase tracking-wider overflow-hidden whitespace-nowrap transition-all duration-300"
-               :class="sidebarOpen ? 'px-2 opacity-100 max-h-8' : 'px-0 opacity-0 max-h-0'">Lainnya</p>
+            <p class="px-2 pt-3 pb-1 text-xs font-semibold text-gray-400 uppercase tracking-wider overflow-hidden whitespace-nowrap transition-[opacity,max-height] duration-300"
+               :class="sidebarOpen ? 'opacity-100 max-h-8' : 'opacity-0 max-h-0'">Lainnya</p>
             <x-sidebar-link :href="route('notifications.index')" :active="request()->routeIs('notifications.*')" icon="bell">Notifikasi</x-sidebar-link>
 
         @else
@@ -106,7 +115,6 @@
     {{-- User Info + Logout --}}
     <div class="shrink-0 border-t border-gray-700 p-2">
 
-        {{-- Satu baris: avatar selalu tampil, teks di-clip --}}
         <div class="flex items-center py-2 mb-1 overflow-hidden">
             <div class="h-8 w-8 rounded-full bg-indigo-500 flex items-center justify-center text-sm font-bold shrink-0 ml-1">
                 {{ strtoupper(substr(Auth::user()->name, 0, 1)) }}

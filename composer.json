@@ -15,7 +15,8 @@
         "laravel/tinker": "^2.10.1",
         "livewire/livewire": "^3.6.4",
         "livewire/volt": "^1.7.0",
-        "mongodb/laravel-mongodb": "*"
+        "mongodb/laravel-mongodb": "*",
+        "predis/predis": "^3.4"
     },
     "require-dev": {
         "barryvdh/laravel-debugbar": "^4.0",

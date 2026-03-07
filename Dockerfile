@@ -63,6 +63,8 @@ RUN npm ci --silent
 # 5) copy the rest of the application (now routes, config, app, etc. exist)
 COPY . .
 
+RUN php artisan storage:link || true
+
 # 6) run composer autoload dump and run artisan discovery now that whole app exists
 RUN composer dump-autoload --optimize --no-interaction \
     && php artisan package:discover --ansi || true
