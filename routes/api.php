@@ -109,9 +109,7 @@ Route::prefix('v1')->group(function () {
     ];
 });
 
-    Route::middleware('auth:sanctum,web')->post('/driver/location', [
-    App\Http\Controllers\Api\DriverController::class, 'updateLocation'
-    ]);
+
 
     // routes/api.php - sementara
     Route::get('debug-sanctum-full', function() {

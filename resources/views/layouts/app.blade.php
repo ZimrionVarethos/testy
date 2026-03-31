@@ -117,7 +117,7 @@
     (function () {
         if (!navigator.geolocation) return;
     
-        const LOCATION_URL = '{{ url("/api/v1/driver/location") }}';
+        const LOCATION_URL = '{{ url("/driver/location") }}';
         const CSRF_TOKEN   = document.querySelector('meta[name="csrf-token"]')?.content ?? '';
         const INTERVAL_MS  = 30000;
     

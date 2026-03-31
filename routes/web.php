@@ -37,6 +37,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/notifications/read-all',   [NotificationController::class, 'markAllRead'])->name('notifications.read-all');
 });
 
+
+
 // ── ADMIN ROUTES ─────────────────────────────────────────────
 Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
 
@@ -116,3 +118,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::patch('/profile',  [ProfileController::class, 'update']) ->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
+
+// routes/web.php — tambahkan di bagian bawah
+Route::middleware(['auth', 'role:driver'])->post('/driver/location', [
+    App\Http\Controllers\Api\DriverController::class, 'updateLocation'
+]);
