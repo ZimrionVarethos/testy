@@ -230,6 +230,10 @@
                 ? `<div class="pin-popup-stale">⚠ Terakhir: ${v.location_updated_at}</div>`
                 : '';
 
+            const updatedNote = v.location_updated_at
+                ? `<div style="font-size:10px;color:#94A3B8;margin-top:6px">🕐 Update: ${v.location_updated_at}</div>`
+                : '';
+            
             const marker = L.marker([v.lat, v.lon], { icon: makeIcon(v.status, v.is_stale) })
                 .bindPopup(`<div class="pin-popup">
                     <div class="pin-popup-plate">${v.plate}</div>
@@ -239,10 +243,7 @@
                         <span style="width:7px;height:7px;border-radius:50%;background:${pinColor};display:inline-block;margin-right:3px"></span>
                         ${pinLabel}
                     </span>
-                    ${staleNote}
-                    <a href="/admin/maps/${v.id}" style="display:block;margin-top:8px;font-size:11px;font-weight:600;color:#4F46E5;text-decoration:none">
-                        Lihat Detail →
-                    </a>
+                    ${updatedNote}
                 </div>`, { maxWidth: 240 })
                 .addTo(map);
 
