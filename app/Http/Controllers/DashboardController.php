@@ -61,17 +61,18 @@ class DashboardController extends Controller
     $vehicleLocations = Vehicle::all()->map(function ($v) use ($activeBookings) {
         $vid     = (string) $v->_id;
         $booking = $activeBookings->get($vid);
-
-        $lat = null;
-        $lon = null;
-
-        // Pakai find() per driver — sama seperti fix di MapsController
+    
+        $lat               = null;
+        $lon               = null;
+        $locationUpdatedAt = null;
+    
         if ($booking && !empty($booking->driver['driver_id'])) {
-            $driver = \App\Models\User::find($booking->driver['driver_id']);
-            $lat    = $driver?->last_lat ?? null;
-            $lon    = $driver?->last_lon ?? null;
+            $driver            = \App\Models\User::find($booking->driver['driver_id']);
+            $lat               = $driver?->last_lat ?? null;
+            $lon               = $driver?->last_lon ?? null;
+            $locationUpdatedAt = $driver?->last_location_updated_at ?? null;
         }
-
+    
         return [
             'id'                  => $vid,
             'plate'               => $v->plate_number ?? '-',
