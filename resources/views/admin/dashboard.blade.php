@@ -585,8 +585,9 @@ document.addEventListener('DOMContentLoaded', function() {
     vehicles.forEach(v => {
         if (!v.lat || !v.lon) return;
         const cfg = statusConfig[v.status] || statusConfig.available;
-        const isDemo = String(v.id).startsWith('demo');
-        const detailLink = !isDemo ? `<a href="/admin/maps/${v.id}" class="pin-popup-link">Lihat Detail →</a>` : '';
+        const updatedNote = v.location_updated_at
+            ? `<div style="font-size:10px;color:#94A3B8;margin-top:6px">🕐 Update: ${v.location_updated_at}</div>`
+            : '';
         L.marker([v.lat, v.lon], { icon: makeIcon(v.status) })
             .bindPopup(`<div class="pin-popup">
                 <div class="pin-popup-plate">${v.plate}</div>
@@ -595,7 +596,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <span style="width:7px;height:7px;border-radius:50%;background:${cfg.color};display:inline-block;margin-right:4px"></span>
                     ${cfg.label}
                 </span>
-                ${detailLink}
+                ${updatedNote}
             </div>`, { maxWidth: 220, className: '' })
             .addTo(map);
     });

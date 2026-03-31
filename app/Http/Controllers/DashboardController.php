@@ -73,12 +73,15 @@ class DashboardController extends Controller
         }
 
         return [
-            'id'     => $vid,
-            'plate'  => $v->plate_number ?? '-',
-            'driver' => $booking?->driver['name'] ?? '-',
-            'status' => $v->status ?? 'available',
-            'lat'    => $lat,
-            'lon'    => $lon,
+            'id'                  => $vid,
+            'plate'               => $v->plate_number ?? '-',
+            'driver'              => $booking?->driver['name'] ?? '-',
+            'status'              => $v->status ?? 'available',
+            'lat'                 => $lat,
+            'lon'                 => $lon,
+            'location_updated_at' => $locationUpdatedAt
+                ? \Carbon\Carbon::parse($locationUpdatedAt)->format('H:i, d M')
+                : null,
         ];
     })->filter(fn($v) => !empty($v['lat']) && !empty($v['lon']))->values()->all();
 
