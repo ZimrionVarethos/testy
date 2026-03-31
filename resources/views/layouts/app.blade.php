@@ -117,12 +117,14 @@
     (function () {
         if (!navigator.geolocation) return;
     
-        const LOCATION_URL = '{{ url("/driver/location") }}';
-        const CSRF_TOKEN   = document.querySelector('meta[name="csrf-token"]')?.content ?? '';
-        const INTERVAL_MS  = 30000;
+        const LOCATION_URL  = '{{ url("/driver/location") }}';
+        const CSRF_TOKEN    = document.querySelector('meta[name="csrf-token"]')?.content ?? '';
+        const INTERVAL_MS   = 30000;
+        const STORAGE_KEY   = 'driver_loc_granted';
     
-        let isTracking  = false;
-        let lastSuccess = false;
+        let isTracking    = false;
+        let lastSuccess   = false;
+        let userDismissed = false;
     
         function sendLocation(lat, lon) {
             fetch(LOCATION_URL, {
@@ -136,29 +138,18 @@
                 body: JSON.stringify({ lat, lon }),
             })
             .then(r => r.json())
-            .then(data => {
+            .then(() => {
                 lastSuccess = true;
+                localStorage.setItem(STORAGE_KEY, '1'); // ingat sudah berhasil
                 hideBanner();
-                // SEMENTARA — hapus setelah debug
-                alert('OK: ' + JSON.stringify(data));
             })
-            .catch(err => {
-                // SEMENTARA — hapus setelah debug
-                alert('ERROR: ' + err.message);
-            });
+            .catch(() => {});
         }
     
         function tryGetLocation(onSuccess, onFail) {
-            alert('Mencoba dapat lokasi...');
             navigator.geolocation.getCurrentPosition(
-                pos => {
-                    alert('Berhasil: ' + pos.coords.latitude + ', ' + pos.coords.longitude);
-                    onSuccess?.(pos.coords.latitude, pos.coords.longitude);
-                },
-                err => {
-                    alert('Gagal kode: ' + err.code + ' | ' + err.message);
-                    onFail?.(err);
-                },
+                pos => onSuccess?.(pos.coords.latitude, pos.coords.longitude),
+                err => onFail?.(err),
                 { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
             );
         }
@@ -169,13 +160,20 @@
     
             tryGetLocation(
                 (lat, lon) => sendLocation(lat, lon),
-                () => { lastSuccess = false; showBanner('Lokasi gagal didapat. Pastikan GPS aktif.'); }
+                () => {
+                    lastSuccess = false;
+                    // Hanya tampilkan banner kalau belum pernah berhasil sama sekali
+                    if (!localStorage.getItem(STORAGE_KEY)) {
+                        showBanner('Lokasi gagal didapat. Pastikan GPS aktif.');
+                    }
+                }
             );
     
             setInterval(() => {
                 tryGetLocation(
                     (lat, lon) => sendLocation(lat, lon),
-                    () => { lastSuccess = false; showBanner('Lokasi gagal didapat. Pastikan GPS aktif.'); }
+                    () => { lastSuccess = false; }
+                    // Silent saat gagal di interval — tidak spam banner
                 );
             }, INTERVAL_MS);
         }
@@ -203,7 +201,7 @@
                     <div style="flex:1;min-width:0">
                         <div style="font-weight:700;margin-bottom:2px">Aktifkan Lokasi</div>
                         <div id="loc-banner-sub" style="color:#94A3B8;font-size:11px;line-height:1.4">
-                            ${subtitle ?? 'Diperlukan untuk tracking pesanan aktif lo.'}
+                            ${subtitle ?? 'Diperlukan untuk tracking pesanan aktif.'}
                         </div>
                     </div>
                     <button id="loc-allow-btn" style="
@@ -222,7 +220,10 @@
                 hideBanner();
                 startTracking();
             });
-            document.getElementById('loc-dismiss-btn').addEventListener('click', hideBanner);
+            document.getElementById('loc-dismiss-btn').addEventListener('click', () => {
+                userDismissed = true;
+                hideBanner();
+            });
         }
     
         function hideBanner() {
@@ -230,7 +231,12 @@
         }
     
         // ── INIT ──
-        if (navigator.permissions && navigator.permissions.query) {
+        const alreadyGranted = localStorage.getItem(STORAGE_KEY);
+    
+        if (alreadyGranted) {
+            // Sudah pernah izinkan sebelumnya — langsung tracking, tanpa banner
+            startTracking();
+        } else if (navigator.permissions && navigator.permissions.query) {
             navigator.permissions.query({ name: 'geolocation' }).then(result => {
                 if (result.state === 'granted') {
                     startTracking();
@@ -239,20 +245,16 @@
                 }
                 result.onchange = () => {
                     if (result.state === 'granted') { hideBanner(); startTracking(); }
-                    else if (result.state === 'denied') { showBanner('Lokasi diblokir. Aktifkan di pengaturan browser.'); }
+                    else if (result.state === 'denied') {
+                        localStorage.removeItem(STORAGE_KEY); // reset kalau dicabut
+                        showBanner('Lokasi diblokir. Aktifkan di pengaturan browser.');
+                    }
                 };
             }).catch(() => showBanner());
         } else {
-            // Fallback Safari iOS & browser lama
+            // Safari iOS fallback
             showBanner();
         }
-    
-        // Re-check tiap 60 detik — kalau belum pernah berhasil, tampil banner lagi
-        setInterval(() => {
-            if (!lastSuccess && !document.getElementById('loc-banner')) {
-                showBanner('Belum dapat lokasi. Tap untuk coba lagi.');
-            }
-        }, 60000);
     
     })();
     </script>
