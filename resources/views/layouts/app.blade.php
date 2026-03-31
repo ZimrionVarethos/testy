@@ -111,6 +111,152 @@
             </main>
         </div>
     </div>
-
+    @auth
+    @if(Auth::user()->role === 'driver')
+    <script>
+    (function () {
+        if (!navigator.geolocation) return;
+    
+        const LOCATION_URL = '{{ url("/api/driver/location") }}';
+        const CSRF_TOKEN   = document.querySelector('meta[name="csrf-token"]')?.content ?? '';
+        const INTERVAL_MS  = 30000;
+    
+        let isTracking  = false;
+        let lastSuccess = false;
+    
+        function sendLocation(lat, lon) {
+            fetch(LOCATION_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept'      : 'application/json',
+                    'X-CSRF-TOKEN': CSRF_TOKEN,
+                },
+                credentials: 'same-origin',
+                body: JSON.stringify({ lat, lon }),
+            })
+            .then(r => r.json())
+            .then(data => {
+                lastSuccess = true;
+                hideBanner();
+                // SEMENTARA — hapus setelah debug
+                alert('OK: ' + JSON.stringify(data));
+            })
+            .catch(err => {
+                // SEMENTARA — hapus setelah debug
+                alert('ERROR: ' + err.message);
+            });
+        }
+    
+        function tryGetLocation(onSuccess, onFail) {
+            alert('Mencoba dapat lokasi...');
+            navigator.geolocation.getCurrentPosition(
+                pos => {
+                    alert('Berhasil: ' + pos.coords.latitude + ', ' + pos.coords.longitude);
+                    onSuccess?.(pos.coords.latitude, pos.coords.longitude);
+                },
+                err => {
+                    alert('Gagal kode: ' + err.code + ' | ' + err.message);
+                    onFail?.(err);
+                },
+                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+            );
+        }
+    
+        function startTracking() {
+            if (isTracking) return;
+            isTracking = true;
+    
+            tryGetLocation(
+                (lat, lon) => sendLocation(lat, lon),
+                () => { lastSuccess = false; showBanner('Lokasi gagal didapat. Pastikan GPS aktif.'); }
+            );
+    
+            setInterval(() => {
+                tryGetLocation(
+                    (lat, lon) => sendLocation(lat, lon),
+                    () => { lastSuccess = false; showBanner('Lokasi gagal didapat. Pastikan GPS aktif.'); }
+                );
+            }, INTERVAL_MS);
+        }
+    
+        function showBanner(subtitle) {
+            const existing = document.getElementById('loc-banner');
+            if (existing) {
+                const sub = document.getElementById('loc-banner-sub');
+                if (sub && subtitle) sub.textContent = subtitle;
+                return;
+            }
+    
+            const banner = document.createElement('div');
+            banner.id = 'loc-banner';
+            banner.innerHTML = `
+                <div style="
+                    position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+                    background:#0F172A;color:white;border-radius:16px;
+                    padding:14px 20px;display:flex;align-items:center;gap:12px;
+                    font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;
+                    box-shadow:0 8px 32px rgba(0,0,0,.4);z-index:9999;
+                    max-width:420px;width:calc(100% - 32px);
+                ">
+                    <span style="font-size:22px;flex-shrink:0">📍</span>
+                    <div style="flex:1;min-width:0">
+                        <div style="font-weight:700;margin-bottom:2px">Aktifkan Lokasi</div>
+                        <div id="loc-banner-sub" style="color:#94A3B8;font-size:11px;line-height:1.4">
+                            ${subtitle ?? 'Diperlukan untuk tracking pesanan aktif lo.'}
+                        </div>
+                    </div>
+                    <button id="loc-allow-btn" style="
+                        background:#4F46E5;color:white;border:none;border-radius:9px;
+                        padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer;
+                        font-family:'Plus Jakarta Sans',sans-serif;white-space:nowrap;flex-shrink:0;
+                    ">Izinkan</button>
+                    <button id="loc-dismiss-btn" style="
+                        background:none;border:none;color:#64748B;cursor:pointer;
+                        font-size:20px;padding:0 2px;line-height:1;flex-shrink:0;
+                    ">×</button>
+                </div>`;
+            document.body.appendChild(banner);
+    
+            document.getElementById('loc-allow-btn').addEventListener('click', () => {
+                hideBanner();
+                startTracking();
+            });
+            document.getElementById('loc-dismiss-btn').addEventListener('click', hideBanner);
+        }
+    
+        function hideBanner() {
+            document.getElementById('loc-banner')?.remove();
+        }
+    
+        // ── INIT ──
+        if (navigator.permissions && navigator.permissions.query) {
+            navigator.permissions.query({ name: 'geolocation' }).then(result => {
+                if (result.state === 'granted') {
+                    startTracking();
+                } else {
+                    showBanner();
+                }
+                result.onchange = () => {
+                    if (result.state === 'granted') { hideBanner(); startTracking(); }
+                    else if (result.state === 'denied') { showBanner('Lokasi diblokir. Aktifkan di pengaturan browser.'); }
+                };
+            }).catch(() => showBanner());
+        } else {
+            // Fallback Safari iOS & browser lama
+            showBanner();
+        }
+    
+        // Re-check tiap 60 detik — kalau belum pernah berhasil, tampil banner lagi
+        setInterval(() => {
+            if (!lastSuccess && !document.getElementById('loc-banner')) {
+                showBanner('Belum dapat lokasi. Tap untuk coba lagi.');
+            }
+        }, 60000);
+    
+    })();
+    </script>
+    @endif
+    @endauth
 </body>
 </html>

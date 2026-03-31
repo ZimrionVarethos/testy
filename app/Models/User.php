@@ -25,8 +25,18 @@ class User extends Authenticatable implements MustVerifyEmail
     protected $collection = 'users';
 
     protected $fillable = [
-        'name', 'email', 'password', 'role',
-        'phone', 'is_active', 'driver_profile', 'email_verified_at',
+        'name',
+        'email',
+        'password',
+        'role',
+        'phone',
+        'is_active',
+        'driver_profile',
+        'email_verified_at',
+        // Tambahkan ini:
+        'last_lat',
+        'last_lon',
+        'last_location_updated_at',
     ];
 
     protected $hidden = ['password', 'remember_token'];

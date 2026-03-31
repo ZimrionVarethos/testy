@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Models\Booking;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class DriverController extends Controller
 {
@@ -92,5 +93,42 @@ class DriverController extends Controller
             ],
             'created_at' => $d->created_at?->toIso8601String(),
         ];
+    }
+
+    public function updateLocation(Request $request)
+    {
+        $request->validate([
+            'lat' => 'required|numeric|between:-90,90',
+            'lon' => 'required|numeric|between:-180,180',
+        ]);
+
+        $driver = Auth::user();
+
+        if (!$driver || $driver->role !== 'driver') {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $hasActiveBooking = Booking::where('driver.driver_id', (string) $driver->_id)
+            ->whereIn('status', ['confirmed', 'ongoing'])
+            ->exists();
+
+        // Silent 200 — bukan error, driver belum bertugas
+        if (!$hasActiveBooking) {
+            return response()->json([
+                'message' => 'Tidak ada pesanan aktif, lokasi tidak disimpan.',
+                'tracked' => false,
+            ]);
+        }
+
+        $driver->update([
+            'last_lat'                 => (float) $request->lat,
+            'last_lon'                 => (float) $request->lon,
+            'last_location_updated_at' => now(),
+        ]);
+
+        return response()->json([
+            'message' => 'Lokasi diperbarui.',
+            'tracked' => true,
+        ]);
     }
 }

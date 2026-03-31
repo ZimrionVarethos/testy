@@ -23,9 +23,5 @@ return Application::configure(basePath: dirname(__DIR__))
         //
     })
     ->create();
-// ->withMiddleware(function (Middleware $middleware) {
-//     $middleware->alias([
-//         'role' => \App\Http\Middleware\RoleMiddleware::class,
-//     ]);
-// })
+
 

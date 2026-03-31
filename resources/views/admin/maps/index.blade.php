@@ -30,8 +30,7 @@
     .mp-live-dot { width: 8px; height: 8px; border-radius: 50%; background: #10B981; animation: pulse-dot 2s infinite; }
     @keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:.4} }
     .mp-map-title { font-size: 14px; font-weight: 700; color: #1E293B; }
-    .mp-demo-badge { font-size: 10px; font-weight: 700; background: #FFFBEB; border: 1px solid #FDE68A; color: #92400E; padding: 2px 8px; border-radius: 99px; }
-    .mp-map-hint { font-size: 11px; color: #94A3B8; }
+    .mp-map-hint  { font-size: 11px; color: #94A3B8; }
     #fleet-map { height: 540px; width: 100%; z-index: 0; display: block; }
 
     .mp-sidebar { background: #fff; border: 1px solid #E2E8F0; border-radius: 16px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,.05); display: flex; flex-direction: column; }
@@ -44,10 +43,11 @@
     .mp-item:last-child { border-bottom: none; }
     .mp-item:hover  { background: #F8FAFC; }
     .mp-item.active { background: #EEF2FF; }
-    .mp-item-dot  { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
-    .mp-item-body { flex: 1; min-width: 0; }
-    .mp-item-plate{ font-size: 12px; font-weight: 700; color: #0F172A; font-family: 'JetBrains Mono', monospace; }
-    .mp-item-label{ font-size: 11px; color: #94A3B8; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .mp-item.no-loc { opacity: .5; cursor: default; }
+    .mp-item-dot   { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+    .mp-item-body  { flex: 1; min-width: 0; }
+    .mp-item-plate { font-size: 12px; font-weight: 700; color: #0F172A; font-family: 'JetBrains Mono', monospace; }
+    .mp-item-label { font-size: 11px; color: #94A3B8; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .mp-badge { margin-left: auto; flex-shrink: 0; padding: 2px 8px; border-radius: 99px; font-size: 10px; font-weight: 700; }
     .badge-ongoing     { background: #ECFDF5; color: #065F46; }
     .badge-available   { background: #EFF6FF; color: #1E40AF; }
@@ -68,62 +68,20 @@
     .pin-popup-label  { font-size: 11px; color: #64748B; margin: 2px 0; }
     .pin-popup-driver { font-size: 11px; color: #94A3B8; margin-bottom: 7px; }
     .pin-popup-status { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 99px; }
-    .pin-popup-dummy  { font-size: 10px; color: #F59E0B; font-weight: 600; margin-top: 6px; }
+    .pin-popup-stale  { font-size: 10px; color: #D97706; font-weight: 600; margin-top: 6px; display: flex; align-items: center; gap: 4px; }
 
     .map-legend-box { background: white; border: 1px solid #E2E8F0; border-radius: 10px; padding: 10px 14px; font-family: 'Plus Jakarta Sans', sans-serif; box-shadow: 0 2px 8px rgba(0,0,0,.06); line-height: 2; }
-    .map-legend-box p    { font-size: 10px; font-weight: 800; color: #374151; margin: 0 0 4px; padding: 0; letter-spacing: .05em; }
+    .map-legend-box p { font-size: 10px; font-weight: 800; color: #374151; margin: 0 0 4px; padding: 0; letter-spacing: .05em; }
     .map-legend-box span { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 600; color: #475569; }
     .leg-dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
     </style>
 
     @php
-    // Controller sudah map semua field — tinggal pakai langsung
-    // Format dari controller: ['id','plate','label','driver','status','lat','lon']
     $pinColors    = ['ongoing'=>'#10B981','available'=>'#3B82F6','maintenance'=>'#F59E0B','rented'=>'#3B82F6'];
     $statusLabels = ['ongoing'=>'Berjalan','available'=>'Tersedia','maintenance'=>'Maintenance','rented'=>'Disewa'];
 
-    // Dummy coords untuk kendaraan yang belum punya lokasi GPS
-    $dummyCoords = [
-        ['lat'=>-6.2088,'lon'=>106.8456],['lat'=>-6.1751,'lon'=>106.8272],
-        ['lat'=>-6.2615,'lon'=>106.9816],['lat'=>-6.3741,'lon'=>106.8296],
-        ['lat'=>-6.4025,'lon'=>106.7942],['lat'=>-6.9175,'lon'=>107.6191],
-        ['lat'=>-6.8694,'lon'=>107.5590],['lat'=>-7.3305,'lon'=>108.2166],
-        ['lat'=>-6.9932,'lon'=>110.4229],['lat'=>-7.4239,'lon'=>110.2109],
-        ['lat'=>-7.7971,'lon'=>110.3688],['lat'=>-7.5756,'lon'=>110.8243],
-        ['lat'=>-7.9666,'lon'=>111.4831],['lat'=>-7.2492,'lon'=>112.7508],
-        ['lat'=>-7.1560,'lon'=>112.6441],['lat'=>-7.3619,'lon'=>112.7371],
-        ['lat'=>-7.9839,'lon'=>112.6214],['lat'=>-8.1845,'lon'=>114.3680],
-        ['lat'=>-7.7221,'lon'=>113.2151],['lat'=>-6.7320,'lon'=>108.5523],
-        ['lat'=>-7.0051,'lon'=>107.6816],['lat'=>-7.1500,'lon'=>110.1403],
-        ['lat'=>-8.0057,'lon'=>111.8944],['lat'=>-7.5166,'lon'=>111.5667],
-    ];
-
-    // $vehicles dari controller sudah berupa Collection of arrays
-    $rawList  = isset($vehicles) ? collect($vehicles) : collect([]);
-    $coordIdx = 0;
-
-    $listVehicles = $rawList->map(function($v) use ($dummyCoords, &$coordIdx) {
-        // v sudah berupa array dengan key: id, plate, label, driver, status, lat, lon
-        $arr = is_array($v) ? $v : (array)$v;
-
-        $hasLoc = !empty($arr['lat']) && !empty($arr['lon']);
-        $lat    = $hasLoc ? (float)$arr['lat'] : (float)$dummyCoords[$coordIdx % count($dummyCoords)]['lat'];
-        $lon    = $hasLoc ? (float)$arr['lon'] : (float)$dummyCoords[$coordIdx % count($dummyCoords)]['lon'];
-        if (!$hasLoc) $coordIdx++;
-
-        return [
-            'id'       => $arr['id']     ?? '',
-            'plate'    => $arr['plate']  ?? '-',
-            'label'    => $arr['label']  ?? '-',   // ← langsung pakai dari controller
-            'driver'   => $arr['driver'] ?? '-',   // ← langsung pakai dari controller
-            'status'   => $arr['status'] ?? 'available',
-            'lat'      => $lat,
-            'lon'      => $lon,
-            'is_dummy' => !$hasLoc,
-        ];
-    })->values()->all();
-
-    $dummyCount = collect($listVehicles)->where('is_dummy', true)->count();
+    $listVehicles     = collect($vehicles ?? [])->map(fn($v) => is_array($v) ? $v : (array)$v)->values()->all();
+    $mappableVehicles = collect($listVehicles)->filter(fn($v) => !empty($v['lat']) && !empty($v['lon']))->values()->all();
     @endphp
 
     <div class="mp-root">
@@ -132,7 +90,7 @@
         <div class="mp-header">
             <div>
                 <h2>Peta Armada</h2>
-                <p>Lokasi kendaraan real-time · Pulau Jawa</p>
+                <p>Lokasi kendaraan · hanya tampil saat bertugas</p>
             </div>
         </div>
 
@@ -161,9 +119,11 @@
                 <div class="mp-map-header">
                     <div class="mp-map-header-left">
                         <span class="mp-live-dot"></span>
-                        <span class="mp-map-title">Live Map · Pulau Jawa</span>
-                        @if($dummyCount > 0)
-                            <span class="mp-demo-badge">{{ $dummyCount }} LOKASI DUMMY</span>
+                        <span class="mp-map-title">Live Map</span>
+                        @if(count($mappableVehicles) === 0)
+                            <span style="font-size:10px;font-weight:700;background:#FFF7ED;border:1px solid #FED7AA;color:#C2410C;padding:2px 8px;border-radius:99px">
+                                Tidak ada yang bertugas
+                            </span>
                         @endif
                     </div>
                     <span class="mp-map-hint">Klik pin untuk detail · Scroll untuk zoom</span>
@@ -178,13 +138,28 @@
                 </div>
                 <div class="mp-list" id="vehicleList">
                     @forelse($listVehicles as $v)
-                    @php $dotColor = $v['is_dummy'] ? '#94A3B8' : ($pinColors[$v['status']] ?? '#94A3B8'); @endphp
-                    <div class="mp-item" data-id="{{ $v['id'] }}" onclick="focusVehicle('{{ $v['id'] }}')">
+                    @php
+                        $hasLoc   = !empty($v['lat']) && !empty($v['lon']);
+                        $dotColor = $v['is_stale'] ? '#F59E0B' : ($pinColors[$v['status']] ?? '#94A3B8');
+                        $dotColor = $hasLoc ? $dotColor : '#CBD5E1';
+                    @endphp
+                    <div class="mp-item {{ !$hasLoc ? 'no-loc' : '' }}"
+                         data-id="{{ $v['id'] }}"
+                         @if($hasLoc) onclick="focusVehicle('{{ $v['id'] }}')" @endif>
                         <span class="mp-item-dot" style="background:{{ $dotColor }}"></span>
                         <div class="mp-item-body">
                             <div class="mp-item-plate">{{ $v['plate'] }}</div>
                             <div class="mp-item-label">
-                                {{ $v['label'] }}@if($v['is_dummy']) · <span style="color:#F59E0B">dummy loc</span>@endif
+                                @if($hasLoc && $v['has_active_booking'])
+                                    Driver: {{ $v['driver'] }}
+                                    @if($v['is_stale'])
+                                        · <span style="color:#D97706">Lokasi lama</span>
+                                    @endif
+                                @elseif($v['has_active_booking'])
+                                    <span style="color:#F59E0B">Menunggu lokasi driver</span>
+                                @else
+                                    {{ $v['label'] }} · <span style="color:#CBD5E1">Tidak bertugas</span>
+                                @endif
                             </div>
                         </div>
                         <span class="mp-badge badge-{{ $v['status'] }}">{{ $statusLabels[$v['status']] ?? $v['status'] }}</span>
@@ -193,7 +168,7 @@
                     <div style="padding:32px 16px;text-align:center;color:#94A3B8;font-size:13px;">Belum ada kendaraan.</div>
                     @endforelse
                 </div>
-                <div class="mp-footer">{{ count($listVehicles) }} kendaraan terdaftar</div>
+                <div class="mp-footer">{{ count($listVehicles) }} kendaraan terdaftar · {{ count($mappableVehicles) }} terlacak</div>
             </div>
 
         </div>
@@ -202,7 +177,8 @@
 
     <script>
     document.addEventListener('DOMContentLoaded', function () {
-        const vehicles = @json($listVehicles);
+        const vehicles = @json($mappableVehicles);
+
         const statusConfig = {
             ongoing:     { color: '#10B981', bg: '#ECFDF5', text: '#065F46', label: 'Berjalan' },
             available:   { color: '#3B82F6', bg: '#EFF6FF', text: '#1E40AF', label: 'Tersedia' },
@@ -212,18 +188,21 @@
 
         const jawaBounds = L.latLngBounds(L.latLng(-8.8, 105.0), L.latLng(-5.8, 115.0));
         const map = L.map('fleet-map', {
-            center: [-7.2, 110.0], zoom: 7, minZoom: 7, maxZoom: 18,
-            scrollWheelZoom: true, maxBounds: jawaBounds, maxBoundsViscosity: 1.0,
+            center: [-7.2, 110.0], zoom: 7, minZoom: 6, maxZoom: 18,
+            scrollWheelZoom: true,
+            maxBounds: jawaBounds, maxBoundsViscosity: 1.0,
         });
         map.fitBounds(jawaBounds);
+
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>', maxZoom: 19,
+            attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+            maxZoom: 19,
         }).addTo(map);
 
-        function makeIcon(status, isDummy) {
-            const cfg = statusConfig[status] || statusConfig.available;
-            const color = isDummy ? '#94A3B8' : cfg.color;
-            const pulse = (status === 'ongoing' && !isDummy) ? `
+        function makeIcon(status, isStale) {
+            const cfg   = statusConfig[status] || statusConfig.available;
+            const color = isStale ? '#F59E0B' : cfg.color;
+            const pulse = (status === 'ongoing' && !isStale) ? `
                 <circle cx="18" cy="18" r="15" fill="none" stroke="${color}" stroke-width="2" opacity="0.5">
                     <animate attributeName="r" values="15;24;15" dur="2s" repeatCount="indefinite"/>
                     <animate attributeName="opacity" values="0.5;0;0.5" dur="2s" repeatCount="indefinite"/>
@@ -238,16 +217,20 @@
         }
 
         const markerMap = {};
+
         vehicles.forEach(v => {
             if (!v.lat || !v.lon) return;
-            const cfg       = statusConfig[v.status] || statusConfig.available;
-            const pinColor  = v.is_dummy ? '#94A3B8' : cfg.color;
-            const pinBg     = v.is_dummy ? '#F8FAFC'  : cfg.bg;
-            const pinText   = v.is_dummy ? '#475569'  : cfg.text;
-            const pinLabel  = v.is_dummy ? 'Dummy'    : cfg.label;
-            const dummyNote = v.is_dummy ? `<div class="pin-popup-dummy">⚠ Lokasi belum tersedia · Koordinat dummy</div>` : '';
+            const cfg      = statusConfig[v.status] || statusConfig.available;
+            const pinColor = v.is_stale ? '#F59E0B' : cfg.color;
+            const pinBg    = v.is_stale ? '#FFFBEB' : cfg.bg;
+            const pinText  = v.is_stale ? '#92400E' : cfg.text;
+            const pinLabel = v.is_stale ? 'Lokasi Lama' : cfg.label;
 
-            const marker = L.marker([v.lat, v.lon], { icon: makeIcon(v.status, v.is_dummy) })
+            const staleNote = v.is_stale && v.location_updated_at
+                ? `<div class="pin-popup-stale">⚠ Terakhir: ${v.location_updated_at}</div>`
+                : '';
+
+            const marker = L.marker([v.lat, v.lon], { icon: makeIcon(v.status, v.is_stale) })
                 .bindPopup(`<div class="pin-popup">
                     <div class="pin-popup-plate">${v.plate}</div>
                     <div class="pin-popup-label">${v.label}</div>
@@ -256,9 +239,13 @@
                         <span style="width:7px;height:7px;border-radius:50%;background:${pinColor};display:inline-block;margin-right:3px"></span>
                         ${pinLabel}
                     </span>
-                    ${dummyNote}
+                    ${staleNote}
+                    <a href="/admin/maps/${v.id}" style="display:block;margin-top:8px;font-size:11px;font-weight:600;color:#4F46E5;text-decoration:none">
+                        Lihat Detail →
+                    </a>
                 </div>`, { maxWidth: 240 })
                 .addTo(map);
+
             markerMap[v.id] = marker;
         });
 
@@ -268,20 +255,19 @@
             d.innerHTML = `<p>LEGENDA</p>
                 <span><i class="leg-dot" style="background:#10B981"></i> Berjalan</span>
                 <span><i class="leg-dot" style="background:#3B82F6"></i> Tersedia / Disewa</span>
-                <span><i class="leg-dot" style="background:#F59E0B"></i> Maintenance</span>
-                <span><i class="leg-dot" style="background:#94A3B8"></i> Lokasi Dummy</span>`;
+                <span><i class="leg-dot" style="background:#F59E0B"></i> Maintenance / Lokasi Lama</span>`;
             return d;
         };
         legend.addTo(map);
         setTimeout(() => map.invalidateSize(), 300);
 
-        window.focusVehicle = function(id) {
+        window.focusVehicle = function (id) {
             document.querySelectorAll('.mp-item').forEach(el => el.classList.remove('active'));
             const item = document.querySelector(`.mp-item[data-id="${id}"]`);
             if (item) { item.classList.add('active'); item.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
             const marker = markerMap[id];
             if (marker) {
-                map.flyTo(marker.getLatLng(), 14, { animate: true, duration: 0.8 });
+                map.flyTo(marker.getLatLng(), 15, { animate: true, duration: 0.8 });
                 setTimeout(() => marker.openPopup(), 850);
             }
         };

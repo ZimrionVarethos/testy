@@ -51,6 +51,9 @@ Route::prefix('v1')->group(function () {
             });
         });
 
+        Route::post('/driver/location', [App\Http\Controllers\Api\DriverController::class, 'updateLocation']);
+    
+
         // Bookings
         Route::prefix('bookings')->group(function () {
             Route::get('/',          [BookingController::class, 'index']);
@@ -135,4 +138,7 @@ Route::prefix('v1')->group(function () {
             ];
         }
     });
+
+
+   
 });

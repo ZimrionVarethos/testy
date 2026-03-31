@@ -178,8 +178,8 @@ class BookingService
         ]);
 
         // Baru di sini vehicle berubah jadi "rented"
-        Vehicle::where('_id', $booking->vehicle['vehicle_id'])
-               ->update(['status' => 'rented']);
+        Vehicle::find($booking->vehicle['vehicle_id'])?->update(['status' => 'rented']);
+
 
         // Notif ke user
         Notification::send(
@@ -206,13 +206,12 @@ class BookingService
         ]);
 
         // Kembalikan status vehicle
-        Vehicle::where('_id', $booking->vehicle['vehicle_id'])
-               ->update(['status' => 'available']);
+        Vehicle::find($booking->vehicle['vehicle_id'])?->update(['status' => 'available']);
 
         // Bebaskan driver
         if ($booking->driver) {
-            User::where('_id', $booking->driver['driver_id'])
-                ->update(['driver_profile.is_available' => true]);
+            User::find($booking->driver['driver_id'])
+                ?->update(['driver_profile.is_available' => true]);
         }
 
         // Notif ke user
