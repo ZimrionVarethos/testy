@@ -51,7 +51,7 @@ Route::prefix('v1')->group(function () {
             });
         });
 
-        Route::post('/driver/location', [App\Http\Controllers\Api\DriverController::class, 'updateLocation']);
+        // Route::post('/driver/location', [App\Http\Controllers\Api\DriverController::class, 'updateLocation']);
     
 
         // Bookings
@@ -108,6 +108,11 @@ Route::prefix('v1')->group(function () {
         'db_uri_set'        => !empty(env('DB_URI')),
     ];
 });
+
+    Route::middleware('auth:sanctum,web')->post('/driver/location', [
+    App\Http\Controllers\Api\DriverController::class, 'updateLocation'
+    ]);
+
     // routes/api.php - sementara
     Route::get('debug-sanctum-full', function() {
         return [
