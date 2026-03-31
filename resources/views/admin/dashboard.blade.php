@@ -311,11 +311,12 @@
 
     {{-- ══ PETA REAL-TIME ══ --}}
     <div class="section-card">
+        
         <div class="section-header">
             <div class="flex items-center gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-indigo-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/></svg>
                 <p class="section-title">Lokasi Armada Real-time</p>
-                @if(count($mapVehicleLocations) === 0)
+                @if(empty($mapVehicleLocations))
                     <span class="text-xs font-semibold text-slate-400 bg-slate-50 border border-slate-200 px-2 py-0.5 rounded-full">
                         Tidak ada yang bertugas
                     </span>
@@ -425,7 +426,7 @@ $defaultRevenueChart = [
 ];
 $chartBookingTrend = $bookingTrend ?? $defaultBookingTrend;
 $chartRevenueData  = $revenueChart ?? $defaultRevenueChart;
-$mapVehicleLocations = $vehicleLocations ?? [];
+$mapVehicleLocations = isset($vehicleLocations) ? (array) $vehicleLocations : [];
 @endphp
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
