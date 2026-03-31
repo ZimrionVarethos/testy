@@ -49,6 +49,7 @@ class DashboardController extends Controller
         ->get()
         ->keyBy(fn($b) => (string) ($b->vehicle['vehicle_id'] ?? ''));
 
+
     $driverIds = $activeBookings
         ->map(fn($b) => $b->driver['driver_id'] ?? null)
         ->filter()->values()->all();
@@ -57,15 +58,16 @@ class DashboardController extends Controller
         ->get()
         ->keyBy(fn($d) => (string) $d->_id);
 
-    $vehicleLocations = Vehicle::all()->map(function ($v) use ($activeBookings, $drivers) {
+    $vehicleLocations = Vehicle::all()->map(function ($v) use ($activeBookings) {
         $vid     = (string) $v->_id;
         $booking = $activeBookings->get($vid);
 
         $lat = null;
         $lon = null;
 
+        // Pakai find() per driver — sama seperti fix di MapsController
         if ($booking && !empty($booking->driver['driver_id'])) {
-            $driver = $drivers->get((string) $booking->driver['driver_id']);
+            $driver = \App\Models\User::find($booking->driver['driver_id']);
             $lat    = $driver?->last_lat ?? null;
             $lon    = $driver?->last_lon ?? null;
         }
