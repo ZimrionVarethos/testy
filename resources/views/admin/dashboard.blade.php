@@ -315,7 +315,15 @@
             <div class="flex items-center gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-indigo-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/></svg>
                 <p class="section-title">Lokasi Armada Real-time</p>
-                <span class="text-xs font-semibold text-amber-600 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">STATIC DEMO</span>
+                @if(count($mapVehicleLocations) === 0)
+                    <span class="text-xs font-semibold text-slate-400 bg-slate-50 border border-slate-200 px-2 py-0.5 rounded-full">
+                        Tidak ada yang bertugas
+                    </span>
+                @else
+                    <span class="text-xs font-semibold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+                        {{ count($mapVehicleLocations) }} terlacak
+                    </span>
+                @endif
             </div>
             <a href="{{ route('admin.maps.index') }}" class="section-link">Peta Detail →</a>
         </div>
@@ -417,14 +425,7 @@ $defaultRevenueChart = [
 ];
 $chartBookingTrend = $bookingTrend ?? $defaultBookingTrend;
 $chartRevenueData  = $revenueChart ?? $defaultRevenueChart;
-$mapVehicleLocations = $vehicleLocations ?? [
-    ['id'=>'demo1','plate'=>'B 1234 XYZ', 'driver'=>'Budi Santoso',  'status'=>'ongoing',     'lat'=>-6.2088,'lon'=>106.8456],
-    ['id'=>'demo2','plate'=>'L 5678 ABC', 'driver'=>'Eko Prasetyo',  'status'=>'ongoing',     'lat'=>-7.2504,'lon'=>112.7688],
-    ['id'=>'demo3','plate'=>'BK 9012 DEF','driver'=>'Ahmad Yusuf',   'status'=>'available',   'lat'=>3.5952, 'lon'=>98.6722],
-    ['id'=>'demo4','plate'=>'DD 3456 GHI','driver'=>'Rizal Hakim',   'status'=>'maintenance', 'lat'=>-5.1477,'lon'=>119.4327],
-    ['id'=>'demo5','plate'=>'KB 7890 JKL','driver'=>'Hendri Wijaya', 'status'=>'ongoing',     'lat'=>0.0263, 'lon'=>109.3425],
-    ['id'=>'demo6','plate'=>'DK 1122 MNO','driver'=>'Wayan Sujana',  'status'=>'available',   'lat'=>-8.6705,'lon'=>115.2126],
-];
+$mapVehicleLocations = $vehicleLocations ?? [];
 @endphp
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
@@ -554,6 +555,7 @@ document.addEventListener('DOMContentLoaded', function() {
         ongoing:     { color: '#10B981', bg: '#ECFDF5', text: '#065F46', label: 'Berjalan' },
         available:   { color: '#3B82F6', bg: '#EFF6FF', text: '#1E40AF', label: 'Tersedia' },
         maintenance: { color: '#F59E0B', bg: '#FFFBEB', text: '#92400E', label: 'Maintenance' },
+        rented:      { color: '#3B82F6', bg: '#EFF6FF', text: '#1E40AF', label: 'Disewa' },
     };
 
     const map = L.map('leaflet-map', {

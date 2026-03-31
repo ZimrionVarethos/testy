@@ -25,34 +25,65 @@ class DashboardController extends Controller
 
     // ── ADMIN ────────────────────────────────────────────────
     private function adminDashboard()
-    {
-        $stats = [
-            'total_bookings'   => Booking::count(),
-            'pending_bookings' => Booking::whereIn('status', ['pending', 'accepted'])->count(),
-            'ongoing_bookings' => Booking::where('status', 'ongoing')->count(),
-            // 'monthly_revenue'  => \App\Models\Payment::where('status', 'paid')
-            //                         ->where('created_at', '>=', now()->startOfMonth())   tunggu midtrans dulu
-            //                         ->sum('amount'),
-            'monthly_revenue'  => Booking::whereIn('status', ['confirmed', 'ongoing', 'completed'])
-                        ->where('confirmed_at', '>=', now()->startOfMonth())
-                        ->sum('total_price'),            
+{
+    $stats = [
+        'total_bookings'   => Booking::count(),
+        'pending_bookings' => Booking::whereIn('status', ['pending', 'accepted'])->count(),
+        'ongoing_bookings' => Booking::where('status', 'ongoing')->count(),
+        'monthly_revenue'  => Booking::whereIn('status', ['confirmed', 'ongoing', 'completed'])
+                    ->where('confirmed_at', '>=', now()->startOfMonth())
+                    ->sum('total_price'),
+    ];
+
+    $vehicleStats = [
+        'available'   => Vehicle::where('status', 'available')->count(),
+        'rented'      => Vehicle::where('status', 'rented')->count(),
+        'maintenance' => Vehicle::where('status', 'maintenance')->count(),
+    ];
+
+    $recentBookings   = Booking::orderBy('created_at', 'desc')->limit(5)->get();
+    $acceptedBookings = Booking::where('status', 'accepted')->orderBy('accepted_at', 'asc')->get();
+
+    // ── Vehicle locations untuk mini-map dashboard ──
+    $activeBookings = Booking::whereIn('status', ['confirmed', 'ongoing'])
+        ->get()
+        ->keyBy(fn($b) => (string) ($b->vehicle['vehicle_id'] ?? ''));
+
+    $driverIds = $activeBookings
+        ->map(fn($b) => $b->driver['driver_id'] ?? null)
+        ->filter()->values()->all();
+
+    $drivers = User::whereIn('_id', $driverIds)
+        ->get()
+        ->keyBy(fn($d) => (string) $d->_id);
+
+    $vehicleLocations = Vehicle::all()->map(function ($v) use ($activeBookings, $drivers) {
+        $vid     = (string) $v->_id;
+        $booking = $activeBookings->get($vid);
+
+        $lat = null;
+        $lon = null;
+
+        if ($booking && !empty($booking->driver['driver_id'])) {
+            $driver = $drivers->get((string) $booking->driver['driver_id']);
+            $lat    = $driver?->last_lat ?? null;
+            $lon    = $driver?->last_lon ?? null;
+        }
+
+        return [
+            'id'     => $vid,
+            'plate'  => $v->plate_number ?? '-',
+            'driver' => $booking?->driver['name'] ?? '-',
+            'status' => $v->status ?? 'available',
+            'lat'    => $lat,
+            'lon'    => $lon,
         ];
+    })->filter(fn($v) => !empty($v['lat']) && !empty($v['lon']))->values()->all();
 
-        $vehicleStats = [
-            'available'   => Vehicle::where('status', 'available')->count(),
-            'rented'      => Vehicle::where('status', 'rented')->count(),
-            'maintenance' => Vehicle::where('status', 'maintenance')->count(),
-        ];
-
-        $recentBookings = Booking::orderBy('created_at', 'desc')->limit(5)->get();
-
-        // Pesanan yang sudah diambil driver, menunggu konfirmasi admin
-        $acceptedBookings = Booking::where('status', 'accepted')
-                                   ->orderBy('accepted_at', 'asc')
-                                   ->get();
-
-        return view('dashboard', compact('stats', 'vehicleStats', 'recentBookings', 'acceptedBookings'));
-    }
+    return view('dashboard', compact(
+        'stats', 'vehicleStats', 'recentBookings', 'acceptedBookings', 'vehicleLocations'
+    ));
+}
 
     // ── PENGGUNA ─────────────────────────────────────────────
     private function penggunaDashboard()
