@@ -8,6 +8,14 @@
         <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">{{ $errors->first('error') }}</div>
         @endif
 
+        @if(session('success'))
+        <div class="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-sm">{{ session('success') }}</div>
+        @endif
+
+        @if(session('error'))
+        <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">{{ session('error') }}</div>
+        @endif
+
         {{-- ── Preview Gambar Kendaraan ── --}}
         @php
             $img = $vehicle->images[0] ?? null;
@@ -20,8 +28,7 @@
         @endphp
 
         @if($img)
-        <div class="rounded-xl overflow-hidden border border-gray-200 bg-gray-900"
-             style="height: 300px;">
+        <div class="rounded-xl overflow-hidden border border-gray-200 bg-gray-900" style="height: 300px;">
             <img src="{{ Storage::url($img) }}"
                  alt="{{ $vehicle->name }}"
                  class="w-full h-full object-cover"
@@ -47,7 +54,10 @@
 
         {{-- Form --}}
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-            <form method="POST" action="{{ route('vehicles.store-booking', $vehicle->_id) }}" class="space-y-4">
+            <form id="booking-form"
+                  method="POST"
+                  action="{{ route('vehicles.store-booking', $vehicle->_id) }}"
+                  class="space-y-4">
                 @csrf
                 <div class="grid grid-cols-2 gap-4">
                     <div>
@@ -85,11 +95,28 @@
                         class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500 resize-none">{{ old('notes') }}</textarea>
                 </div>
 
-                <button type="submit" class="w-full py-2.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition font-medium">
-                    Buat Pesanan
+                {{-- Debug info (hapus setelah payment flow berjalan) --}}
+                <div id="debug-box" class="hidden bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-3 rounded-lg text-xs font-mono space-y-1">
+                    <p class="font-semibold">DEBUG — Form Submit</p>
+                    <p id="debug-action"></p>
+                    <p id="debug-status">Mengirim...</p>
+                </div>
+
+                <button type="submit"
+                        id="submit-btn"
+                        class="w-full py-2.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition font-medium">
+                    Buat Pesanan & Bayar
                 </button>
             </form>
         </div>
+
+        {{-- Debug: tampilkan redirect target jika ada session --}}
+        @if(session('debug_redirect'))
+        <div class="bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3 rounded-lg text-xs font-mono">
+            DEBUG redirect target: {{ session('debug_redirect') }}
+        </div>
+        @endif
+
     </div>
 
     <script>
@@ -98,6 +125,11 @@
     const endInput    = document.querySelector('[name=end_date]');
     const estimate    = document.getElementById('price-estimate');
     const priceText   = document.getElementById('price-text');
+    const form        = document.getElementById('booking-form');
+    const debugBox    = document.getElementById('debug-box');
+    const debugAction = document.getElementById('debug-action');
+    const debugStatus = document.getElementById('debug-status');
+    const submitBtn   = document.getElementById('submit-btn');
 
     function updateEstimate() {
         if (!startInput.value || !endInput.value) return;
@@ -110,5 +142,18 @@
 
     startInput.addEventListener('change', updateEstimate);
     endInput.addEventListener('change', updateEstimate);
+
+    form.addEventListener('submit', function(e) {
+        // Tampilkan debug box
+        debugBox.classList.remove('hidden');
+        debugAction.textContent = 'Action: ' + form.action;
+        debugStatus.textContent = 'Status: Form submitted, menunggu redirect...';
+
+        // Disable tombol supaya tidak double submit
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Memproses...';
+
+        // Biarkan form submit normal (jangan e.preventDefault())
+    });
     </script>
 </x-app-layout>

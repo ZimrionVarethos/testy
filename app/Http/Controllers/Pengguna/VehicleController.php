@@ -1,13 +1,17 @@
 <?php
-// ─────────────────────────────────────────────────────────────
 
 namespace App\Http\Controllers\Pengguna;
-use App\Http\Controllers\Controller;
-use App\Models\Vehicle; use App\Models\Booking;
-use App\Services\BookingService;
-use Illuminate\Http\Request; use Illuminate\Support\Facades\Auth;
 
-class VehicleController extends Controller{
+use App\Http\Controllers\Controller;
+use App\Models\Vehicle;
+use App\Models\Booking;
+use App\Services\BookingService;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+
+class VehicleController extends Controller
+{
     public function __construct(private BookingService $bookingService) {}
 
     public function index(Request $request)
@@ -49,12 +53,25 @@ class VehicleController extends Controller{
                 'pickup'     => ['address' => $request->pickup_address, 'lat' => 0, 'lng' => 0],
                 'notes'      => $request->notes,
             ];
+
             $booking = $this->bookingService->createBooking($data, Auth::user());
 
-            // ← Langsung ke halaman bayar Midtrans Snap
-            return redirect()->route('bookings.pay', $booking->_id)
-                             ->with('success', 'Pesanan dibuat! Selesaikan pembayaran.');
+            $bookingId  = (string) $booking->_id;
+            $payUrl     = route('bookings.pay', $bookingId);
+
+            // Debug log — hapus setelah payment flow berjalan
+            Log::info('storeBooking: booking dibuat, redirect ke payment', [
+                'booking_id'   => $bookingId,
+                'booking_code' => $booking->booking_code,
+                'pay_url'      => $payUrl,
+            ]);
+
+            return redirect($payUrl)
+                ->with('success', 'Pesanan dibuat! Selesaikan pembayaran.')
+                ->with('debug_redirect', $payUrl);
+
         } catch (\Exception $e) {
+            Log::error('storeBooking error', ['error' => $e->getMessage()]);
             return back()->withErrors(['error' => $e->getMessage()]);
         }
     }
