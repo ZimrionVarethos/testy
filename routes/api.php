@@ -13,66 +13,62 @@ use App\Http\Controllers\Api\UserController;
 |--------------------------------------------------------------------------
 | API Routes — Bening Rental
 |--------------------------------------------------------------------------
-|
-| Semua route API untuk aplikasi mobile Bening Rental.
-| Base URL: /api/v1
-|
 */
 
 Route::prefix('v1')->group(function () {
 
     // ── Auth (Public) ────────────────────────────────────────────────────
     Route::prefix('auth')->group(function () {
-        Route::post('register', [AuthController::class, 'register']);
-        Route::post('login',    [AuthController::class, 'login']);
+        Route::post('register',        [AuthController::class, 'register']);
+        Route::post('login',           [AuthController::class, 'login']);
         Route::post('forgot-password', [AuthController::class, 'forgotPassword']);
     });
+
+    // ── Midtrans Webhook (Public — diverifikasi via signature key) ───────
+    // PENTING: route ini harus dikecualikan dari CSRF di App\Http\Middleware\VerifyCsrfToken
+    // atau pakai api middleware (sudah stateless di Laravel 11)
+    Route::post('payments/notification', [PaymentController::class, 'notification'])
+         ->name('api.payments.notification');
 
     // ── Protected Routes ─────────────────────────────────────────────────
     Route::middleware('auth:sanctum')->group(function () {
 
         // Auth
         Route::prefix('auth')->group(function () {
-            Route::post('logout',  [AuthController::class, 'logout']);
-            Route::get('me',       [AuthController::class, 'me']);
-            Route::put('profile',  [AuthController::class, 'updateProfile']);
+            Route::post('logout', [AuthController::class, 'logout']);
+            Route::get('me',      [AuthController::class, 'me']);
+            Route::put('profile', [AuthController::class, 'updateProfile']);
         });
 
         // Vehicles (Customer: read-only)
         Route::prefix('vehicles')->group(function () {
-            Route::get('/',          [VehicleController::class, 'index']);
-            Route::get('{id}',       [VehicleController::class, 'show']);
+            Route::get('/',       [VehicleController::class, 'index']);
+            Route::get('{id}',    [VehicleController::class, 'show']);
 
-            // Admin only
             Route::middleware('role:admin')->group(function () {
-                Route::post('/',         [VehicleController::class, 'store']);
-                Route::put('{id}',       [VehicleController::class, 'update']);
-                Route::delete('{id}',    [VehicleController::class, 'destroy']);
+                Route::post('/',      [VehicleController::class, 'store']);
+                Route::put('{id}',    [VehicleController::class, 'update']);
+                Route::delete('{id}', [VehicleController::class, 'destroy']);
             });
         });
 
-        // Route::post('/driver/location', [App\Http\Controllers\Api\DriverController::class, 'updateLocation']);
-    
-
         // Bookings
         Route::prefix('bookings')->group(function () {
-            Route::get('/',          [BookingController::class, 'index']);
-            Route::post('/',         [BookingController::class, 'store']);
-            Route::get('{id}',       [BookingController::class, 'show']);
-            Route::post('{id}/cancel', [BookingController::class, 'cancel']);
+            Route::get('/',              [BookingController::class, 'index']);
+            Route::post('/',             [BookingController::class, 'store']);
+            Route::get('{id}',           [BookingController::class, 'show']);
+            Route::post('{id}/cancel',   [BookingController::class, 'cancel']);
 
-            // Admin only
             Route::middleware('role:admin')->group(function () {
-                Route::post('{id}/confirm',  [BookingController::class, 'confirm']);
+                Route::post('{id}/confirm', [BookingController::class, 'confirm']);
             });
 
-            // Driver
             Route::middleware('role:driver')->group(function () {
                 Route::post('{id}/accept', [BookingController::class, 'accept']);
             });
         });
 
-        // Drivers (Admin: full, Customer: read)
+        // Drivers
         Route::prefix('drivers')->group(function () {
             Route::get('/',       [DriverController::class, 'index']);
             Route::get('{id}',    [DriverController::class, 'show']);
@@ -82,9 +78,11 @@ Route::prefix('v1')->group(function () {
             });
         });
 
-        // Payments (Admin only)
-        Route::middleware('role:admin')->group(function () {
-            Route::get('payments', [PaymentController::class, 'index']);
+        // Payments — Admin: list semua; User: list milik sendiri
+        Route::prefix('payments')->group(function () {
+            Route::middleware('role:admin')->group(function () {
+                Route::get('/', [PaymentController::class, 'index']);
+            });
         });
 
         // Dashboard (Admin only)
@@ -95,53 +93,49 @@ Route::prefix('v1')->group(function () {
 
         // Users (Admin only)
         Route::middleware('role:admin')->prefix('users')->group(function () {
-            Route::get('/',           [UserController::class, 'index']);
-            Route::get('{id}',        [UserController::class, 'show']);
+            Route::get('/',            [UserController::class, 'index']);
+            Route::get('{id}',         [UserController::class, 'show']);
             Route::post('{id}/toggle', [UserController::class, 'toggle']);
         });
     });
 
+    // ── Debug (hapus di production) ──────────────────────────────────────
     Route::get('/debug', function () {
-    return [
-        'mongodb_extension' => extension_loaded('mongodb'),
-        'db_connection'     => env('DB_CONNECTION'),
-        'db_uri_set'        => !empty(env('DB_URI')),
-    ];
-});
-
-
-
-    // routes/api.php - sementara
-    Route::get('debug-sanctum-full', function() {
         return [
-            'token_model' => config('sanctum.personal_access_token_model'),
-            'db_default' => config('database.default'),
+            'mongodb_extension' => extension_loaded('mongodb'),
+            'db_connection'     => env('DB_CONNECTION'),
+            'db_uri_set'        => !empty(env('DB_URI')),
+        ];
+    });
+
+    Route::get('debug-sanctum-full', function () {
+        return [
+            'token_model'        => config('sanctum.personal_access_token_model'),
+            'db_default'         => config('database.default'),
             'mongodb_connection' => config('database.connections.mongodb.driver'),
         ];
     });
 
-        // routes/api.php - sementara
-    Route::get('debug-token-test', function() {
+    Route::get('debug-token-test', function () {
         $user = App\Models\User::first();
         if (!$user) return ['error' => 'no user'];
-        
+
         try {
             $token = $user->createToken('test');
             return [
-                'success' => true,
+                'success'     => true,
                 'token_class' => get_class($token->accessToken),
-                'token_id' => $token->accessToken->getKey(),
+                'token_id'    => $token->accessToken->getKey(),
             ];
         } catch (\Throwable $e) {
             return [
                 'error' => $e->getMessage(),
                 'file'  => $e->getFile(),
                 'line'  => $e->getLine(),
-                'trace' => collect($e->getTrace())->take(5)->map(fn($t) => ($t['file'] ?? '').' :'.$t['line'])->toArray(),
+                'trace' => collect($e->getTrace())->take(5)
+                               ->map(fn($t) => ($t['file'] ?? '') . ' :' . $t['line'])
+                               ->toArray(),
             ];
         }
     });
-
-
-   
 });

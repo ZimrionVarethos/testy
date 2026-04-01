@@ -50,11 +50,12 @@ class VehicleController extends Controller{
                 'notes'      => $request->notes,
             ];
             $booking = $this->bookingService->createBooking($data, Auth::user());
-            return redirect()->route('bookings.show', $booking->_id)->with('success', 'Pesanan berhasil dibuat!');
+
+            // ← Langsung ke halaman bayar Midtrans Snap
+            return redirect()->route('bookings.pay', $booking->_id)
+                             ->with('success', 'Pesanan dibuat! Selesaikan pembayaran.');
         } catch (\Exception $e) {
             return back()->withErrors(['error' => $e->getMessage()]);
         }
     }
 }
-
-// ─────────────────────────────────────────────────────────────

@@ -3,43 +3,39 @@
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\Admin\BookingController as AdminBookingController;
-use App\Http\Controllers\Admin\VehicleController as AdminVehicleController;
-use App\Http\Controllers\Admin\DriverController as AdminDriverController;
-use App\Http\Controllers\Admin\UserController as AdminUserController;
-use App\Http\Controllers\Admin\PaymentController as AdminPaymentController;
-use App\Http\Controllers\Admin\ReportController as AdminReportController;
-use App\Http\Controllers\Pengguna\BookingController as PenggunaBookingController;
-use App\Http\Controllers\Pengguna\VehicleController as PenggunaVehicleController;
-use App\Http\Controllers\Pengguna\PaymentController as PenggunaPaymentController;
-use App\Http\Controllers\Driver\BookingController as DriverBookingController;
+use App\Http\Controllers\Admin\BookingController  as AdminBookingController;
+use App\Http\Controllers\Admin\VehicleController  as AdminVehicleController;
+use App\Http\Controllers\Admin\DriverController   as AdminDriverController;
+use App\Http\Controllers\Admin\UserController     as AdminUserController;
+use App\Http\Controllers\Admin\PaymentController  as AdminPaymentController;
+use App\Http\Controllers\Admin\ReportController   as AdminReportController;
+use App\Http\Controllers\Pengguna\BookingController  as PenggunaBookingController;
+use App\Http\Controllers\Pengguna\VehicleController  as PenggunaVehicleController;
+use App\Http\Controllers\Pengguna\PaymentController  as PenggunaPaymentController;
+use App\Http\Controllers\Driver\BookingController    as DriverBookingController;
 use App\Http\Controllers\NotificationController;
-use App\Http\Controllers\Admin\MapsController as AdminMapsController;
-// Di bagian atas routes/web.php, bersama use lainnya
+use App\Http\Controllers\Admin\MapsController    as AdminMapsController;
 use App\Http\Controllers\Admin\StorageController;
 
-Route::get('/', function () {
-    return view('welcome');
-});
+// ── WELCOME ──────────────────────────────────────────────────
+Route::get('/', fn() => view('welcome'));
 
-// ── AUTH ROUTES ─────────────────────────────────────────────
-require __DIR__.'/auth.php'; // ← hanya sekali, di sini saja
+// ── AUTH ─────────────────────────────────────────────────────
+require __DIR__ . '/auth.php';
 
-// ── DASHBOARD ───────────────────────────────────────────────
+// ── DASHBOARD ────────────────────────────────────────────────
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 });
 
 // ── NOTIFIKASI ───────────────────────────────────────────────
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('/notifications',             [NotificationController::class, 'index'])     ->name('notifications.index');
-    Route::post('/notifications/{id}/read',  [NotificationController::class, 'markRead'])  ->name('notifications.read');
-    Route::post('/notifications/read-all',   [NotificationController::class, 'markAllRead'])->name('notifications.read-all');
+    Route::get('/notifications',            [NotificationController::class, 'index'])      ->name('notifications.index');
+    Route::post('/notifications/{id}/read', [NotificationController::class, 'markRead'])   ->name('notifications.read');
+    Route::post('/notifications/read-all',  [NotificationController::class, 'markAllRead'])->name('notifications.read-all');
 });
 
-
-
-// ── ADMIN ROUTES ─────────────────────────────────────────────
+// ── ADMIN ────────────────────────────────────────────────────
 Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
 
     // Pesanan
@@ -49,67 +45,76 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('ad
     Route::post('bookings/{id}/cancel',  [AdminBookingController::class, 'cancel']) ->name('bookings.cancel');
 
     // Kendaraan
-    Route::get('vehicles',               [AdminVehicleController::class, 'index']) ->name('vehicles.index');
-    Route::get('vehicles/create',        [AdminVehicleController::class, 'create'])->name('vehicles.create');
-    Route::post('vehicles',              [AdminVehicleController::class, 'store']) ->name('vehicles.store');
-    Route::get('vehicles/{id}/edit',     [AdminVehicleController::class, 'edit'])  ->name('vehicles.edit');
-    Route::put('vehicles/{id}',          [AdminVehicleController::class, 'update'])->name('vehicles.update');
-    Route::delete('vehicles/{id}',       [AdminVehicleController::class, 'destroy'])->name('vehicles.destroy');
+    Route::get('vehicles',           [AdminVehicleController::class, 'index']) ->name('vehicles.index');
+    Route::get('vehicles/create',    [AdminVehicleController::class, 'create'])->name('vehicles.create');
+    Route::post('vehicles',          [AdminVehicleController::class, 'store']) ->name('vehicles.store');
+    Route::get('vehicles/{id}/edit', [AdminVehicleController::class, 'edit'])  ->name('vehicles.edit');
+    Route::put('vehicles/{id}',      [AdminVehicleController::class, 'update'])->name('vehicles.update');
+    Route::delete('vehicles/{id}',   [AdminVehicleController::class, 'destroy'])->name('vehicles.destroy');
 
     // Driver
-    Route::get('drivers',                [AdminDriverController::class, 'index'])  ->name('drivers.index');
-    Route::get('drivers/{id}',           [AdminDriverController::class, 'show'])   ->name('drivers.show');
-    Route::post('drivers/{id}/toggle',   [AdminDriverController::class, 'toggle']) ->name('drivers.toggle');
+    Route::get('drivers',              [AdminDriverController::class, 'index'])  ->name('drivers.index');
+    Route::get('drivers/{id}',         [AdminDriverController::class, 'show'])   ->name('drivers.show');
+    Route::post('drivers/{id}/toggle', [AdminDriverController::class, 'toggle']) ->name('drivers.toggle');
 
     // Pengguna
-    Route::get('users',                  [AdminUserController::class, 'index'])    ->name('users.index');
-    Route::get('users/{id}',             [AdminUserController::class, 'show'])     ->name('users.show');
-    Route::post('users/{id}/toggle',     [AdminUserController::class, 'toggle'])   ->name('users.toggle');
+    Route::get('users',              [AdminUserController::class, 'index'])  ->name('users.index');
+    Route::get('users/{id}',         [AdminUserController::class, 'show'])   ->name('users.show');
+    Route::post('users/{id}/toggle', [AdminUserController::class, 'toggle'])->name('users.toggle');
 
     // Pembayaran
-    Route::get('payments',               [AdminPaymentController::class, 'index']) ->name('payments.index');
-    Route::get('payments/{id}',          [AdminPaymentController::class, 'show'])  ->name('payments.show');
+    Route::get('payments',      [AdminPaymentController::class, 'index'])->name('payments.index');
+    Route::get('payments/{id}', [AdminPaymentController::class, 'show']) ->name('payments.show');
 
     // Laporan
-    Route::get('reports',                [AdminReportController::class, 'index'])  ->name('reports.index');
+    Route::get('reports', [AdminReportController::class, 'index'])->name('reports.index');
 
-    // Peta Kendaraan
-    Route::get('maps',                   [AdminMapsController::class, 'index'])    ->name('maps.index');
-    // Route::get('maps/{id}',              [AdminMapsController::class, 'show'])     ->name('maps.show');
-
+    // Peta
+    Route::get('maps', [AdminMapsController::class, 'index'])->name('maps.index');
 
     // Storage (MongoDB)
-    Route::get('/storage',                              [StorageController::class, 'index'])->name('storage.index');
-    Route::get('/storage/{collection}',                 [StorageController::class, 'show'])->name('storage.show');
-    Route::delete('/storage/{collection}',              [StorageController::class, 'destroyCollection'])->name('storage.destroyCollection');
-    Route::delete('/storage/{collection}/{id}',         [StorageController::class, 'destroyDocument'])->name('storage.destroyDocument');
-
+    Route::get('/storage',                        [StorageController::class, 'index'])           ->name('storage.index');
+    Route::get('/storage/{collection}',           [StorageController::class, 'show'])            ->name('storage.show');
+    Route::delete('/storage/{collection}',        [StorageController::class, 'destroyCollection'])->name('storage.destroyCollection');
+    Route::delete('/storage/{collection}/{id}',   [StorageController::class, 'destroyDocument']) ->name('storage.destroyDocument');
 });
 
-// ── PENGGUNA ROUTES ──────────────────────────────────────────
+// ── PENGGUNA ─────────────────────────────────────────────────
 Route::middleware(['auth', 'verified', 'role:pengguna,user'])->group(function () {
 
-    Route::get('bookings',               [PenggunaBookingController::class, 'index'])       ->name('bookings.index');
-    Route::get('bookings/{id}',          [PenggunaBookingController::class, 'show'])        ->name('bookings.show');
-    Route::delete('bookings/{id}',       [PenggunaBookingController::class, 'destroy'])     ->name('bookings.destroy');
+    // Booking
+    Route::get('bookings',         [PenggunaBookingController::class, 'index'])       ->name('bookings.index');
+    Route::get('bookings/{id}',    [PenggunaBookingController::class, 'show'])        ->name('bookings.show');
+    Route::delete('bookings/{id}', [PenggunaBookingController::class, 'destroy'])     ->name('bookings.destroy');
 
-    Route::get('vehicles',               [PenggunaVehicleController::class, 'index'])       ->name('vehicles.index');
-    Route::get('vehicles/{id}',          [PenggunaVehicleController::class, 'show'])        ->name('vehicles.show');
-    Route::get('vehicles/{id}/book',     [PenggunaVehicleController::class, 'book'])        ->name('vehicles.book');
-    Route::post('vehicles/{id}/book',    [PenggunaVehicleController::class, 'storeBooking'])->name('vehicles.store-booking');
+    // Kendaraan & pemesanan
+    Route::get('vehicles',           [PenggunaVehicleController::class, 'index'])       ->name('vehicles.index');
+    Route::get('vehicles/{id}',      [PenggunaVehicleController::class, 'show'])        ->name('vehicles.show');
+    Route::get('vehicles/{id}/book', [PenggunaVehicleController::class, 'book'])        ->name('vehicles.book');
+    Route::post('vehicles/{id}/book',[PenggunaVehicleController::class, 'storeBooking'])->name('vehicles.store-booking');
 
-    Route::get('payments',               [PenggunaPaymentController::class, 'index'])       ->name('payments.index');
-    Route::get('payments/{id}',          [PenggunaPaymentController::class, 'show'])        ->name('payments.show');
+    // ── PAYMENT ──────────────────────────────────────────────
+    // Daftar riwayat payment
+    Route::get('payments',      [PenggunaPaymentController::class, 'index']) ->name('payments.index');
+    // Detail payment
+    Route::get('payments/{id}', [PenggunaPaymentController::class, 'show'])  ->name('payments.show');
+
+    // Buat / ambil Snap token untuk booking tertentu
+    // URL: /bookings/{id}/pay  →  tampil halaman Snap
+    Route::get('bookings/{id}/pay',    [PenggunaPaymentController::class, 'createSnap'])->name('bookings.pay');
+
+    // Finish callback setelah Snap (Midtrans redirect ke sini)
+    Route::get('payments/{id}/finish', [PenggunaPaymentController::class, 'finish'])    ->name('payments.finish');
 });
 
-// ── DRIVER ROUTES ────────────────────────────────────────────
+// ── DRIVER ───────────────────────────────────────────────────
 Route::middleware(['auth', 'verified', 'role:driver'])->prefix('driver')->name('driver.')->group(function () {
 
-    Route::get('bookings/available',     [DriverBookingController::class, 'available'])         ->name('bookings.available');
-    Route::get('bookings',               [DriverBookingController::class, 'index'])             ->name('bookings.index');
-    Route::get('bookings/{id}',          [DriverBookingController::class, 'show'])              ->name('bookings.show');
-    Route::post('bookings/{id}/accept',  [DriverBookingController::class, 'accept'])            ->name('bookings.accept');
-    Route::post('toggle-availability',   [DriverBookingController::class, 'toggleAvailability'])->name('toggle-availability');
+    Route::get('bookings/available',    [DriverBookingController::class, 'available'])         ->name('bookings.available');
+    Route::get('bookings',              [DriverBookingController::class, 'index'])             ->name('bookings.index');
+    Route::get('bookings/{id}',         [DriverBookingController::class, 'show'])              ->name('bookings.show');
+    Route::post('bookings/{id}/accept', [DriverBookingController::class, 'accept'])            ->name('bookings.accept');
+    Route::post('toggle-availability',  [DriverBookingController::class, 'toggleAvailability'])->name('toggle-availability');
 });
 
 // ── PROFILE ──────────────────────────────────────────────────
@@ -119,7 +124,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-// routes/web.php — tambahkan di bagian bawah
-Route::middleware(['auth', 'role:driver'])->post('/driver/location', [
-    App\Http\Controllers\Api\DriverController::class, 'updateLocation'
-]);
+// ── DRIVER LOCATION (Mobile) ─────────────────────────────────
+Route::middleware(['auth', 'role:driver'])
+     ->post('/driver/location', [App\Http\Controllers\Api\DriverController::class, 'updateLocation']);
