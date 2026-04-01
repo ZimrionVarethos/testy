@@ -3,8 +3,8 @@
 
 @php
 $classes = $active
-    ? 'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium bg-indigo-600 text-white'
-    : 'flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-gray-400 hover:text-white hover:bg-gray-700 transition-colors duration-150';
+    ? 'flex items-center px-2 py-2 rounded-lg text-sm font-medium bg-indigo-600 text-white'
+    : 'flex items-center px-2 py-2 rounded-lg text-sm text-gray-400 hover:text-white hover:bg-gray-700 transition-colors duration-150';
 
 $icons = [
     'home'             => 'M3 9.75L12 3l9 6.75V21a.75.75 0 01-.75.75H15a.75.75 0 01-.75-.75v-4.5h-4.5V21a.75.75 0 01-.75.75H3.75A.75.75 0 013 21V9.75z',
@@ -27,23 +27,16 @@ $icons = [
 $path = $icons[$icon] ?? $icons['home'];
 @endphp
 
-{{-- 
-    Saat sidebar collapse (sidebarOpen = false):
-    - padding kiri/kanan dikecilkan agar icon terpusat
-    - gap dan span teks disembunyikan
-    Karena komponen ini dirender di dalam Alpine scope,
-    kita bisa pakai :class / x-bind langsung di sini.
---}}
 <a {{ $attributes->merge(['class' => $classes]) }}
-   :class="sidebarOpen ? 'gap-3 px-3' : 'gap-0 px-2 justify-center'"
    :title="sidebarOpen ? '' : '{{ $slot }}'">
 
-    <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    {{-- Icon: posisi selalu tetap, tidak ada transisi apapun --}}
+    <svg class="h-5 w-5 shrink-0 ml-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $path }}"/>
     </svg>
 
-    {{-- Teks label: fade + collapse width saat sidebar ditutup --}}
-    <span class="whitespace-nowrap overflow-hidden transition-all duration-300"
+    {{-- Hanya teks yang animate --}}
+    <span class="whitespace-nowrap overflow-hidden transition-all duration-300 ml-3"
           :class="sidebarOpen ? 'opacity-100 max-w-full' : 'opacity-0 max-w-0'">
         {{ $slot }}
     </span>

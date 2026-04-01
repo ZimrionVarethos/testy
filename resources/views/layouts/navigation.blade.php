@@ -59,19 +59,12 @@
 
         @if($role === 'admin')
 
-            <p class="px-2 pb-1 text-xs font-semibold text-gray-400 uppercase tracking-wider overflow-hidden whitespace-nowrap transition-[opacity,max-height] duration-300"
-               :class="sidebarOpen ? 'opacity-100 max-h-8' : 'opacity-0 max-h-0'">Utama</p>
+            
             <x-sidebar-link :href="route('dashboard')" :active="request()->routeIs('dashboard')" icon="home">Dashboard</x-sidebar-link>
-
-            <p class="px-2 pt-3 pb-1 text-xs font-semibold text-gray-400 uppercase tracking-wider overflow-hidden whitespace-nowrap transition-[opacity,max-height] duration-300"
-               :class="sidebarOpen ? 'opacity-100 max-h-8' : 'opacity-0 max-h-0'">Kelola</p>
             <x-sidebar-link :href="route('admin.bookings.index')" :active="request()->routeIs('admin.bookings.*')" icon="clipboard-list">Pesanan</x-sidebar-link>
             <x-sidebar-link :href="route('admin.vehicles.index')" :active="request()->routeIs('admin.vehicles.*')" icon="truck">Kendaraan</x-sidebar-link>
             <x-sidebar-link :href="route('admin.drivers.index')" :active="request()->routeIs('admin.drivers.*')" icon="identification">Driver</x-sidebar-link>
             <x-sidebar-link :href="route('admin.users.index')" :active="request()->routeIs('admin.users.*')" icon="user-group">Pengguna</x-sidebar-link>
-
-            <p class="px-2 pt-3 pb-1 text-xs font-semibold text-gray-400 uppercase tracking-wider overflow-hidden whitespace-nowrap transition-[opacity,max-height] duration-300"
-               :class="sidebarOpen ? 'opacity-100 max-h-8' : 'opacity-0 max-h-0'">Laporan</p>
             <x-sidebar-link :href="route('admin.payments.index')" :active="request()->routeIs('admin.payments.*')" icon="credit-card">Pembayaran</x-sidebar-link>
             <x-sidebar-link :href="route('admin.reports.index')" :active="request()->routeIs('admin.reports.*')" icon="chart-bar">Laporan & Statistik</x-sidebar-link>
             <x-sidebar-link :href="route('admin.maps.index')" :active="request()->routeIs('admin.maps.*')" icon="maps">Lokasi</x-sidebar-link>
