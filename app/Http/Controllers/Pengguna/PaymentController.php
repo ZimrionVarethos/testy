@@ -113,10 +113,11 @@ class PaymentController extends Controller
 
         try {
             $snapToken = \Midtrans\Snap::getSnapToken($params);
-        } catch (\Throwable $e) {
-            Log::error('Midtrans Snap token error', ['error' => $e->getMessage()]);
-            return back()->with('error', 'Gagal menghubungi payment gateway. Coba lagi.');
-        }
+            } catch (\Throwable $e) {
+                Log::error('Midtrans Snap token error', ['error' => $e->getMessage()]);
+                // DEBUG — hapus setelah ketemu masalahnya
+                return back()->with('error', 'Midtrans error: ' . $e->getMessage());
+            }
 
         // Simpan Payment baru
         $payment = $existing ?? new Payment();
