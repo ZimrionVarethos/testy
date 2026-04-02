@@ -23,6 +23,7 @@ RUN apt-get update && apt-get install -y \
     build-essential \
     wget \
     libssl-dev \
+    && update-ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
 # Configure and install PHP extensions (gd configure first)
@@ -79,6 +80,6 @@ RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cac
 EXPOSE 8080
 CMD ["sh", "-lc", "php artisan config:clear && php artisan cache:clear && php artisan migrate --force || true; php artisan serve --host=0.0.0.0 --port=${PORT:-8080}"]
 
-RUN update-ca-certificates
+
 
 
