@@ -13,7 +13,7 @@
             <h2 class="text-xl font-bold text-gray-800">Pembayaran Berhasil!</h2>
             <p class="text-gray-500 text-sm">
                 Pesanan <span class="font-semibold text-gray-700">{{ $payment->booking_code }}</span>
-                telah dibayar. Admin akan segera memproses pesanan Anda.
+                telah dikonfirmasi. Admin akan segera menugaskan driver.
             </p>
 
         @elseif($payment->status === 'pending')
@@ -23,10 +23,12 @@
                           d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                 </svg>
             </div>
-            <h2 class="text-xl font-bold text-gray-800">Menunggu Pembayaran</h2>
+            <h2 class="text-xl font-bold text-gray-800">Pembayaran Sedang Diverifikasi</h2>
             <p class="text-gray-500 text-sm">
-                Pembayaran Anda sedang diproses. Selesaikan pembayaran sesuai instruksi yang diberikan.
+                Midtrans sedang memverifikasi pembayaran Anda. Halaman ini akan otomatis update dalam beberapa detik.
             </p>
+            {{-- Auto refresh setiap 5 detik sampai status berubah --}}
+            <p class="text-xs text-gray-400" id="refresh-countdown">Mengecek status dalam <span id="countdown">5</span> detik...</p>
 
         @else
             <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto">
@@ -35,9 +37,7 @@
                 </svg>
             </div>
             <h2 class="text-xl font-bold text-gray-800">Pembayaran Gagal</h2>
-            <p class="text-gray-500 text-sm">
-                Terjadi masalah pada pembayaran Anda. Silakan coba lagi.
-            </p>
+            <p class="text-gray-500 text-sm">Terjadi masalah pada pembayaran Anda. Silakan buat pesanan baru.</p>
         @endif
 
         <div class="bg-gray-50 rounded-lg p-4 text-sm text-left space-y-2">
@@ -59,17 +59,25 @@
             </div>
         </div>
 
-        <div class="flex gap-3 justify-center">
-            <a href="{{ route('bookings.index') }}"
-               class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors">
-                Lihat Pesanan
-            </a>
-            @if($payment->status === 'pending')
-            <a href="{{ route('bookings.pay', $payment->booking_id) }}"
-               class="px-5 py-2 border border-gray-200 hover:bg-gray-50 text-gray-700 text-sm font-medium rounded-lg transition-colors">
-                Bayar Lagi
-            </a>
-            @endif
-        </div>
+        <a href="{{ route('bookings.index') }}"
+           class="inline-block px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors">
+            Lihat Pesanan Saya
+        </a>
+
     </div>
+
+    @if($payment->status === 'pending')
+    <script>
+        // Auto refresh setiap 5 detik untuk cek apakah webhook sudah update status
+        let count = 5;
+        const el = document.getElementById('countdown');
+        setInterval(() => {
+            count--;
+            if (el) el.textContent = count;
+            if (count <= 0) {
+                window.location.reload();
+            }
+        }, 1000);
+    </script>
+    @endif
 </x-app-layout>
