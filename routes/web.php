@@ -127,3 +127,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
 // ── DRIVER LOCATION (Mobile) ─────────────────────────────────
 Route::middleware(['auth', 'role:driver'])
      ->post('/driver/location', [App\Http\Controllers\Api\DriverController::class, 'updateLocation']);
+
+// DEBUG — hapus setelah selesai
+Route::get('/debug-midtrans', function () {
+    $serverKey = config('midtrans.server_key');
+    $clientKey = config('midtrans.client_key');
+    $isProd    = config('midtrans.is_production');
+
+    return response()->json([
+        'server_key_length' => strlen($serverKey),
+        'server_key_prefix' => substr($serverKey, 0, 15),
+        'client_key_prefix' => substr($clientKey, 0, 15),
+        'is_production'     => $isProd,
+        'env_direct'        => substr(env('MIDTRANS_SERVER_KEY', 'NOT_FOUND'), 0, 15),
+    ]);
+});
