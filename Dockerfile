@@ -81,4 +81,4 @@ CMD ["sh", "-lc", "php artisan config:clear && php artisan cache:clear && php ar
 
 RUN update-ca-certificates
 
-RUN composer install --no-dev && npm install && npm run build && php artisan config:clear && php artisan route:clear && php artisan cache:clear
+
