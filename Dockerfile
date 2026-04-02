@@ -80,3 +80,5 @@ EXPOSE 8080
 CMD ["sh", "-lc", "php artisan config:clear && php artisan cache:clear && php artisan migrate --force || true; php artisan serve --host=0.0.0.0 --port=${PORT:-8080}"]
 
 RUN update-ca-certificates
+
+RUN composer install --no-dev && npm install && npm run build && php artisan config:clear && php artisan route:clear && php artisan cache:clear
