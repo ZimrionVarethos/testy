@@ -154,7 +154,7 @@
                     <p class="text-xs text-amber-700">
                         Selesaikan sebelum
                         <span class="font-semibold">
-                            {{ \Carbon\Carbon::parse($activePayment->expired_at)->format('d M Y, H:i') }}
+                            {{ \Carbon\Carbon::parse($activePayment->expired_at)->format('d M Y, H:i \W\I\B') }}
                         </span>
                         · {{ $activePayment->expiryLabel() }}
                     </p>

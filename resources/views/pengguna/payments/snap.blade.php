@@ -35,7 +35,7 @@
                 <p class="text-amber-700">
                     ⏱ Selesaikan pembayaran sebelum
                     <span class="font-semibold">
-                        {{ \Carbon\Carbon::parse($expired_at)->format('d M Y, H:i') }}
+                        {{ \Carbon\Carbon::parse($expired_at)->format('d M Y, H:i \W\I\B') }}
                     </span>
                 </p>
                 <p class="text-amber-600 text-xs mt-0.5" id="pay-countdown"></p>
