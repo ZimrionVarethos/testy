@@ -63,11 +63,11 @@ class Payment extends Model
     public function isExpired(): bool
     {
         if ($this->status === self::STATUS_EXPIRED) return true;
-    
+
         if ($this->expired_at !== null) {
             return \Carbon\Carbon::parse($this->expired_at)->isPast();
         }
-    
+
         // Fallback untuk payment lama tanpa expired_at
         return \Carbon\Carbon::parse($this->created_at)->addMinutes(30)->isPast();
     }
@@ -119,12 +119,13 @@ class Payment extends Model
     public function expiryLabel(): string
     {
         if ($this->isExpired()) return 'sudah kedaluwarsa';
-
+    
         $deadline = $this->expired_at
             ? \Carbon\Carbon::parse($this->expired_at)
-            : \Carbon\Carbon::parse($this->created_at)->addMinutes(30);
-
-        return 'tersisa ' . $deadline->diffForHumans(null, true);
+            : \Carbon\Carbon::parse($this->created_at)->addMinutes(30); // ← sudah 30 menit
+    
+        // Set locale Indonesia agar tidak muncul "hours"
+        return 'tersisa ' . $deadline->locale('id')->diffForHumans(null, true);
     }
 
 }

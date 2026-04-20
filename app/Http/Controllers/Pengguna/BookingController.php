@@ -14,7 +14,16 @@ class BookingController extends Controller
     public function show(string $id)
     {
         $booking = Booking::findOrFail($id);
-        if ($booking->user['user_id'] !== (string) Auth::id()) abort(403);
+    
+        if (($booking->user['user_id'] ?? null) !== (string) Auth::id()) abort(403);
+    
+        // ← TAMBAH: expire payment on-the-fly saat halaman dibuka
+        $activePayment = \App\Models\Payment::activeForBooking((string) $booking->_id);
+        if ($activePayment && $activePayment->isPending() && $activePayment->isExpired()) {
+            $activePayment->update(['status' => \App\Models\Payment::STATUS_EXPIRED]);
+            $activePayment = null;
+        }
+    
         return view('pengguna.bookings.show', compact('booking'));
     }
 

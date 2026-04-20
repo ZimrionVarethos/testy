@@ -51,23 +51,23 @@
                     <span @class([
                         'px-2 py-1 text-xs rounded-full font-medium shrink-0',
                         'bg-yellow-100 text-yellow-700' => $booking->status === 'pending',
-                        'bg-blue-100 text-blue-700'     => $booking->status === 'accepted',
                         'bg-indigo-100 text-indigo-700' => $booking->status === 'confirmed',
                         'bg-green-100 text-green-700'   => $booking->status === 'ongoing',
                     ])>
                         @switch($booking->status)
-                            @case('pending') Menunggu Driver @break
-                            @case('accepted') Driver Ditemukan @break
-                            @case('confirmed') Dikonfirmasi @break
-                            @case('ongoing') Sedang Berjalan @break
+                            @case('pending')   Menunggu Konfirmasi @break
+                            @case('confirmed') Dikonfirmasi        @break
+                            @case('ongoing')   Sedang Berjalan     @break
                             @default {{ ucfirst($booking->status) }}
                         @endswitch
                     </span>
                 </div>
-                @if($booking->driver)
+
+                @if(!empty($booking->driver['driver_id']))
                 <div class="mt-2 flex items-center gap-2 text-xs text-gray-500">
                     <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                     </svg>
                     Driver: {{ $booking->driver['name'] }}
                 </div>
@@ -76,7 +76,9 @@
             @empty
             <div class="px-5 py-8 text-center">
                 <p class="text-sm text-gray-400">Belum ada pesanan aktif.</p>
-                <a href="{{ route('vehicles.index') }}" class="mt-2 inline-block text-indigo-500 text-sm hover:underline">Mulai sewa sekarang</a>
+                <a href="{{ route('vehicles.index') }}" class="mt-2 inline-block text-indigo-500 text-sm hover:underline">
+                    Mulai sewa sekarang
+                </a>
             </div>
             @endforelse
         </div>
@@ -96,7 +98,9 @@
                 <div>
                     <p class="text-sm font-medium text-gray-800">{{ $notif->title }}</p>
                     <p class="text-xs text-gray-500">{{ $notif->message }}</p>
-                    <p class="text-xs text-gray-300 mt-0.5">{{ \Carbon\Carbon::parse($notif->created_at)->diffForHumans() }}</p>
+                    <p class="text-xs text-gray-300 mt-0.5">
+                        {{ \Carbon\Carbon::parse($notif->created_at)->locale('id')->diffForHumans() }}
+                    </p>
                 </div>
             </div>
             @endforeach
