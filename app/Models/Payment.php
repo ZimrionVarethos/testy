@@ -52,7 +52,7 @@ class Payment extends Model
                 // Payment lama tanpa expired_at: fallback ke created_at + 24 jam
                   ->orWhere(function ($q) use ($now) {
                       $q->whereNull('expired_at')
-                        ->where('created_at', '<=', $now->copy()->subHours(24));
+                        ->where('created_at', '<=', $now->copy()->subMinutes(30));
                   });
             });
     }
@@ -63,15 +63,13 @@ class Payment extends Model
     public function isExpired(): bool
     {
         if ($this->status === self::STATUS_EXPIRED) return true;
-
-        // Jika expired_at ada, pakai itu
+    
         if ($this->expired_at !== null) {
             return \Carbon\Carbon::parse($this->expired_at)->isPast();
         }
-
-        // Fallback untuk payment lama tanpa expired_at:
-        // anggap expired setelah 24 jam dari created_at
-        return \Carbon\Carbon::parse($this->created_at)->addHours(24)->isPast();
+    
+        // Fallback untuk payment lama tanpa expired_at
+        return \Carbon\Carbon::parse($this->created_at)->addMinutes(30)->isPast();
     }
 
 
@@ -121,11 +119,11 @@ class Payment extends Model
     public function expiryLabel(): string
     {
         if ($this->isExpired()) return 'sudah kedaluwarsa';
-    
+
         $deadline = $this->expired_at
             ? \Carbon\Carbon::parse($this->expired_at)
-            : \Carbon\Carbon::parse($this->created_at)->addHours(24); // fallback
-    
+            : \Carbon\Carbon::parse($this->created_at)->addMinutes(30);
+
         return 'tersisa ' . $deadline->diffForHumans(null, true);
     }
 

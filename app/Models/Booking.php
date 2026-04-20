@@ -99,12 +99,9 @@ class Booking extends Model
      */
     public function confirmationDeadline(): \Carbon\Carbon
     {
-        $byTime    = \Carbon\Carbon::parse($this->created_at)->addHours(24);
-        $byStart   = \Carbon\Carbon::parse($this->start_date);
-    
-        return $byTime->lt($byStart) ? $byTime : $byStart;
+        return \Carbon\Carbon::parse($this->created_at)->addMinutes(30);
     }
-    
+
     /**
      * Sisa waktu sebelum deadline, dalam format human-readable.
      * Contoh: "tersisa 3 jam 45 menit" atau "sudah terlewat"
@@ -112,11 +109,11 @@ class Booking extends Model
     public function confirmationDeadlineLabel(): string
     {
         $deadline = $this->confirmationDeadline();
-    
+
         if ($deadline->isPast()) {
             return 'sudah terlewat';
         }
-    
+
         return 'tersisa ' . $deadline->diffForHumans(absolute: true);
     }
 }

@@ -83,9 +83,9 @@ class PaymentController extends Controller
         $expiredAt = \Carbon\Carbon::parse($booking->created_at)->addHours(24);
         $startDate = \Carbon\Carbon::parse($booking->start_date);
 
-        if ($startDate->lt($expiredAt)) {
-            $expiredAt = $startDate;
-        }
+        // Ganti seluruh blok hitung $expiredAt dan $minutesLeft dengan ini:
+        $expiredAt   = \Carbon\Carbon::parse($booking->created_at)->addMinutes(30);
+        $minutesLeft = 30;
 
         // Jika deadline sudah lewat, tolak
         if ($expiredAt->isPast()) {
@@ -110,16 +110,6 @@ class PaymentController extends Controller
         $orderId = 'PAY-' . (string) $booking->_id . '-' . time();
         $user    = Auth::user();
 
-        // ── DIUPDATE: minimum 30 menit, maksimal sesuai deadline ──
-        $minutesLeft = (int) \Carbon\Carbon::now()->diffInMinutes($expiredAt, false);
-
-        if ($minutesLeft < 30) {
-            // Deadline terlalu mepet — beri minimal 30 menit
-            // tapi jangan lebih dari original deadline
-            $minutesLeft = 30;
-            // Geser expired_at ikut
-            $expiredAt = \Carbon\Carbon::now()->addMinutes(30);
-        }
 
         $params = [
             'transaction_details' => [
