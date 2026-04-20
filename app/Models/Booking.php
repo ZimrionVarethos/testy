@@ -114,6 +114,6 @@ class Booking extends Model
             return 'sudah terlewat';
         }
 
-        return 'tersisa ' . $deadline->diffForHumans(absolute: true);
+        return 'tersisa ' . $deadline->diffForHumans(null, true);
     }
 }
