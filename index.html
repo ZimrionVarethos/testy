@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DriveEase | Rental Mobil Premium</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --primary-blue: #0056b3;
+            --secondary-blue: #eef4fb;
+            --text-dark: #333;
+            --white: #ffffff;
+            --transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Poppins', sans-serif; background: #fdfdfd; overflow-x: hidden; }
+
+        /* --- INTERACTIVE NAVBAR --- */
+        header {
+            position: fixed;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            padding: 1.5rem 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1000;
+            transition: var(--transition);
+            background: rgba(255, 255, 255, 0);
+        }
+
+        /* State saat di-scroll (Cylinder Effect) */
+        header.scrolled {
+            top: 20px;
+            width: 90%;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 0.8rem 3%;
+            border-radius: 50px; /* Efek Silinder */
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .logo { font-size: 1.5rem; font-weight: 700; color: var(--primary-blue); }
+        nav ul { display: flex; list-style: none; }
+        nav ul li { margin: 0 1.5rem; }
+        nav ul li a { text-decoration: none; color: var(--text-dark); font-weight: 500; }
+
+        /* --- HERO SECTION --- */
+        .hero {
+            height: 100vh;
+            background: linear-gradient(rgba(255,255,255,0.8), rgba(255,255,255,0.4)), url('https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&q=80&w=1920') no-repeat center center/cover;
+            display: flex; align-items: center; padding: 0 10%;
+        }
+        .hero-content h1 { font-size: 3.5rem; color: var(--primary-blue); line-height: 1.1; }
+
+        /* --- CAR SLIDER SECTION --- */
+        .slider-container {
+            position: relative;
+            padding: 2rem 0;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .car-wrapper {
+            display: flex;
+            overflow-x: auto;
+            scroll-behavior: smooth;
+            scroll-snap-type: x mandatory;
+            gap: 20px;
+            padding: 20px;
+            scrollbar-width: none; /* Hide scrollbar Firefox */
+        }
+
+        .car-wrapper::-webkit-scrollbar { display: none; } /* Hide scrollbar Chrome/Safari */
+
+        .car-card {
+            min-width: 350px;
+            scroll-snap-align: center;
+            background: var(--white);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition);
+            border: 2px solid transparent;
+        }
+
+        .car-card:hover { transform: translateY(-10px); border-color: var(--primary-blue); }
+        .car-card img { width: 100%; height: 200px; object-fit: contain; }
+
+        /* Slider Indicators/Buttons */
+        .nav-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 50px;
+            height: 50px;
+            background: var(--primary-blue);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 10;
+            border: none;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            transition: 0.3s;
+        }
+
+        .nav-btn:hover { background: #003d82; scale: 1.1; }
+        .prev { left: -25px; }
+        .next { right: -25px; }
+
+        /* --- CONTACT & FOOTER --- */
+        .btn { padding: 0.8rem 2rem; background: var(--primary-blue); color: white; border-radius: 50px; text-decoration: none; display: inline-block; }
+        
+        #contact { padding: 5rem 10%; background: var(--secondary-blue); border-radius: 50px 50px 0 0; }
+
+        /* Responsive Mobile */
+        @media (max-width: 768px) {
+            header.scrolled { width: 95%; top: 10px; }
+            nav { display: none; }
+            .hero-content h1 { font-size: 2.2rem; }
+            .car-card { min-width: 85vw; }
+            .nav-btn { display: none; } /* Gunakan swipe di mobile */
+            .prev { left: 5px; }
+            .next { right: 5px; }
+        }
+    </style>
+</head>
+<body>
+
+    <header id="navbar">
+        <div class="logo">DriveEase</div>
+        <nav>
+            <ul>
+                <li><a href="#">Home</a></li>
+                <li><a href="#cars">Armada</a></li>
+                <li><a href="#contact">Kontak</a></li>
+            </ul>
+        </nav>
+        <a href="#contact" class="btn">Pesan</a>
+    </header>
+
+    <section class="hero">
+        <div class="hero-content">
+            <h1>Premium Car Rental<br>Untuk Anda.</h1>
+            <p style="margin: 20px 0;">Pilihan terbaik untuk kenyamanan perjalanan Anda di dalam dan luar kota.</p>
+            <a href="#cars" class="btn">Cek Armada</a>
+        </div>
+    </section>
+
+    <section id="cars" style="padding: 5rem 5%;">
+        <div style="text-align: center; margin-bottom: 3rem;">
+            <h2>Koleksi Mobil Kami</h2>
+            <p>Klik mobil untuk melihat detail atau geser untuk pilihan lain.</p>
+        </div>
+
+        <div class="slider-container">
+            <button class="nav-btn prev" onclick="slide('prev')"><i class="fas fa-chevron-left"></i></button>
+            
+            <div class="car-wrapper" id="carWrapper">
+                <div class="car-card" onclick="scrollToCard(this)">
+                    <img src="https://images.unsplash.com/photo-1552519507-da3b142c6e3d?auto=format&fit=crop&q=80&w=400" alt="Car">
+                    <h3>Chevrolet Camaro</h3>
+                    <p style="color: var(--primary-blue); font-weight: 700;">Rp 1.500.000 / Hari</p>
+                </div>
+                <div class="car-card" onclick="scrollToCard(this)">
+                    <img src="https://images.unsplash.com/photo-1583121274602-3e2820c69888?auto=format&fit=crop&q=80&w=400" alt="Car">
+                    <h3>Ferrari Giallo</h3>
+                    <p style="color: var(--primary-blue); font-weight: 700;">Rp 5.000.000 / Hari</p>
+                </div>
+                <div class="car-card" onclick="scrollToCard(this)">
+                    <img src="https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&q=80&w=400" alt="Car">
+                    <h3>Porsche 911</h3>
+                    <p style="color: var(--primary-blue); font-weight: 700;">Rp 4.200.000 / Hari</p>
+                </div>
+                <div class="car-card" onclick="scrollToCard(this)">
+                    <img src="https://images.unsplash.com/photo-1494976388531-d1058494cdd8?auto=format&fit=crop&q=80&w=400" alt="Car">
+                    <h3>Ford Mustang</h3>
+                    <p style="color: var(--primary-blue); font-weight: 700;">Rp 2.100.000 / Hari</p>
+                </div>
+            </div>
+
+            <button class="nav-btn next" onclick="slide('next')"><i class="fas fa-chevron-right"></i></button>
+        </div>
+    </section>
+
+    <section id="contact">
+        <h2 style="margin-bottom: 2rem;">Hubungi Kami</h2>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 40px;">
+            <div>
+                <p>Ada pertanyaan? Tim kami siap melayani 24/7.</p><br>
+                <p><strong>Email:</strong> hello@driveease.com</p>
+                <p><strong>WA:</strong> +62 812 3456 7890</p>
+            </div>
+            <form style="display: flex; flex-direction: column; gap: 10px;">
+                <input type="text" placeholder="Nama" style="padding: 15px; border-radius: 10px; border: none;">
+                <button type="submit" class="btn" style="border: none; cursor: pointer;">Kirim</button>
+            </form>
+        </div>
+    </section>
+
+    <script>
+        // --- SCRIPT NAVBAR SCROLL EFFECT ---
+        const navbar = document.getElementById('navbar');
+        window.onscroll = function() {
+            if (window.scrollY > 50) {
+                navbar.classList.add('scrolled');
+            } else {
+                navbar.classList.remove('scrolled');
+            }
+        };
+
+        // --- SCRIPT CAR SLIDER ---
+        const wrapper = document.getElementById('carWrapper');
+
+        function slide(direction) {
+            const scrollAmount = 370; // Lebar card + gap
+            if (direction === 'prev') {
+                wrapper.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+            } else {
+                wrapper.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+            }
+        }
+
+        // Fitur klik gambar untuk scroll ke mobil tersebut
+        function scrollToCard(card) {
+            card.scrollIntoView({
+                behavior: 'smooth',
+                block: 'nearest',
+                inline: 'center'
+            });
+        }
+    </script>
+</body>
+</html>

@@ -17,6 +17,7 @@
         "livewire/volt": "^1.7.0",
         "midtrans/midtrans-php": "^2.6",
         "mongodb/laravel-mongodb": "*",
+        "phpoffice/phpspreadsheet": "^5.7",
         "predis/predis": "^3.4"
     },
     "require-dev": {

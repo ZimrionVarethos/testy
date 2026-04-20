@@ -16,9 +16,12 @@ use App\Http\Controllers\Driver\BookingController    as DriverBookingController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\Admin\MapsController    as AdminMapsController;
 use App\Http\Controllers\Admin\StorageController;
+use App\Http\Controllers\Admin\LandingPageController;
+use App\Http\Controllers\WelcomeController;
+use App\Http\Controllers\Admin\ReportController;
 
 // ── WELCOME ──────────────────────────────────────────────────
-Route::get('/', fn() => view('welcome'));
+Route::get('/', [WelcomeController::class, 'index'])->name('welcome');
 
 // ── AUTH ─────────────────────────────────────────────────────
 require __DIR__ . '/auth.php';
@@ -71,6 +74,17 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('ad
 
     // Peta
     Route::get('maps', [AdminMapsController::class, 'index'])->name('maps.index');
+
+    Route::get('landing',                     [LandingPageController::class, 'index'])->name('landing.index');
+    Route::put('landing',                     [LandingPageController::class, 'update'])->name('landing.update');
+    Route::get('landing/slides/{key}/destroy',[LandingPageController::class, 'destroySlide'])->name('landing.slides.destroy');
+    Route::get('landing/{key}/destroy',       [LandingPageController::class, 'destroy'])->name('landing.destroy');
+    
+    // Laporan & Statistik
+    Route::get('/reports',             [ReportController::class, 'index'])->name('reports.index');
+    Route::get('/reports/export',      [ReportController::class, 'export'])->name('reports.export');
+    Route::post('/reports/export-old', [ReportController::class, 'exportOld'])->name('reports.export-old');
+    Route::delete('/reports/delete-old', [ReportController::class, 'deleteOld'])->name('reports.delete-old');
 
     // Storage (MongoDB)
     Route::get('/storage',                        [StorageController::class, 'index'])           ->name('storage.index');

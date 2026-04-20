@@ -40,7 +40,7 @@
         </a>
 
         <div class="overflow-hidden transition-all duration-300 whitespace-nowrap"
-             :class="sidebarOpen ? 'opacity-100 max-w-xs' : 'opacity-0 max-w-0'">
+             :class="sidebarOpen ? 'opacity-100 max-w-xs' : 'opacity-0 max-w-0 display-none'">
             <span class="font-semibold text-base tracking-tight">Bening Rental</span>
         </div>
 
@@ -68,6 +68,7 @@
             <x-sidebar-link :href="route('admin.payments.index')" :active="request()->routeIs('admin.payments.*')" icon="credit-card">Pembayaran</x-sidebar-link>
             <x-sidebar-link :href="route('admin.reports.index')" :active="request()->routeIs('admin.reports.*')" icon="chart-bar">Laporan & Statistik</x-sidebar-link>
             <x-sidebar-link :href="route('admin.maps.index')" :active="request()->routeIs('admin.maps.*')" icon="maps">Lokasi</x-sidebar-link>
+            <x-sidebar-link :href="route('admin.landing.index')" :active="request()->routeIs('admin.landing.*')" icon="website">Landing Page</x-sidebar-link>
 
             {{-- Storage: hanya tampil untuk developer (email spesifik) --}}
             @if(Auth::user()->email === 'mochfarelaz@gmail.com')
@@ -76,27 +77,19 @@
 
         @elseif($role === 'pengguna' || $role === 'user')
 
-            <p class="px-2 pb-1 text-xs font-semibold text-gray-400 uppercase tracking-wider overflow-hidden whitespace-nowrap transition-[opacity,max-height] duration-300"
-               :class="sidebarOpen ? 'opacity-100 max-h-8' : 'opacity-0 max-h-0'">Menu</p>
+
             <x-sidebar-link :href="route('dashboard')" :active="request()->routeIs('dashboard')" icon="home">Dashboard</x-sidebar-link>
             <x-sidebar-link :href="route('bookings.index')" :active="request()->routeIs('bookings.*')" icon="clipboard-list">Pesanan Saya</x-sidebar-link>
             <x-sidebar-link :href="route('vehicles.index')" :active="request()->routeIs('vehicles.*')" icon="truck">Sewa Kendaraan</x-sidebar-link>
-
-            <p class="px-2 pt-3 pb-1 text-xs font-semibold text-gray-400 uppercase tracking-wider overflow-hidden whitespace-nowrap transition-[opacity,max-height] duration-300"
-               :class="sidebarOpen ? 'opacity-100 max-h-8' : 'opacity-0 max-h-0'">Lainnya</p>
             <x-sidebar-link :href="route('payments.index')" :active="request()->routeIs('payments.*')" icon="credit-card">Riwayat Pembayaran</x-sidebar-link>
             <x-sidebar-link :href="route('notifications.index')" :active="request()->routeIs('notifications.*')" icon="bell">Notifikasi</x-sidebar-link>
 
         @elseif($role === 'driver')
 
-            <p class="px-2 pb-1 text-xs font-semibold text-gray-400 uppercase tracking-wider overflow-hidden whitespace-nowrap transition-[opacity,max-height] duration-300"
-               :class="sidebarOpen ? 'opacity-100 max-h-8' : 'opacity-0 max-h-0'">Menu Driver</p>
+
             <x-sidebar-link :href="route('dashboard')" :active="request()->routeIs('dashboard')" icon="home">Dashboard</x-sidebar-link>
             <x-sidebar-link :href="route('driver.bookings.available')" :active="request()->routeIs('driver.bookings.available')" icon="clipboard-list">Pesanan Tersedia</x-sidebar-link>
             <x-sidebar-link :href="route('driver.bookings.index')" :active="request()->routeIs('driver.bookings.index')" icon="truck">Pesanan Saya</x-sidebar-link>
-
-            <p class="px-2 pt-3 pb-1 text-xs font-semibold text-gray-400 uppercase tracking-wider overflow-hidden whitespace-nowrap transition-[opacity,max-height] duration-300"
-               :class="sidebarOpen ? 'opacity-100 max-h-8' : 'opacity-0 max-h-0'">Lainnya</p>
             <x-sidebar-link :href="route('notifications.index')" :active="request()->routeIs('notifications.*')" icon="bell">Notifikasi</x-sidebar-link>
 
         @else

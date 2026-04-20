@@ -1,145 +1,2062 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
-    <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
+<html lang="id">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>DriveEase — Rental Mobil Premium Indonesia</title>
+    <meta name="description" content="Rental mobil premium dengan pengemudi profesional. Perjalanan nyaman, aman, dan tepat waktu di seluruh Indonesia.">
 
-        <title>Laravel</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
-        <!-- Fonts -->
-        <link rel="preconnect" href="https://fonts.bunny.net">
-        <link href="https://fonts.bunny.net/css?family=figtree:400,600&display=swap" rel="stylesheet" />
+    <style>
+        /* ══════════════════════════════════════
+           DESIGN TOKENS
+        ══════════════════════════════════════ */
+        :root {
+            --ink:      rgb(17 24 39);
+            --ink-80:   rgba(17,24,39,0.8);
+            --ink-40:   rgba(17,24,39,0.4);
+            --ink-12:   rgba(17,24,39,0.12);
+            --ink-06:   rgba(17,24,39,0.06);
+            --white:    #ffffff;
+            --off:      #F7F7F5;
+            --line:     rgba(17,24,39,0.1);
+            --ease:     cubic-bezier(0.76, 0, 0.24, 1);
+            --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+        }
 
-        <!-- Styles -->
-        @vite(['resources/css/app.css', 'resources/js/app.js'])
-    </head>
-    <body class="antialiased font-sans">
-        <div class="bg-gray-50 text-black/50 dark:bg-black dark:text-white/50">
-            <img id="background" class="absolute -left-20 top-0 max-w-[877px]" src="https://laravel.com/assets/img/welcome/background.svg" />
-            <div class="relative min-h-screen flex flex-col items-center justify-center selection:bg-[#FF2D20] selection:text-white">
-                <div class="relative w-full max-w-2xl px-6 lg:max-w-7xl">
-                    <header class="grid grid-cols-2 items-center gap-2 py-10 lg:grid-cols-3">
-                        <div class="flex lg:justify-center lg:col-start-2">
-                            <svg class="h-12 w-auto text-white lg:h-16 lg:text-[#FF2D20]" viewBox="0 0 62 65" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M61.8548 14.6253C61.8778 14.7102 61.8895 14.7978 61.8897 14.8858V28.5615C61.8898 28.737 61.8434 28.9095 61.7554 29.0614C61.6675 29.2132 61.5409 29.3392 61.3887 29.4265L49.9104 36.0351V49.1337C49.9104 49.4902 49.7209 49.8192 49.4118 49.9987L25.4519 63.7916C25.3971 63.8227 25.3372 63.8427 25.2774 63.8639C25.255 63.8714 25.2338 63.8851 25.2101 63.8913C25.0426 63.9354 24.8666 63.9354 24.6991 63.8913C24.6716 63.8838 24.6467 63.8689 24.6205 63.8589C24.5657 63.8389 24.5084 63.8215 24.456 63.7916L0.501061 49.9987C0.348882 49.9113 0.222437 49.7853 0.134469 49.6334C0.0465019 49.4816 0.000120578 49.3092 0 49.1337L0 8.10652C0 8.01678 0.0124642 7.92953 0.0348998 7.84477C0.0423783 7.8161 0.0598282 7.78993 0.0697995 7.76126C0.0884958 7.70891 0.105946 7.65531 0.133367 7.6067C0.152063 7.5743 0.179485 7.54812 0.20192 7.51821C0.230588 7.47832 0.256763 7.43719 0.290416 7.40229C0.319084 7.37362 0.356476 7.35243 0.388883 7.32751C0.425029 7.29759 0.457436 7.26518 0.498568 7.2415L12.4779 0.345059C12.6296 0.257786 12.8015 0.211853 12.9765 0.211853C13.1515 0.211853 13.3234 0.257786 13.475 0.345059L25.4531 7.2415H25.4556C25.4955 7.26643 25.5292 7.29759 25.5653 7.32626C25.5977 7.35119 25.6339 7.37362 25.6625 7.40104C25.6974 7.43719 25.7224 7.47832 25.7523 7.51821C25.7735 7.54812 25.8021 7.5743 25.8196 7.6067C25.8483 7.65656 25.8645 7.70891 25.8844 7.76126C25.8944 7.78993 25.9118 7.8161 25.9193 7.84602C25.9423 7.93096 25.954 8.01853 25.9542 8.10652V33.7317L35.9355 27.9844V14.8846C35.9355 14.7973 35.948 14.7088 35.9704 14.6253C35.9792 14.5954 35.9954 14.5692 36.0053 14.5405C36.0253 14.4882 36.0427 14.4346 36.0702 14.386C36.0888 14.3536 36.1163 14.3274 36.1375 14.2975C36.1674 14.2576 36.1923 14.2165 36.2272 14.1816C36.2559 14.1529 36.292 14.1317 36.3244 14.1068C36.3618 14.0769 36.3942 14.0445 36.4341 14.0208L48.4147 7.12434C48.5663 7.03694 48.7383 6.99094 48.9133 6.99094C49.0883 6.99094 49.2602 7.03694 49.4118 7.12434L61.3899 14.0208C61.4323 14.0457 61.4647 14.0769 61.5021 14.1055C61.5333 14.1305 61.5694 14.1529 61.5981 14.1803C61.633 14.2165 61.6579 14.2576 61.6878 14.2975C61.7103 14.3274 61.7377 14.3536 61.7551 14.386C61.7838 14.4346 61.8 14.4882 61.8199 14.5405C61.8312 14.5692 61.8474 14.5954 61.8548 14.6253ZM59.893 27.9844V16.6121L55.7013 19.0252L49.9104 22.3593V33.7317L59.8942 27.9844H59.893ZM47.9149 48.5566V37.1768L42.2187 40.4299L25.953 49.7133V61.2003L47.9149 48.5566ZM1.99677 9.83281V48.5566L23.9562 61.199V49.7145L12.4841 43.2219L12.4804 43.2194L12.4754 43.2169C12.4368 43.1945 12.4044 43.1621 12.3682 43.1347C12.3371 43.1097 12.3009 43.0898 12.2735 43.0624L12.271 43.0586C12.2386 43.0275 12.2162 42.9888 12.1887 42.9539C12.1638 42.9203 12.1339 42.8916 12.114 42.8567L12.1127 42.853C12.0903 42.8156 12.0766 42.7707 12.0604 42.7283C12.0442 42.6909 12.023 42.656 12.013 42.6161C12.0005 42.5688 11.998 42.5177 11.9931 42.4691C11.9881 42.4317 11.9781 42.3943 11.9781 42.3569V15.5801L6.18848 12.2446L1.99677 9.83281ZM12.9777 2.36177L2.99764 8.10652L12.9752 13.8513L22.9541 8.10527L12.9752 2.36177H12.9777ZM18.1678 38.2138L23.9574 34.8809V9.83281L19.7657 12.2459L13.9749 15.5801V40.6281L18.1678 38.2138ZM48.9133 9.14105L38.9344 14.8858L48.9133 20.6305L58.8909 14.8846L48.9133 9.14105ZM47.9149 22.3593L42.124 19.0252L37.9323 16.6121V27.9844L43.7219 31.3174L47.9149 33.7317V22.3593ZM24.9533 47.987L39.59 39.631L46.9065 35.4555L36.9352 29.7145L25.4544 36.3242L14.9907 42.3482L24.9533 47.987Z" fill="currentColor"/></svg>
+        /* ══════════════════════════════════════
+           RESET & BASE
+        ══════════════════════════════════════ */
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; font-size: 16px; }
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--white);
+            color: var(--ink);
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+        a { text-decoration: none; color: inherit; }
+        img { max-width: 100%; display: block; }
+
+        /* ══════════════════════════════════════
+           NAVBAR
+        ══════════════════════════════════════ */
+        #navbar {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            padding: 0 5%;
+            height: 72px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 999;
+            transition: background 0.4s var(--ease), box-shadow 0.4s;
+        }
+        #navbar.scrolled {
+            background: rgba(255,255,255,0.96);
+            box-shadow: 0 1px 0 var(--line);
+            backdrop-filter: blur(12px);
+        }
+        #navbar.hero-over {
+            background: transparent;
+        }
+
+        /* ── Logo blob (di luar navbar, layer di bawah navbar) ── */
+        .nav-logo-blob {
+            position: fixed;
+            top: 0;
+            left: 5%;
+            width: 140px;
+            height: 120px;
+            background: rgba(255, 255, 255, 0.16);
+            border-radius: 10% 10% 50% 50%;
+            box-shadow: 0 6px 24px rgba(0,0,0,0.10);
+            z-index: 998;                       /* di bawah navbar → tertutup navbar bagian atas */
+            pointer-events: none;
+            transition: background 0.4s var(--ease), box-shadow 0.4s;
+        }
+        .nav-logo-blob.scrolled {
+            box-shadow: none;            
+            background: rgb(255, 255, 255);  
+            backdrop-filter: blur(12px);                  /* hilang saat navbar sudah scrolled, agar tidak mengganggu estetika */
+                   /* menyatu sempurna dengan navbar saat scroll */
+        }
+
+        /* ── Logo image link (z-index paling atas) ── */
+        .nav-logo-link {
+            position: fixed;
+            top: 1px;
+            left: 5%;
+            width: 140px;
+            height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1001;
+        }
+        .nav-logo-link img {
+            width: 102px;
+            height: 102px;
+            object-fit: contain;
+            border-radius: 50%;
+            margin-top: 0px;                   /* ikuti lekukan blob ke bawah */
+        }
+
+        /* ── Spacer kiri navbar ── */
+        .nav-logo-spacer {
+            width: 90px;
+            flex-shrink: 0;
+        }
+
+        /* ── Nav links ── */
+        nav ul { display: flex; list-style: none; gap: 2.4rem; }
+        nav ul li a {
+            font-size: 0.84rem;
+            font-weight: 500;
+            color: rgba(255,255,255,0.72);
+            letter-spacing: 0.01em;
+            transition: color 0.22s;
+        }
+        #navbar.scrolled nav ul li a { color: var(--ink-80); }
+        nav ul li a:hover { color: var(--white); }
+        #navbar.scrolled nav ul li a:hover { color: var(--ink); }
+
+        /* ── Nav right buttons ── */
+        .nav-right { display: flex; align-items: center; gap: 0.5rem; }
+        .nav-btn {
+            font-family: 'Syne', sans-serif;
+            font-size: 0.82rem;
+            font-weight: 700;
+            padding: 0.55rem 1.3rem;
+            border-radius: 4px;
+            transition: all 0.24s;
+            letter-spacing: 0.01em;
+        }
+        .nav-btn-ghost {
+            color: rgba(255,255,255,0.72);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        #navbar.scrolled .nav-btn-ghost { color: var(--ink-80); border-color: var(--line); }
+        .nav-btn-ghost:hover { background: rgba(255,255,255,0.1); color: var(--white); }
+        #navbar.scrolled .nav-btn-ghost:hover { background: var(--ink-06); color: var(--ink); }
+        .nav-btn-solid { background: var(--white); color: var(--ink); }
+        #navbar.scrolled .nav-btn-solid { background: var(--ink); color: var(--white); }
+        .nav-btn-solid:hover { opacity: 0.88; transform: translateY(-1px); }
+
+        /* ── Hamburger ── */
+        .nav-hamburger {
+            display: none;
+            flex-direction: column;
+            gap: 5px;
+            cursor: pointer;
+            padding: 4px;
+        }
+        .nav-hamburger span {
+            width: 24px; height: 2px;
+            background: var(--white);
+            border-radius: 2px;
+            transition: all 0.3s var(--ease);
+        }
+        #navbar.scrolled .nav-hamburger span { background: var(--ink); }
+        .nav-hamburger.open span:nth-child(1) { transform: rotate(45deg) translate(5px, 5px); }
+        .nav-hamburger.open span:nth-child(2) { opacity: 0; }
+        .nav-hamburger.open span:nth-child(3) { transform: rotate(-45deg) translate(5px, -5px); }
+
+        /* ══════════════════════════════════════
+           MOBILE MENU — FULL SCREEN
+        ══════════════════════════════════════ */
+        .mobile-menu {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: var(--white);
+            z-index: 997;
+            padding: 100px 8% 3rem;
+            flex-direction: column;
+            justify-content: space-between;
+            transform: translateX(100%);
+            opacity: 0;
+            transition: transform 0.4s var(--ease), opacity 0.4s var(--ease);
+            pointer-events: none;
+            overflow-y: auto;
+        }
+        .mobile-menu.open {
+            transform: translateX(0);
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .mobile-menu ul {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+            flex: 1;
+        }
+        .mobile-menu ul li a {
+            display: block;
+            padding: 1.1rem 0;
+            font-family: 'Syne', sans-serif;
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--ink);
+            border-bottom: 1px solid var(--line);
+            letter-spacing: -0.02em;
+            transition: color 0.2s, padding-left 0.2s;
+        }
+        .mobile-menu ul li a:hover {
+            color: var(--accent, #2563eb);
+            padding-left: 0.5rem;
+        }
+        .mobile-menu-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem;
+            margin-top: 2rem;
+        }
+        .mobile-menu-actions a {
+            display: block;
+            padding: 1rem;
+            text-align: center;
+            font-family: 'Syne', sans-serif;
+            font-size: 1rem;
+            font-weight: 700;
+            border-radius: 6px;
+        }
+        .mob-btn-outline { border: 1.5px solid var(--line); color: var(--ink); }
+        .mob-btn-fill { background: var(--ink); color: var(--white); }
+
+        /* ── Responsive ── */
+        @media (max-width: 768px) {
+            nav, .nav-right .nav-btn { display: none; }
+            .nav-hamburger { display: flex; }
+            .mobile-menu { display: flex; }
+        }
+        /* ══════════════════════════════════════
+           HERO SLIDER
+        ══════════════════════════════════════ */
+        .hero {
+            position: relative;
+            height: 100vh;
+            min-height: 620px;
+            overflow: hidden;
+            background: var(--ink);
+        }
+
+        /* Slides */
+        .hero-slides {
+            position: absolute;
+            inset: 0;
+        }
+        .hero-slide {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            transition: opacity 1.1s var(--ease);
+        }
+        .hero-slide.active { opacity: 1; }
+        .hero-slide::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(
+                110deg,
+                rgba(17,24,39,0.88) 0%,
+                rgba(17,24,39,0.55) 52%,
+                rgba(17,24,39,0.22) 100%
+            );
+            z-index: 1;
+        }
+        .hero-slide img {
+            width: 100%; height: 100%;
+            object-fit: cover;
+            transform: scale(1.06);
+            transition: transform 6.5s var(--ease);
+        }
+        .hero-slide.active img { transform: scale(1); }
+
+        /* Content */
+        .hero-body {
+            position: relative;
+            z-index: 10;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding: 0 8% 8%;
+        }
+
+        .hero-slide-label {
+            font-family: 'Syne', sans-serif;
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.5);
+            margin-bottom: 1.4rem;
+            opacity: 0;
+            transform: translateY(14px);
+            animation: slideUp 0.8s var(--ease-out) 0.3s forwards;
+        }
+        .hero-title {
+            font-family: 'Syne', sans-serif;
+            font-size: clamp(2.8rem, 7.5vw, 6.5rem);
+            font-weight: 800;
+            color: var(--white);
+            line-height: 0.94;
+            letter-spacing: -0.03em;
+            margin-bottom: 2rem;
+            opacity: 0;
+            transform: translateY(22px);
+            animation: slideUp 0.9s var(--ease-out) 0.5s forwards;
+        }
+        .hero-title em {
+            font-style: italic;
+            font-weight: 300;
+        }
+        .hero-desc {
+            font-size: 1rem;
+            color: rgba(255,255,255,0.6);
+            line-height: 1.75;
+            max-width: 480px;
+            margin-bottom: 2.5rem;
+            opacity: 0;
+            transform: translateY(18px);
+            animation: slideUp 0.9s var(--ease-out) 0.7s forwards;
+        }
+        .hero-actions {
+            display: flex;
+            gap: 0.85rem;
+            flex-wrap: wrap;
+            align-items: center;
+            opacity: 0;
+            transform: translateY(16px);
+            animation: slideUp 0.9s var(--ease-out) 0.9s forwards;
+        }
+        .btn-hero-fill {
+            font-family: 'Syne', sans-serif;
+            font-size: 0.88rem;
+            font-weight: 700;
+            padding: 0.9rem 2.1rem;
+            background: var(--white);
+            color: var(--ink);
+            border-radius: 4px;
+            letter-spacing: 0.01em;
+            transition: all 0.28s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .btn-hero-fill:hover { background: #e8e8e8; transform: translateY(-2px); }
+        .btn-hero-border {
+            font-family: 'Syne', sans-serif;
+            font-size: 0.88rem;
+            font-weight: 600;
+            padding: 0.88rem 2.1rem;
+            border: 1.5px solid rgba(255,255,255,0.28);
+            color: rgba(255,255,255,0.82);
+            border-radius: 4px;
+            transition: all 0.28s;
+        }
+        .btn-hero-border:hover { border-color: rgba(255,255,255,0.7); color: var(--white); }
+
+        /* Slider controls */
+        .hero-controls {
+            position: absolute;
+            bottom: 6%;
+            right: 8%;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 1.2rem;
+            opacity: 0;
+            animation: fadeIn 0.8s ease 1.3s forwards;
+        }
+        .hero-dots {
+            display: flex;
+            gap: 0.4rem;
+        }
+        .hero-dot {
+            width: 20px; height: 2px;
+            background: rgba(255,255,255,0.28);
+            border-radius: 2px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .hero-dot.active {
+            width: 40px;
+            background: var(--white);
+        }
+        .hero-arrows {
+            display: flex;
+            gap: 0.4rem;
+        }
+        .hero-arrow {
+            width: 44px; height: 44px;
+            border: 1px solid rgba(255,255,255,0.22);
+            border-radius: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: rgba(255,255,255,0.7);
+            font-size: 0.75rem;
+            transition: all 0.24s;
+            background: transparent;
+        }
+        .hero-arrow:hover { background: rgba(255,255,255,0.12); color: var(--white); border-color: rgba(255,255,255,0.5); }
+
+        /* Slide counter */
+        .hero-counter {
+            position: absolute;
+            top: 50%;
+            right: 8%;
+            transform: translateY(-50%);
+            z-index: 10;
+            writing-mode: vertical-rl;
+            font-family: 'Syne', sans-serif;
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.15em;
+            color: rgba(255,255,255,0.36);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            opacity: 0;
+            animation: fadeIn 0.8s ease 1.5s forwards;
+        }
+        .hero-counter-line {
+            width: 1px;
+            height: 50px;
+            background: rgba(255,255,255,0.18);
+        }
+
+        /* ══════════════════════════════════════
+           TICKER / TRUST BAR
+        ══════════════════════════════════════ */
+        .ticker {
+            background: var(--ink);
+            padding: 1.1rem 0;
+            overflow: hidden;
+            position: relative;
+        }
+        .ticker-track {
+            display: flex;
+            gap: 0;
+            white-space: nowrap;
+            animation: ticker 28s linear infinite;
+        }
+        .ticker-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.6rem;
+            font-family: 'Syne', sans-serif;
+            font-size: 0.74rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.45);
+            padding: 0 3rem;
+        }
+        .ticker-item i { color: rgba(255,255,255,0.22); font-size: 0.55rem; }
+        @keyframes ticker {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+
+        /* ══════════════════════════════════════
+           SECTION COMMONS
+        ══════════════════════════════════════ */
+        .sec { padding: 7rem 8%; }
+        .sec-tag {
+            font-family: 'Syne', sans-serif;
+            font-size: 0.68rem;
+            font-weight: 700;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: var(--ink-40);
+            display: block;
+            margin-bottom: 1.1rem;
+        }
+        .sec-h2 {
+            font-family: 'Syne', sans-serif;
+            font-size: clamp(1.9rem, 3.8vw, 3.2rem);
+            font-weight: 800;
+            color: var(--ink);
+            line-height: 1.06;
+            letter-spacing: -0.03em;
+        }
+        .sec-h2 em { font-style: italic; font-weight: 400; }
+        .sec-sub {
+            font-size: 0.97rem;
+            color: var(--ink-40);
+            line-height: 1.8;
+            margin-top: 0.8rem;
+            max-width: 480px;
+        }
+
+        /* ══════════════════════════════════════
+           HOW IT WORKS — Numbered list layout
+        ══════════════════════════════════════ */
+        #how-it-works {
+            background: var(--off);
+            padding: 7rem 8%;
+        }
+        .works-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6rem;
+            align-items: start;
+            margin-top: 4rem;
+        }
+        .works-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+        }
+        .works-item {
+            display: grid;
+            grid-template-columns: 56px 1fr;
+            gap: 1.5rem;
+            padding: 2rem 0;
+            border-top: 1px solid var(--line);
+            transition: all 0.3s;
+            cursor: default;
+        }
+        .works-item:last-child { border-bottom: 1px solid var(--line); }
+        .works-num {
+            font-family: 'Syne', sans-serif;
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            color: var(--ink-40);
+            padding-top: 0.2rem;
+        }
+        .works-content h3 {
+            font-family: 'Syne', sans-serif;
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--ink);
+            margin-bottom: 0.5rem;
+        }
+        .works-content p { font-size: 0.88rem; color: var(--ink-40); line-height: 1.75; }
+        .works-visual {
+            position: sticky;
+            top: 100px;
+            border-radius: 6px;
+            overflow: hidden;
+            aspect-ratio: 4/5;
+        }
+        .works-visual img {
+            width: 100%; height: 100%;
+            object-fit: cover;
+        }
+
+        /* ══════════════════════════════════════
+           FLEET — Editorial grid
+        ══════════════════════════════════════ */
+        #fleet { background: var(--white); padding: 7rem 8%; }
+        .fleet-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 3rem;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+        }
+        .fleet-filters { display: flex; gap: 0.3rem; flex-wrap: wrap; }
+        .filter-btn {
+            font-family: 'Syne', sans-serif;
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            padding: 0.48rem 1.1rem;
+            border: 1.5px solid var(--line);
+            border-radius: 3px;
+            background: transparent;
+            color: var(--ink-40);
+            cursor: pointer;
+            transition: all 0.22s;
+        }
+        .filter-btn.active, .filter-btn:hover {
+            background: var(--ink);
+            color: var(--white);
+            border-color: var(--ink);
+        }
+
+        /* Masonry-like grid */
+        .fleet-grid {
+            columns: 3;
+            column-gap: 1rem;
+        }
+        .car-card {
+            break-inside: avoid;
+            margin-bottom: 1rem;
+            border-radius: 6px;
+            overflow: hidden;
+            border: 1px solid var(--line);
+            background: var(--white);
+            transition: all 0.38s var(--ease);
+        }
+        .car-card:nth-child(3n+2) { margin-top: 2.5rem; }
+        .car-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 24px 60px rgba(17,24,39,0.1);
+            border-color: transparent;
+        }
+        .car-img {
+            position: relative;
+            overflow: hidden;
+        }
+        .car-img img {
+            width: 100%;
+            aspect-ratio: 16/10;
+            object-fit: cover;
+            transition: transform 0.6s var(--ease);
+        }
+        .car-card:hover .car-img img { transform: scale(1.05); }
+        .car-badge {
+            position: absolute;
+            top: 10px; left: 10px;
+            font-family: 'Syne', sans-serif;
+            font-size: 0.62rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.28rem 0.65rem;
+            border-radius: 2px;
+        }
+        .badge-available { background: rgba(17,24,39,0.85); color: rgba(255,255,255,0.9); }
+        .badge-rented    { background: rgba(17,24,39,0.6); color: rgba(255,255,255,0.7); }
+        .badge-service   { background: rgba(17,24,39,0.4); color: rgba(255,255,255,0.6); }
+        .car-body { padding: 1.2rem 1.4rem 1.5rem; }
+        .car-type {
+            font-family: 'Syne', sans-serif;
+            font-size: 0.64rem;
+            font-weight: 700;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            color: var(--ink-40);
+            margin-bottom: 0.35rem;
+        }
+        .car-name {
+            font-family: 'Syne', sans-serif;
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--ink);
+            margin-bottom: 0.8rem;
+            letter-spacing: -0.01em;
+        }
+        .car-specs {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.1rem;
+        }
+        .spec {
+            font-size: 0.78rem;
+            color: var(--ink-40);
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+        .spec i { font-size: 0.7rem; }
+        .car-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-top: 1rem;
+            border-top: 1px solid var(--line);
+        }
+        .car-price strong {
+            font-family: 'Syne', sans-serif;
+            font-size: 1.05rem;
+            font-weight: 800;
+            color: var(--ink);
+        }
+        .car-price span {
+            font-size: 0.76rem;
+            color: var(--ink-40);
+            margin-left: 0.15rem;
+        }
+        .btn-book {
+            font-family: 'Syne', sans-serif;
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            padding: 0.52rem 1.15rem;
+            background: var(--ink);
+            color: var(--white);
+            border-radius: 3px;
+            transition: all 0.22s;
+        }
+        .btn-book:hover { opacity: 0.8; }
+        .fleet-cta {
+            display: flex;
+            justify-content: center;
+            margin-top: 3.5rem;
+        }
+        .btn-outline-ink {
+            font-family: 'Syne', sans-serif;
+            font-size: 0.82rem;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            padding: 0.9rem 2.2rem;
+            border: 1.5px solid var(--ink);
+            color: var(--ink);
+            border-radius: 4px;
+            transition: all 0.26s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.55rem;
+        }
+        .btn-outline-ink:hover { background: var(--ink); color: var(--white); }
+
+
+        /* ══════════════════════════════════════
+         WHY US — Dark section with app mockup
+        ══════════════════════════════════════ */
+        #why-us {
+            background: var(--ink);
+            padding: 7rem 8%;
+        }
+        #why-us .sec-tag { color: rgba(255,255,255,0.3); }
+        #why-us .sec-h2 { color: var(--white); }
+        #why-us .sec-sub { color: rgba(255,255,255,0.38); }
+
+        .why-layout {
+            display: grid;
+            grid-template-columns: 1fr 1.4fr;
+            gap: 5rem;
+            align-items: center;
+        }
+
+        /* — Mockup kiri — */
+        .why-mockup {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .why-mockup-frame {
+            position: relative;
+            width: 100%;
+            max-width: 300px;
+            aspect-ratio: 9/19;
+            border-radius: 36px;
+            overflow: hidden;
+            border: 1px solid rgba(169, 169, 169, 0.99);        /* lebih terang dari 0.1 */
+            box-shadow:
+                0 0 0 8px rgba(88, 87, 87, 0.41),             /* ring luar lebih terang */
+                0 40px 80px rgba(177, 176, 176, 0.5);
+            background: rgba(24, 12, 12, 0.06);               /* tambah ini biar frame keliatan walau gambar belum penuh */
+        }
+        .why-mockup-frame img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        /* — Kanan: teks + grid — */
+        .why-right {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+        }
+        .why-right .sec-sub {
+            margin-bottom: 2.5rem;
+        }
+
+        .why-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1px;
+            background: rgba(255,255,255,0.07);
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        .why-card {
+            padding: 2rem 1.8rem;
+            background: var(--ink);
+            transition: background 0.3s;
+        }
+        .why-card:hover { background: rgba(255,255,255,0.04); }
+        .why-icon {
+            width: 38px; height: 38px;
+            border: 1px solid rgba(255,255,255,0.14);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1.2rem;
+        }
+        .why-icon i { color: rgba(255,255,255,0.5); font-size: 0.95rem; }
+        .why-card h3 {
+            font-family: 'Syne', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: rgba(255,255,255,0.85);
+            margin-bottom: 0.45rem;
+        }
+        .why-card p { font-size: 0.82rem; color: rgba(255,255,255,0.3); line-height: 1.8; }
+                /* ══════════════════════════════════════
+           STATS — Horizontal bold numbers
+        ══════════════════════════════════════ */
+        #stats {
+            background: var(--off);
+            padding: 6rem 8%;
+            border-top: 1px solid var(--line);
+            border-bottom: 1px solid var(--line);
+        }
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0;
+        }
+        .stat-item {
+            padding: 2.5rem 2rem;
+            border-right: 1px solid var(--line);
+        }
+        .stat-item:first-child { padding-left: 0; }
+        .stat-item:last-child { border-right: none; }
+        .stat-num {
+            
+            font-size: clamp(2.4rem, 4.5vw, 4rem);
+            font-weight: 800;
+            color: var(--ink);
+            line-height: 1;
+            letter-spacing: -0.04em;
+        }
+        .stat-label {
+            font-size: 0.82rem;
+            color: var(--ink-40);
+            margin-top: 0.6rem;
+            letter-spacing: 0.01em;
+        }
+
+        /* ══════════════════════════════════════
+           HISTORY — Horizontal scroll timeline
+        ══════════════════════════════════════ */
+        #history { background: var(--white); padding: 7rem 0 7rem 8%; }
+        #history .head-wrap { padding-right: 8%; margin-bottom: 4rem; }
+        .tl-scroll {
+            display: flex;
+            gap: 0;
+            overflow-x: auto;
+            padding-right: 8%;
+            scroll-snap-type: x mandatory;
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .tl-scroll::-webkit-scrollbar { display: none; }
+        .tl-entry {
+            flex: 0 0 320px;
+            scroll-snap-align: start;
+            padding: 0 3rem 0 0;
+            position: relative;
+        }
+        .tl-entry::before {
+            content: '';
+            position: absolute;
+            top: 1.5rem;
+            left: 0; right: 3rem;
+            height: 1px;
+            background: var(--line);
+        }
+        .tl-dot {
+            width: 12px; height: 12px;
+            border-radius: 50%;
+            background: var(--ink);
+            margin-bottom: 2rem;
+            flex-shrink: 0;
+            position: relative;
+            box-shadow: 0 0 0 4px var(--white), 0 0 0 5px var(--line);
+        }
+        .tl-year-num {
+            font-family: 'Syne', sans-serif;
+            font-size: 2.4rem;
+            font-weight: 800;
+            color: var(--ink);
+            letter-spacing: -0.04em;
+            line-height: 1;
+            margin-bottom: 0.6rem;
+        }
+        .tl-content h3 {
+            font-family: 'Syne', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--ink);
+            margin-bottom: 0.55rem;
+        }
+        .tl-content p { font-size: 0.83rem; color: var(--ink-40); line-height: 1.78; }
+
+        /* ══════════════════════════════════════
+           TESTIMONIALS — Overlapping cards
+        ══════════════════════════════════════ */
+        #testimonials {
+            background: var(--off);
+            padding: 7rem 8%;
+        }
+        .testi-layout {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 5rem;
+            margin-top: 4rem;
+            align-items: start;
+        }
+        .testi-left { position: sticky; top: 100px; }
+        .testi-count {
+            font-family: 'Syne', sans-serif;
+            font-size: 5rem;
+            font-weight: 800;
+            color: var(--ink);
+            letter-spacing: -0.04em;
+            line-height: 0.9;
+            margin-bottom: 0.5rem;
+        }
+        .testi-count-label { font-size: 0.85rem; color: var(--ink-40); }
+        .testi-avg {
+            margin-top: 2.5rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--line);
+        }
+        .testi-avg-stars {
+            font-size: 1.1rem;
+            color: var(--ink);
+            letter-spacing: 0.05em;
+            margin-bottom: 0.3rem;
+        }
+        .testi-avg-val {
+            font-family: 'Syne', sans-serif;
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--ink);
+        }
+        .testi-avg-sub { font-size: 0.8rem; color: var(--ink-40); margin-top: 0.15rem; }
+
+        /* Ganti jadi: */
+        .testi-grid {
+            height: 520px;
+            overflow: hidden;
+            position: relative;
+            mask-image: linear-gradient(
+                to bottom,
+                transparent 0%,
+                black 12%,
+                black 88%,
+                transparent 100%
+            );
+            -webkit-mask-image: linear-gradient(
+                to bottom,
+                transparent 0%,
+                black 12%,
+                black 88%,
+                transparent 100%
+            );
+        }
+
+        .testi-track {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            animation: scrollTestimonials 20s linear infinite;
+        }
+
+        .testi-track:hover,
+        .testi-grid:hover .testi-track {
+            animation-play-state: paused;
+        }
+
+        @keyframes scrollTestimonials {
+            0%   { transform: translateY(0); }
+            100% { transform: translateY(-50%); }
+        }
+        .testi-card {
+            background: var(--white);
+            border-radius: 6px;
+            padding: 2rem;
+            border: 1px solid var(--line);
+            transition: all 0.3s var(--ease);
+        }
+        .testi-card:hover {
+            transform: translateX(6px);
+            box-shadow: 0 12px 40px rgba(17,24,39,0.06);
+        }
+        .testi-stars { font-size: 0.75rem; color: var(--ink); letter-spacing: 0.08em; margin-bottom: 0.9rem; }
+        .testi-text {
+            font-size: 0.92rem;
+            color: var(--ink-80);
+            line-height: 1.8;
+            margin-bottom: 1.4rem;
+            font-style: italic;
+        }
+        .testi-author { display: flex; align-items: center; gap: 0.75rem; }
+        .testi-avatar {
+            width: 38px; height: 38px;
+            border-radius: 50%;
+            background: var(--ink);
+            color: var(--white);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Syne', sans-serif;
+            font-size: 0.72rem;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+        .testi-name {
+            font-family: 'Syne', sans-serif;
+            font-size: 0.84rem;
+            font-weight: 700;
+            color: var(--ink);
+        }
+        .testi-role { font-size: 0.74rem; color: var(--ink-40); margin-top: 0.1rem; }
+
+        /* ══════════════════════════════════════
+           CTA — Full bleed split
+        ══════════════════════════════════════ */
+        .cta-section {
+            background: var(--ink);
+            padding: 0;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            min-height: 480px;
+        }
+        .cta-left {
+            padding: 6rem 5rem 6rem 8%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .cta-left h2 {
+            font-family: 'Syne', sans-serif;
+            font-size: clamp(1.8rem, 3.2vw, 2.8rem);
+            font-weight: 800;
+            color: var(--white);
+            line-height: 1.08;
+            letter-spacing: -0.03em;
+            margin-bottom: 1rem;
+        }
+        .cta-left p {
+            font-size: 0.95rem;
+            color: rgba(255,255,255,0.4);
+            line-height: 1.75;
+            max-width: 380px;
+            margin-bottom: 2.4rem;
+        }
+        .cta-btns { display: flex; flex-direction: column; gap: 0.6rem; max-width: 260px; }
+        .btn-cta-fill {
+            font-family: 'Syne', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 700;
+            padding: 1rem 1.8rem;
+            background: var(--white);
+            color: var(--ink);
+            border-radius: 4px;
+            text-align: center;
+            transition: all 0.24s;
+        }
+        .btn-cta-fill:hover { opacity: 0.88; }
+        .btn-cta-ghost {
+            font-family: 'Syne', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 600;
+            padding: 1rem 1.8rem;
+            border: 1px solid rgba(255,255,255,0.16);
+            color: rgba(255,255,255,0.6);
+            border-radius: 4px;
+            text-align: center;
+            transition: all 0.24s;
+        }
+        .btn-cta-ghost:hover { border-color: rgba(255,255,255,0.4); color: var(--white); }
+        .cta-right {
+            position: relative;
+            overflow: hidden;
+        }
+        .cta-right img {
+            width: 100%; height: 100%;
+            object-fit: cover;
+            filter: grayscale(60%) brightness(0.55);
+        }
+        .cta-right-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to right, var(--ink), transparent);
+        }
+
+        /* ══════════════════════════════════════
+           FOOTER
+        ══════════════════════════════════════ */
+        footer {
+            background: var(--white);
+            border-top: 1px solid var(--line);
+            padding: 4rem 8% 2.5rem;
+        }
+        .footer-top {
+            display: grid;
+            grid-template-columns: 2fr repeat(3, 1fr);
+            gap: 4rem;
+            padding-bottom: 3rem;
+            margin-bottom: 2rem;
+            border-bottom: 1px solid var(--line);
+        }
+        .footer-logo {
+            font-family: 'Syne', sans-serif;
+            font-size: 1.2rem;
+            font-weight: 800;
+            color: var(--ink);
+            letter-spacing: -0.03em;
+            display: block;
+            margin-bottom: 1rem;
+        }
+        .footer-logo sup { font-size: 0.42em; letter-spacing: 0.12em; font-weight: 600; opacity: 0.45; }
+        .footer-brand p { font-size: 0.83rem; color: var(--ink-40); line-height: 1.82; max-width: 260px; }
+        .footer-socials { display: flex; gap: 0.5rem; margin-top: 1.4rem; }
+        .social-btn {
+            width: 32px; height: 32px;
+            border: 1px solid var(--line);
+            border-radius: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--ink-40);
+            font-size: 0.78rem;
+            transition: all 0.22s;
+        }
+        .social-btn:hover { border-color: var(--ink); color: var(--ink); }
+        .footer-col h4 {
+            font-family: 'Syne', sans-serif;
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: var(--ink);
+            margin-bottom: 1.2rem;
+        }
+        .footer-col ul { list-style: none; display: flex; flex-direction: column; gap: 0.65rem; }
+        .footer-col ul li a { font-size: 0.83rem; color: var(--ink-40); transition: color 0.2s; }
+        .footer-col ul li a:hover { color: var(--ink); }
+        .footer-bottom {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            font-size: 0.77rem;
+            color: var(--ink-40);
+        }
+
+        /* ══════════════════════════════════════
+           MOBILE SLIDER (full-width)
+        ══════════════════════════════════════ */
+        .mobile-slider-section { display: none; }
+
+        /* ══════════════════════════════════════
+           ANIMATIONS
+        ══════════════════════════════════════ */
+        @keyframes slideUp {
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeIn {
+            to { opacity: 1; }
+        }
+
+        .reveal {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.75s var(--ease-out), transform 0.75s var(--ease-out);
+        }
+        .reveal.visible { opacity: 1; transform: none; }
+        .reveal-delay-1 { transition-delay: 0.1s; }
+        .reveal-delay-2 { transition-delay: 0.2s; }
+        .reveal-delay-3 { transition-delay: 0.32s; }
+
+        /* ══════════════════════════════════════
+           RESPONSIVE
+        ══════════════════════════════════════ */
+        @media (max-width: 1024px) {
+            .fleet-grid { columns: 2; }
+            .why-layout {
+                grid-template-columns: 1fr;
+                gap: 3rem;
+            }
+            .why-mockup {
+                /*display: none;  sembunyikan mockup di mobile, grid tetap tampil */
+            }
+            .works-layout { grid-template-columns: 1fr; gap: 3rem; }
+            .works-visual { display: none; }
+            .testi-layout { grid-template-columns: 1fr; }
+            .testi-left { position: static; }
+            .cta-section { grid-template-columns: 1fr; }
+            .cta-right { height: 260px; }
+            .footer-top { grid-template-columns: 1fr 1fr; gap: 2.5rem; }
+            .stats-row { grid-template-columns: repeat(2, 1fr); }
+            .stat-item { border-bottom: 1px solid var(--line); }
+        }
+
+        @media (max-width: 768px) {
+            nav { display: none; }
+            .nav-right .nav-btn { display: none; }
+            .nav-hamburger { display: flex; }
+            .mobile-menu { display: block; }
+
+            .hero-counter { display: none; }
+            .hero-body { padding: 0 6% 10%; }
+            .hero-controls { right: 6%; bottom: 5%; }
+
+            /* Mobile Hero Slider section override */
+            .hero { display: none; }
+            .ticker { display: none; }
+            .mobile-slider-section { display: block; }
+
+            .fleet-grid { columns: 1; }
+            .car-card:nth-child(3n+2) { margin-top: 0; }
+
+            .sec { padding: 5rem 6%; }
+            #how-it-works { padding: 5rem 6%; }
+            #fleet { padding: 5rem 6%; }
+            #why-us { padding: 5rem 6%; }
+            #stats { padding: 4rem 6%; }
+            #history { padding: 5rem 0 5rem 6%; }
+            #testimonials { padding: 5rem 6%; }
+            .cta-left { padding: 4rem 6%; }
+
+            .works-layout { margin-top: 2.5rem; }
+            .stats-row { grid-template-columns: repeat(2, 1fr); }
+            .stat-item:first-child { padding-left: 2rem; }
+            .footer-top { grid-template-columns: 1fr; gap: 2rem; }
+            .footer-bottom { flex-direction: column; align-items: flex-start; }
+            .why-grid { grid-template-columns: 1fr; }
+        }
+
+        @media (max-width: 480px) {
+            .stats-row { 
+                grid-template-columns: 1fr 1fr;
+                display: block;
+             }
+            .hero-title { font-size: 2.6rem; }
+            
+        }
+
+        /* ══════════════════════════════════════
+           MOBILE HERO SLIDER (full-width)
+        ══════════════════════════════════════ */
+        .mobile-slider-section {
+            position: relative;
+            background: var(--ink);
+        }
+        .mob-slider {
+            position: relative;
+            height: 100svh;
+            min-height: 600px;
+            overflow: hidden;
+        }
+        .mob-slide {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            transition: opacity 1s var(--ease);
+        }
+        .mob-slide.active { opacity: 1; }
+        .mob-slide::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(
+                170deg,
+                rgba(17,24,39,0.2) 0%,
+                rgba(17,24,39,0.75) 60%,
+                rgba(17,24,39,0.95) 100%
+            );
+            z-index: 1;
+        }
+        .mob-slide img {
+            width: 100%; height: 100%;
+            object-fit: cover;
+            transform: scale(1.06);
+            transition: transform 7s var(--ease);
+        }
+        .mob-slide.active img { transform: scale(1); }
+        .mob-slide-body {
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            z-index: 10;
+            padding: 0 7% 9%;
+        }
+        .mob-slide-tag {
+            font-family: 'Syne', sans-serif;
+            font-size: 0.64rem;
+            font-weight: 700;
+            letter-spacing: 0.22em;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.45);
+            margin-bottom: 1rem;
+        }
+        .mob-slide-title {
+            font-family: 'Syne', sans-serif;
+            font-size: 2.6rem;
+            font-weight: 800;
+            color: var(--white);
+            line-height: 0.95;
+            letter-spacing: -0.03em;
+            margin-bottom: 1.2rem;
+        }
+        .mob-slide-title em { font-style: italic; font-weight: 300; }
+        .mob-slide-desc {
+            font-size: 0.88rem;
+            color: rgba(255,255,255,0.55);
+            line-height: 1.75;
+            margin-bottom: 2rem;
+        }
+        .mob-slide-btns {
+            display: flex;
+            flex-direction: column;
+            gap: 0.65rem;
+        }
+        .mob-btn-primary {
+            font-family: 'Syne', sans-serif;
+            font-size: 0.88rem;
+            font-weight: 700;
+            padding: 1.05rem;
+            background: var(--white);
+            color: var(--ink);
+            border-radius: 4px;
+            text-align: center;
+            transition: opacity 0.22s;
+        }
+        .mob-btn-secondary {
+            font-family: 'Syne', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 600;
+            padding: 1.05rem;
+            border: 1px solid rgba(255,255,255,0.2);
+            color: rgba(255,255,255,0.72);
+            border-radius: 4px;
+            text-align: center;
+        }
+        /* Dots at top of mobile slider */
+        .mob-dots {
+            position: absolute;
+            top: 88px;
+            left: 7%;
+            z-index: 10;
+            display: flex;
+            gap: 0.35rem;
+        }
+        .mob-dot {
+            width: 16px; height: 2px;
+            background: rgba(255,255,255,0.25);
+            border-radius: 2px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .mob-dot.active { width: 32px; background: var(--white); }
+        /* Swipe indicator */
+        .mob-swipe-hint {
+            position: absolute;
+            bottom: 7.5%;
+            right: 7%;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            gap: 0.45rem;
+            font-family: 'Syne', sans-serif;
+            font-size: 0.62rem;
+            font-weight: 700;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.3);
+        }
+        .mob-swipe-hint i { font-size: 0.9rem; }
+
+        /* Mobile ticker */
+        .mob-ticker {
+            background: var(--ink);
+            padding: 0.85rem 0;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+
+    {{-- ════════ NAVBAR ════════ --}}
+    {{-- Blob di LUAR navbar, layer paling bawah --}}
+    <div class="nav-logo-blob"></div>
+    
+    {{-- Logo img juga di luar, tapi z-index di atas blob dan navbar --}}
+    <a href="/" class="nav-logo-link" aria-label="Bening Rental">
+        <img src="{{ asset('image/logo.webp') }}" alt="Bening Rental Logo">
+    </a>
+    
+    {{-- ════════ NAVBAR ════════ --}}
+    <header id="navbar" class="hero-over">
+    
+        {{-- Spacer kiri biar nav tetap center --}}
+        <div class="nav-logo-spacer"></div>
+    
+        <nav>
+            <ul>
+                <li><a href="#how-it-works">Cara Kerja</a></li>
+                <li><a href="#fleet">Armada</a></li>
+                <li><a href="#why-us">Keunggulan</a></li>
+                <li><a href="#history">About</a></li>
+            </ul>
+        </nav>
+    
+        <div class="nav-right">
+            @guest
+                <a href="{{ route('login') }}" class="nav-btn nav-btn-ghost">Masuk</a>
+                <a href="{{ route('register') }}" class="nav-btn nav-btn-solid">Daftar Gratis</a>
+            @else
+                <a href="{{ route('dashboard') }}" class="nav-btn nav-btn-solid">Dashboard</a>
+            @endguest
+            <div class="nav-hamburger" id="hamburger" aria-label="Menu">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+    </header>
+    
+    {{-- Mobile menu — full screen --}}
+    <div class="mobile-menu" id="mobileMenu">
+        <ul>
+            <li><a href="#how-it-works">Cara Kerja</a></li>
+            <li><a href="#fleet">Armada</a></li>
+            <li><a href="#why-us">Keunggulan</a></li>
+            <li><a href="#history">About</a></li>
+        </ul>
+        <div class="mobile-menu-actions">
+            @guest
+                <a href="{{ route('login') }}" class="mob-btn-outline">Masuk</a>
+                <a href="{{ route('register') }}" class="mob-btn-fill">Daftar Gratis</a>
+            @else
+                <a href="{{ route('dashboard') }}" class="mob-btn-fill">Dashboard</a>
+            @endguest
+        </div>
+    </div>
+
+    {{-- ════════ HERO SLIDER (Desktop) ════════ --}}
+    <section class="hero" id="heroDesktop">
+        <div class="hero-slides" id="heroSlides">
+            @foreach($heroSlides as $i => $url)
+            <div class="hero-slide {{ $i === 0 ? 'active' : '' }}">
+                <img src="{{ $url }}" alt="Slide {{ $i + 1 }}">
+            </div>
+            @endforeach
+        </div>
+
+        <div class="hero-body">
+            <div class="hero-slide-label">Rental Mobil Premium — Indonesia</div>
+            <p class="hero-desc">Armada premium, pengemudi terverifikasi, dan layanan tanpa batas — untuk bisnis, leisure, dan semua kebutuhan Anda.</p>
+            <div class="hero-actions">
+                @guest
+                    <a href="{{ route('register') }}" class="btn-hero-fill">
+                        Mulai Pesan <i class="fas fa-arrow-right"></i>
+                    </a>
+                    <a href="#fleet" class="btn-hero-border">Lihat Armada</a>
+                @else
+                    <a href="{{ route('vehicles.index') }}" class="btn-hero-fill">
+                        Pesan Sekarang <i class="fas fa-arrow-right"></i>
+                    </a>
+                    <a href="{{ route('dashboard') }}" class="btn-hero-border">Dashboard</a>
+                @endguest
+            </div>
+        </div>
+
+        <div class="hero-controls">
+            <div class="hero-dots" id="heroDots">
+                @foreach($heroSlides as $i => $url)
+                <div class="hero-dot {{ $i === 0 ? 'active' : '' }}" data-idx="{{ $i }}"></div>
+                @endforeach
+            </div>
+            <div class="hero-arrows">
+                <button class="hero-arrow" id="heroPrev" aria-label="Previous"><i class="fas fa-arrow-left"></i></button>
+                <button class="hero-arrow" id="heroNext" aria-label="Next"><i class="fas fa-arrow-right"></i></button>
+            </div>
+        </div>
+
+        <div class="hero-counter">
+            <span id="slideCounter">01 / {{ str_pad(count($heroSlides), 2, '0', STR_PAD_LEFT) }}</span>
+            <div class="hero-counter-line"></div>
+        </div>
+    </section>
+
+    {{-- ════════ TICKER ════════ --}}
+    <div class="ticker">
+        <div class="ticker-track" aria-hidden="true">
+            @php $items = ['Pengemudi Terverifikasi','Layanan 24/7','Coverage Nasional','Pembayaran Aman','Support Responsif','Asuransi Perjalanan','Armada Prima','GPS Real-time']; @endphp
+            @foreach(array_merge($items,$items) as $item)
+                <span class="ticker-item"><i class="fas fa-circle"></i>{{ $item }}</span>
+            @endforeach
+        </div>
+    </div>
+
+    {{-- ════════ MOBILE SLIDER ════════ --}}
+    {{-- Ganti seluruh blok mobile-slider-section dengan ini --}}
+    
+    <div class="mobile-slider-section" id="mobileHero">
+        <div class="mob-slider" id="mobSlides">
+    
+            {{-- Dots — pakai id="mobDots" agar JS bisa temukan --}}
+            <div class="mob-dots" id="mobDots">
+                @foreach($heroSlides as $i => $url)
+                    <div class="mob-dot {{ $i === 0 ? 'active' : '' }}" data-idx="{{ $i }}"></div>
+                @endforeach
+            </div>
+    
+            {{-- Slides — hanya gambar, semua dari $heroSlides --}}
+            @foreach($heroSlides as $i => $url)
+                <div class="mob-slide {{ $i === 0 ? 'active' : '' }}">
+                    <img src="{{ $url }}" alt="Slide {{ $i + 1 }}">
+                </div>
+            @endforeach
+    
+            {{-- Konten teks — diletakkan di luar slide, tetap absolute di atas semua slide --}}
+            <div class="mob-slide-body">
+                <div class="mob-slide-tag">Rental Premium — Indonesia</div>
+                <h1 class="mob-slide-title">Perjalanan<br><em>Tanpa</em><br>Kompromi.</h1>
+                <p class="mob-slide-desc">Armada premium & pengemudi profesional untuk setiap perjalanan Anda.</p>
+                <div class="mob-slide-btns">
+                    @guest
+                        <a href="{{ route('register') }}" class="mob-btn-primary">Mulai Pesan</a>
+                        <a href="#fleet" class="mob-btn-secondary">Lihat Armada</a>
+                    @else
+                        <a href="{{ route('vehicles.index') }}" class="mob-btn-primary">Pesan Sekarang</a>
+                        <a href="{{ route('dashboard') }}" class="mob-btn-secondary">Dashboard</a>
+                    @endguest
+                </div>
+            </div>
+    
+            <div class="mob-swipe-hint"><i class="fas fa-arrow-right"></i> Geser</div>
+        </div>
+    
+        {{-- Mobile ticker --}}
+        <div class="mob-ticker">
+            <div class="ticker-track" aria-hidden="true">
+                @php $items = ['Pengemudi Terverifikasi','Layanan 24/7','Coverage Nasional','Pembayaran Aman','Support Responsif','Asuransi Perjalanan','Armada Prima','GPS Real-time']; @endphp
+                @foreach(array_merge($items, $items) as $item)
+                    <span class="ticker-item"><i class="fas fa-circle"></i>{{ $item }}</span>
+                @endforeach
+            </div>
+        </div>
+    </div>
+
+    {{-- ════════ HOW IT WORKS ════════ --}}
+    <section id="how-it-works">
+        <div class="works-layout">
+            <div>
+               
+                <h2 class="sec-h2 reveal reveal-delay-1">Simple</h2>
+                <p class="sec-sub reveal reveal-delay-2">Tidak perlu antri atau ribet. Daftar, pilih, bayar, dan pengemudi kami tiba tepat waktu.</p>
+                <div class="works-list" style="margin-top:2.5rem;">
+                    <div class="works-item reveal">
+                        <div class="works-num">01</div>
+                        <div class="works-content">
+                            <h3>Buat Akun</h3>
+                            <p>Daftar gratis dalam hitungan detik. Lengkapi profil untuk pengalaman yang lebih personal.</p>
                         </div>
-                        @if (Route::has('login'))
-                            <livewire:welcome.navigation />
+                    </div>
+                    <div class="works-item reveal reveal-delay-1">
+                        <div class="works-num">02</div>
+                        <div class="works-content">
+                            <h3>Pilih Kendaraan</h3>
+                            <p>Jelajahi armada lengkap kami. Saring berdasarkan tipe, kapasitas, atau harga.</p>
+                        </div>
+                    </div>
+                    <div class="works-item reveal reveal-delay-2">
+                        <div class="works-num">03</div>
+                        <div class="works-content">
+                            <h3>Bayar & Konfirmasi</h3>
+                            <p>Pembayaran aman via Midtrans. Admin konfirmasi, pengemudi siap menjemput.</p>
+                        </div>
+                    </div>
+                    <div class="works-item reveal reveal-delay-3">
+                        <div class="works-num">04</div>
+                        <div class="works-content">
+                            <h3>Nikmati & Beri Ulasan</h3>
+                            <p>Selesaikan perjalanan dan bagikan pengalaman Anda untuk membantu pengemudi kami.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="works-visual reveal">
+                <img src="{{ $landingImages['how_it_works_image'] }}" alt="Pengemudi Profesional">
+            </div>
+        </div>
+    </section>
+
+    {{-- ════════ FLEET ════════ --}}
+    <section id="fleet">
+        <div class="fleet-head">
+            <div>
+                <h2 class="sec-h2 reveal reveal-delay-1">Best Service</h2>
+            </div>
+            <div class="fleet-filters reveal">
+                <button class="filter-btn active" data-filter="all">Semua</button>
+                <button class="filter-btn" data-filter="sedan">Sedan</button>
+                <button class="filter-btn" data-filter="suv">SUV</button>
+                <button class="filter-btn" data-filter="mpv">MPV</button>
+                <button class="filter-btn" data-filter="van">Van</button>
+            </div>
+        </div>
+
+        <div class="fleet-grid" id="fleet-grid">
+            @forelse($vehicles as $vehicle)
+            <div class="car-card reveal" data-type="{{ strtolower($vehicle->type ?? 'sedan') }}">
+                <div class="car-img">
+                    @if(!empty($vehicle->images) && count($vehicle->images) > 0)
+                        <img src="{{ $vehicle->images[0] }}" alt="{{ $vehicle->name }}" loading="lazy">
+                    @else
+                        <img src="https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&q=80&w=600" alt="{{ $vehicle->name }}" loading="lazy">
+                    @endif
+                    <span class="car-badge badge-{{ $vehicle->status ?? 'available' }}">
+                        {{ $vehicle->status === 'available' ? 'Tersedia' : ($vehicle->status === 'rented' ? 'Disewa' : 'Servis') }}
+                    </span>
+                </div>
+                <div class="car-body">
+                    <div class="car-type">{{ $vehicle->type ?? 'Sedan' }}</div>
+                    <div class="car-name">{{ $vehicle->brand }} {{ $vehicle->model }} {{ $vehicle->year }}</div>
+                    <div class="car-specs">
+                        <div class="spec"><i class="fas fa-users"></i> {{ $vehicle->capacity ?? 4 }} Kursi</div>
+                        <div class="spec"><i class="fas fa-star"></i> {{ number_format($vehicle->rating_avg ?? 4.8, 1) }}</div>
+                        @if(!empty($vehicle->features))
+                            <div class="spec"><i class="fas fa-snowflake"></i> AC</div>
                         @endif
-                    </header>
+                    </div>
+                    <div class="car-footer">
+                        <div class="car-price">
+                            <strong>Rp {{ number_format($vehicle->price_per_day, 0, ',', '.') }}</strong>
+                            <span>/ hari</span>
+                        </div>
+                        @auth
+                            @if(($vehicle->status ?? 'available') === 'available')
+                                <a href="{{ route('vehicles.show', $vehicle->_id) }}" class="btn-book">Pesan</a>
+                            @else
+                                <span style="font-size:0.75rem;color:var(--ink-40);">Tidak Tersedia</span>
+                            @endif
+                        @else
+                            <a href="{{ route('login') }}" class="btn-book">Pesan</a>
+                        @endauth
+                    </div>
+                </div>
+            </div>
+            @empty
+            @php
+            $showcases = [
+                ['brand'=>'Toyota','model'=>'Alphard','type'=>'MPV','price'=>1800000,'cap'=>7,'rating'=>4.9,'status'=>'available',
+                 'img'=>'https://images.unsplash.com/photo-1621007947382-bb3c3994e3fb?auto=format&fit=crop&q=80&w=600'],
+                ['brand'=>'BMW','model'=>'520i','type'=>'Sedan','price'=>2500000,'cap'=>5,'rating'=>4.8,'status'=>'available',
+                 'img'=>'https://images.unsplash.com/photo-1555215695-3004980ad54e?auto=format&fit=crop&q=80&w=600'],
+                ['brand'=>'Toyota','model'=>'Fortuner','type'=>'SUV','price'=>1500000,'cap'=>7,'rating'=>4.7,'status'=>'available',
+                 'img'=>'https://images.unsplash.com/photo-1606016159991-dfe4f2746ad5?auto=format&fit=crop&q=80&w=600'],
+                ['brand'=>'Honda','model'=>'Odyssey','type'=>'MPV','price'=>1200000,'cap'=>8,'rating'=>4.8,'status'=>'rented',
+                 'img'=>'https://images.unsplash.com/photo-1594502184342-2e12f877aa73?auto=format&fit=crop&q=80&w=600'],
+                ['brand'=>'Mercedes','model'=>'E350','type'=>'Sedan','price'=>3200000,'cap'=>5,'rating'=>5.0,'status'=>'available',
+                 'img'=>'https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?auto=format&fit=crop&q=80&w=600'],
+                ['brand'=>'Mitsubishi','model'=>'Pajero Sport','type'=>'SUV','price'=>1400000,'cap'=>7,'rating'=>4.6,'status'=>'available',
+                 'img'=>'https://images.unsplash.com/photo-1519641471654-76ce0107ad1b?auto=format&fit=crop&q=80&w=600'],
+            ];
+            @endphp
+            @foreach($showcases as $car)
+            <div class="car-card reveal" data-type="{{ strtolower($car['type']) }}">
+                <div class="car-img">
+                    <img src="{{ $car['img'] }}" alt="{{ $car['brand'] }} {{ $car['model'] }}" loading="lazy">
+                    <span class="car-badge badge-{{ $car['status'] }}">
+                        {{ $car['status'] === 'available' ? 'Tersedia' : 'Disewa' }}
+                    </span>
+                </div>
+                <div class="car-body">
+                    <div class="car-type">{{ $car['type'] }}</div>
+                    <div class="car-name">{{ $car['brand'] }} {{ $car['model'] }}</div>
+                    <div class="car-specs">
+                        <div class="spec"><i class="fas fa-users"></i> {{ $car['cap'] }} Kursi</div>
+                        <div class="spec"><i class="fas fa-star"></i> {{ $car['rating'] }}</div>
+                        <div class="spec"><i class="fas fa-snowflake"></i> AC</div>
+                    </div>
+                    <div class="car-footer">
+                        <div class="car-price">
+                            <strong>Rp {{ number_format($car['price'], 0, ',', '.') }}</strong>
+                            <span>/ hari</span>
+                        </div>
+                        <a href="{{ route('login') }}" class="btn-book">Pesan</a>
+                    </div>
+                </div>
+            </div>
+            @endforeach
+            @endforelse
+        </div>
 
-                    <main class="mt-6">
-                        <div class="grid gap-6 lg:grid-cols-2 lg:gap-8">
-                            <a
-                                href="https://laravel.com/docs"
-                                id="docs-card"
-                                class="flex flex-col items-start gap-6 overflow-hidden rounded-lg bg-white p-6 shadow-[0px_14px_34px_0px_rgba(0,0,0,0.08)] ring-1 ring-white/[0.05] transition duration-300 hover:text-black/70 hover:ring-black/20 focus:outline-none focus-visible:ring-[#FF2D20] md:row-span-3 lg:p-10 lg:pb-10 dark:bg-zinc-900 dark:ring-zinc-800 dark:hover:text-white/70 dark:hover:ring-zinc-700 dark:focus-visible:ring-[#FF2D20]"
-                            >
-                                <div id="screenshot-container" class="relative flex w-full flex-1 items-stretch">
-                                    <img
-                                        src="https://laravel.com/assets/img/welcome/docs-light.svg"
-                                        alt="Laravel documentation screenshot"
-                                        class="aspect-video h-full w-full flex-1 rounded-[10px] object-top object-cover drop-shadow-[0px_4px_34px_rgba(0,0,0,0.06)] dark:hidden"
-                                        onerror="
-                                            document.getElementById('screenshot-container').classList.add('!hidden');
-                                            document.getElementById('docs-card').classList.add('!row-span-1');
-                                            document.getElementById('docs-card-content').classList.add('!flex-row');
-                                            document.getElementById('background').classList.add('!hidden');
-                                        "
-                                    />
-                                    <img
-                                        src="https://laravel.com/assets/img/welcome/docs-dark.svg"
-                                        alt="Laravel documentation screenshot"
-                                        class="hidden aspect-video h-full w-full flex-1 rounded-[10px] object-top object-cover drop-shadow-[0px_4px_34px_rgba(0,0,0,0.25)] dark:block"
-                                    />
-                                    <div
-                                        class="absolute -bottom-16 -left-16 h-40 w-[calc(100%+8rem)] bg-gradient-to-b from-transparent via-white to-white dark:via-zinc-900 dark:to-zinc-900"
-                                    ></div>
-                                </div>
+        <div class="fleet-cta reveal">
+            @auth
+                <a href="{{ route('vehicles.index') }}" class="btn-outline-ink">
+                    Lihat Semua Kendaraan <i class="fas fa-arrow-right"></i>
+                </a>
+            @else
+                <a href="{{ route('register') }}" class="btn-outline-ink">
+                    Daftar & Lihat Semua Armada <i class="fas fa-arrow-right"></i>
+                </a>
+            @endauth
+        </div>
+    </section>
 
-                                <div class="relative flex items-center gap-6 lg:items-end">
-                                    <div id="docs-card-content" class="flex items-start gap-6 lg:flex-col">
-                                        <div class="flex size-12 shrink-0 items-center justify-center rounded-full bg-[#FF2D20]/10 sm:size-16">
-                                            <svg class="size-5 sm:size-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><path fill="#FF2D20" d="M23 4a1 1 0 0 0-1.447-.894L12.224 7.77a.5.5 0 0 1-.448 0L2.447 3.106A1 1 0 0 0 1 4v13.382a1.99 1.99 0 0 0 1.105 1.79l9.448 4.728c.14.065.293.1.447.1.154-.005.306-.04.447-.105l9.453-4.724a1.99 1.99 0 0 0 1.1-1.789V4ZM3 6.023a.25.25 0 0 1 .362-.223l7.5 3.75a.251.251 0 0 1 .138.223v11.2a.25.25 0 0 1-.362.224l-7.5-3.75a.25.25 0 0 1-.138-.22V6.023Zm18 11.2a.25.25 0 0 1-.138.224l-7.5 3.75a.249.249 0 0 1-.329-.099.249.249 0 0 1-.033-.12V9.772a.251.251 0 0 1 .138-.224l7.5-3.75a.25.25 0 0 1 .362.224v11.2Z"/><path fill="#FF2D20" d="m3.55 1.893 8 4.048a1.008 1.008 0 0 0 .9 0l8-4.048a1 1 0 0 0-.9-1.785l-7.322 3.706a.506.506 0 0 1-.452 0L4.454.108a1 1 0 0 0-.9 1.785H3.55Z"/></svg>
-                                        </div>
+    {{-- ════════ WHY US ════════ --}}
+    <section id="why-us">
+        <div class="why-layout">
 
-                                        <div class="pt-3 sm:pt-5 lg:pt-0">
-                                            <h2 class="text-xl font-semibold text-black dark:text-white">Documentation</h2>
+            <!-- KIRI: Mockup Mobile -->
+            <div class="why-mockup reveal">
+                <div class="why-mockup-frame">
+                    <img src="{{ $landingImages['why_us_mockup'] }}" alt="Mockup Aplikasi ">
+                </div>
+            </div>
 
-                                            <p class="mt-4 text-sm/relaxed">
-                                                Laravel has wonderful documentation covering every aspect of the framework. Whether you are a newcomer or have prior experience with Laravel, we recommend reading our documentation from beginning to end.
-                                            </p>
-                                        </div>
-                                    </div>
+            <!-- KANAN: Grid Benefit -->
+            <div class="why-right">
+                <span class="sec-tag reveal">Aplikasi Kami</span>
+                <h2 class="sec-h2 reveal reveal-delay-1" style="color:var(--white);">make it simple with our app</h2>
+                <p class="sec-sub reveal reveal-delay-2" style="color:rgba(255,255,255,0.35);">Semua kebutuhan perjalanan Anda ada di satu genggaman</p>
+                <div class="why-grid reveal reveal-delay-3">
+                    <div class="why-card">
+                        <div class="why-icon"><i class="fas fa-mobile-screen"></i></div>
+                        <h3>Pemesanan Instan</h3>
+                        <p>Pesan kendaraan dalam hitungan detik. Tanpa antre, tanpa telepon, langsung konfirmasi.</p>
+                    </div>
+                    <div class="why-card">
+                        <div class="why-icon"><i class="fas fa-map-location-dot"></i></div>
+                        <h3>Lacak Secara Real-time</h3>
+                        <p>Pantau posisi kendaraan langsung dari aplikasi. Tahu kapan pengemudi tiba.</p>
+                    </div>
+                    <div class="why-card">
+                        <div class="why-icon"><i class="fas fa-calendar-check"></i></div>
+                        <h3>Jadwal Fleksibel</h3>
+                        <p>Atur tanggal dan jam penjemputan sesuai kebutuhan Anda, kapan saja.</p>
+                    </div>
+                    <div class="why-card">
+                        <div class="why-icon"><i class="fas fa-wallet"></i></div>
+                        <h3>Bayar Lebih Mudah</h3>
+                        <p>Berbagai metode pembayaran tersedia — transfer, e-wallet, hingga kartu kredit.</p>
+                    </div>
+                    <div class="why-card">
+                        <div class="why-icon"><i class="fas fa-bell"></i></div>
+                        <h3>Notifikasi Otomatis</h3>
+                        <p>Update status perjalanan secara real-time langsung ke ponsel Anda.</p>
+                    </div>
+                    <div class="why-card">
+                        <div class="why-icon"><i class="fas fa-headset"></i></div>
+                        <h3>Support Dalam Aplikasi</h3>
+                        <p>Hubungi tim kami langsung dari chat aplikasi — respons cepat 24/7.</p>
+                    </div>
+                </div>
+            </div>
 
-                                    <svg class="size-6 shrink-0 stroke-[#FF2D20]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12h15m0 0l-6.75-6.75M19.5 12l-6.75 6.75"/></svg>
-                                </div>
-                            </a>
+        </div>
+    </section>
 
-                            <a
-                                href="https://laracasts.com"
-                                class="flex items-start gap-4 rounded-lg bg-white p-6 shadow-[0px_14px_34px_0px_rgba(0,0,0,0.08)] ring-1 ring-white/[0.05] transition duration-300 hover:text-black/70 hover:ring-black/20 focus:outline-none focus-visible:ring-[#FF2D20] lg:pb-10 dark:bg-zinc-900 dark:ring-zinc-800 dark:hover:text-white/70 dark:hover:ring-zinc-700 dark:focus-visible:ring-[#FF2D20]"
-                            >
-                                <div class="flex size-12 shrink-0 items-center justify-center rounded-full bg-[#FF2D20]/10 sm:size-16">
-                                    <svg class="size-5 sm:size-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><g fill="#FF2D20"><path d="M24 8.25a.5.5 0 0 0-.5-.5H.5a.5.5 0 0 0-.5.5v12a2.5 2.5 0 0 0 2.5 2.5h19a2.5 2.5 0 0 0 2.5-2.5v-12Zm-7.765 5.868a1.221 1.221 0 0 1 0 2.264l-6.626 2.776A1.153 1.153 0 0 1 8 18.123v-5.746a1.151 1.151 0 0 1 1.609-1.035l6.626 2.776ZM19.564 1.677a.25.25 0 0 0-.177-.427H15.6a.106.106 0 0 0-.072.03l-4.54 4.543a.25.25 0 0 0 .177.427h3.783c.027 0 .054-.01.073-.03l4.543-4.543ZM22.071 1.318a.047.047 0 0 0-.045.013l-4.492 4.492a.249.249 0 0 0 .038.385.25.25 0 0 0 .14.042h5.784a.5.5 0 0 0 .5-.5v-2a2.5 2.5 0 0 0-1.925-2.432ZM13.014 1.677a.25.25 0 0 0-.178-.427H9.101a.106.106 0 0 0-.073.03l-4.54 4.543a.25.25 0 0 0 .177.427H8.4a.106.106 0 0 0 .073-.03l4.54-4.543ZM6.513 1.677a.25.25 0 0 0-.177-.427H2.5A2.5 2.5 0 0 0 0 3.75v2a.5.5 0 0 0 .5.5h1.4a.106.106 0 0 0 .073-.03l4.54-4.543Z"/></g></svg>
-                                </div>
+    {{-- ════════ STATS ════════ --}}
+    <section id="stats">
+        <div class="stats-row">
+            <div class="stat-item reveal">
+                <div class="stat-num" data-target="{{ max($stats['total_vehicles'], 20) }}" data-suffix="+">0</div>
+                <div class="stat-label">Kendaraan Aktif</div>
+            </div>
+            <div class="stat-item reveal reveal-delay-1">
+                <div class="stat-num" data-target="{{ max($stats['total_bookings'], 500) }}" data-suffix="+">0</div>
+                <div class="stat-label">Perjalanan Selesai</div>
+            </div>
+            <div class="stat-item reveal reveal-delay-2">
+                <div class="stat-num" data-target="{{ max($stats['happy_customers'], 200) }}" data-suffix="+">0</div>
+                <div class="stat-label">Pelanggan Puas</div>
+            </div>
+            <div class="stat-item reveal reveal-delay-3">
+                <div class="stat-num" data-target="4.9" data-decimal="1">0</div>
+                <div class="stat-label">Rating Rata-rata</div>
+            </div>
+        </div>
+    </section>
 
-                                <div class="pt-3 sm:pt-5">
-                                    <h2 class="text-xl font-semibold text-black dark:text-white">Laracasts</h2>
+    {{-- ════════ HISTORY ════════ --}}
+    <section id="history">
+        <div class="head-wrap">
+            <h2 class="sec-h2 reveal reveal-delay-1">Our Record</h2>
+        </div>
+        <div class="tl-scroll">
+            @php $timeline = [
+                ['year'=>'2020','title'=>'Pondasi DriveEase','desc'=>'Berawal dari 3 kendaraan dan tekad kuat, DriveEase lahir dengan misi menghadirkan rental mobil yang jujur dan profesional.'],
+                ['year'=>'2021','title'=>'Ekspansi Armada','desc'=>'Armada berkembang menjadi 15 kendaraan. Mulai menerima pesanan korporat dari berbagai perusahaan di Jabodetabek.'],
+                ['year'=>'2022','title'=>'Platform Digital','desc'=>'Meluncurkan sistem pemesanan online terintegrasi dengan Midtrans untuk pembayaran yang aman dan terpercaya.'],
+                ['year'=>'2023','title'=>'Pelacakan Real-time','desc'=>'Menghadirkan fitur GPS tracking untuk setiap perjalanan. Transparansi penuh untuk ketenangan pikiran pelanggan.'],
+                ['year'=>'2024','title'=>'Penghargaan Nasional','desc'=>'Meraih penghargaan "Best Car Rental Service". Kepercayaan Anda adalah motivasi terbesar kami.'],
+                ['year'=>'2025+','title'=>'Menuju Masa Depan','desc'=>'Ekspansi ke 10 kota besar Indonesia dengan armada kendaraan listrik premium untuk generasi mendatang.'],
+            ]; @endphp
+            @foreach($timeline as $tl)
+            <div class="tl-entry reveal">
+                <div class="tl-dot"></div>
+                <div class="tl-year-num">{{ $tl['year'] }}</div>
+                <div class="tl-content">
+                    <h3>{{ $tl['title'] }}</h3>
+                    <p>{{ $tl['desc'] }}</p>
+                </div>
+            </div>
+            @endforeach
+        </div>
+    </section>
 
-                                    <p class="mt-4 text-sm/relaxed">
-                                        Laracasts offers thousands of video tutorials on Laravel, PHP, and JavaScript development. Check them out, see for yourself, and massively level up your development skills in the process.
-                                    </p>
-                                </div>
-
-                                <svg class="size-6 shrink-0 self-center stroke-[#FF2D20]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12h15m0 0l-6.75-6.75M19.5 12l-6.75 6.75"/></svg>
-                            </a>
-
-                            <a
-                                href="https://laravel-news.com"
-                                class="flex items-start gap-4 rounded-lg bg-white p-6 shadow-[0px_14px_34px_0px_rgba(0,0,0,0.08)] ring-1 ring-white/[0.05] transition duration-300 hover:text-black/70 hover:ring-black/20 focus:outline-none focus-visible:ring-[#FF2D20] lg:pb-10 dark:bg-zinc-900 dark:ring-zinc-800 dark:hover:text-white/70 dark:hover:ring-zinc-700 dark:focus-visible:ring-[#FF2D20]"
-                            >
-                                <div class="flex size-12 shrink-0 items-center justify-center rounded-full bg-[#FF2D20]/10 sm:size-16">
-                                    <svg class="size-5 sm:size-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><g fill="#FF2D20"><path d="M8.75 4.5H5.5c-.69 0-1.25.56-1.25 1.25v4.75c0 .69.56 1.25 1.25 1.25h3.25c.69 0 1.25-.56 1.25-1.25V5.75c0-.69-.56-1.25-1.25-1.25Z"/><path d="M24 10a3 3 0 0 0-3-3h-2V2.5a2 2 0 0 0-2-2H2a2 2 0 0 0-2 2V20a3.5 3.5 0 0 0 3.5 3.5h17A3.5 3.5 0 0 0 24 20V10ZM3.5 21.5A1.5 1.5 0 0 1 2 20V3a.5.5 0 0 1 .5-.5h14a.5.5 0 0 1 .5.5v17c0 .295.037.588.11.874a.5.5 0 0 1-.484.625L3.5 21.5ZM22 20a1.5 1.5 0 1 1-3 0V9.5a.5.5 0 0 1 .5-.5H21a1 1 0 0 1 1 1v10Z"/><path d="M12.751 6.047h2a.75.75 0 0 1 .75.75v.5a.75.75 0 0 1-.75.75h-2A.75.75 0 0 1 12 7.3v-.5a.75.75 0 0 1 .751-.753ZM12.751 10.047h2a.75.75 0 0 1 .75.75v.5a.75.75 0 0 1-.75.75h-2A.75.75 0 0 1 12 11.3v-.5a.75.75 0 0 1 .751-.753ZM4.751 14.047h10a.75.75 0 0 1 .75.75v.5a.75.75 0 0 1-.75.75h-10A.75.75 0 0 1 4 15.3v-.5a.75.75 0 0 1 .751-.753ZM4.75 18.047h7.5a.75.75 0 0 1 .75.75v.5a.75.75 0 0 1-.75.75h-7.5A.75.75 0 0 1 4 19.3v-.5a.75.75 0 0 1 .75-.753Z"/></g></svg>
-                                </div>
-
-                                <div class="pt-3 sm:pt-5">
-                                    <h2 class="text-xl font-semibold text-black dark:text-white">Laravel News</h2>
-
-                                    <p class="mt-4 text-sm/relaxed">
-                                        Laravel News is a community driven portal and newsletter aggregating all of the latest and most important news in the Laravel ecosystem, including new package releases and tutorials.
-                                    </p>
-                                </div>
-
-                                <svg class="size-6 shrink-0 self-center stroke-[#FF2D20]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12h15m0 0l-6.75-6.75M19.5 12l-6.75 6.75"/></svg>
-                            </a>
-
-                            <div class="flex items-start gap-4 rounded-lg bg-white p-6 shadow-[0px_14px_34px_0px_rgba(0,0,0,0.08)] ring-1 ring-white/[0.05] lg:pb-10 dark:bg-zinc-900 dark:ring-zinc-800">
-                                <div class="flex size-12 shrink-0 items-center justify-center rounded-full bg-[#FF2D20]/10 sm:size-16">
-                                    <svg class="size-5 sm:size-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                        <g fill="#FF2D20">
-                                            <path
-                                                d="M16.597 12.635a.247.247 0 0 0-.08-.237 2.234 2.234 0 0 1-.769-1.68c.001-.195.03-.39.084-.578a.25.25 0 0 0-.09-.267 8.8 8.8 0 0 0-4.826-1.66.25.25 0 0 0-.268.181 2.5 2.5 0 0 1-2.4 1.824.045.045 0 0 0-.045.037 12.255 12.255 0 0 0-.093 3.86.251.251 0 0 0 .208.214c2.22.366 4.367 1.08 6.362 2.118a.252.252 0 0 0 .32-.079 10.09 10.09 0 0 0 1.597-3.733ZM13.616 17.968a.25.25 0 0 0-.063-.407A19.697 19.697 0 0 0 8.91 15.98a.25.25 0 0 0-.287.325c.151.455.334.898.548 1.328.437.827.981 1.594 1.619 2.28a.249.249 0 0 0 .32.044 29.13 29.13 0 0 0 2.506-1.99ZM6.303 14.105a.25.25 0 0 0 .265-.274 13.048 13.048 0 0 1 .205-4.045.062.062 0 0 0-.022-.07 2.5 2.5 0 0 1-.777-.982.25.25 0 0 0-.271-.149 11 11 0 0 0-5.6 2.815.255.255 0 0 0-.075.163c-.008.135-.02.27-.02.406.002.8.084 1.598.246 2.381a.25.25 0 0 0 .303.193 19.924 19.924 0 0 1 5.746-.438ZM9.228 20.914a.25.25 0 0 0 .1-.393 11.53 11.53 0 0 1-1.5-2.22 12.238 12.238 0 0 1-.91-2.465.248.248 0 0 0-.22-.187 18.876 18.876 0 0 0-5.69.33.249.249 0 0 0-.179.336c.838 2.142 2.272 4 4.132 5.353a.254.254 0 0 0 .15.048c1.41-.01 2.807-.282 4.117-.802ZM18.93 12.957l-.005-.008a.25.25 0 0 0-.268-.082 2.21 2.21 0 0 1-.41.081.25.25 0 0 0-.217.2c-.582 2.66-2.127 5.35-5.75 7.843a.248.248 0 0 0-.09.299.25.25 0 0 0 .065.091 28.703 28.703 0 0 0 2.662 2.12.246.246 0 0 0 .209.037c2.579-.701 4.85-2.242 6.456-4.378a.25.25 0 0 0 .048-.189 13.51 13.51 0 0 0-2.7-6.014ZM5.702 7.058a.254.254 0 0 0 .2-.165A2.488 2.488 0 0 1 7.98 5.245a.093.093 0 0 0 .078-.062 19.734 19.734 0 0 1 3.055-4.74.25.25 0 0 0-.21-.41 12.009 12.009 0 0 0-10.4 8.558.25.25 0 0 0 .373.281 12.912 12.912 0 0 1 4.826-1.814ZM10.773 22.052a.25.25 0 0 0-.28-.046c-.758.356-1.55.635-2.365.833a.25.25 0 0 0-.022.48c1.252.43 2.568.65 3.893.65.1 0 .2 0 .3-.008a.25.25 0 0 0 .147-.444c-.526-.424-1.1-.917-1.673-1.465ZM18.744 8.436a.249.249 0 0 0 .15.228 2.246 2.246 0 0 1 1.352 2.054c0 .337-.08.67-.23.972a.25.25 0 0 0 .042.28l.007.009a15.016 15.016 0 0 1 2.52 4.6.25.25 0 0 0 .37.132.25.25 0 0 0 .096-.114c.623-1.464.944-3.039.945-4.63a12.005 12.005 0 0 0-5.78-10.258.25.25 0 0 0-.373.274c.547 2.109.85 4.274.901 6.453ZM9.61 5.38a.25.25 0 0 0 .08.31c.34.24.616.561.8.935a.25.25 0 0 0 .3.127.631.631 0 0 1 .206-.034c2.054.078 4.036.772 5.69 1.991a.251.251 0 0 0 .267.024c.046-.024.093-.047.141-.067a.25.25 0 0 0 .151-.23A29.98 29.98 0 0 0 15.957.764a.25.25 0 0 0-.16-.164 11.924 11.924 0 0 0-2.21-.518.252.252 0 0 0-.215.076A22.456 22.456 0 0 0 9.61 5.38Z"
-                                            />
-                                        </g>
-                                    </svg>
-                                </div>
-
-                                <div class="pt-3 sm:pt-5">
-                                    <h2 class="text-xl font-semibold text-black dark:text-white">Vibrant Ecosystem</h2>
-
-                                    <p class="mt-4 text-sm/relaxed">
-                                        Laravel's robust library of first-party tools and libraries, such as <a href="https://forge.laravel.com" class="rounded-sm underline hover:text-black focus:outline-none focus-visible:ring-1 focus-visible:ring-[#FF2D20] dark:hover:text-white dark:focus-visible:ring-[#FF2D20]">Forge</a>, <a href="https://vapor.laravel.com" class="rounded-sm underline hover:text-black focus:outline-none focus-visible:ring-1 focus-visible:ring-[#FF2D20] dark:hover:text-white">Vapor</a>, <a href="https://nova.laravel.com" class="rounded-sm underline hover:text-black focus:outline-none focus-visible:ring-1 focus-visible:ring-[#FF2D20] dark:hover:text-white">Nova</a>, <a href="https://envoyer.io" class="rounded-sm underline hover:text-black focus:outline-none focus-visible:ring-1 focus-visible:ring-[#FF2D20] dark:hover:text-white">Envoyer</a>, and <a href="https://herd.laravel.com" class="rounded-sm underline hover:text-black focus:outline-none focus-visible:ring-1 focus-visible:ring-[#FF2D20] dark:hover:text-white">Herd</a> help you take your projects to the next level. Pair them with powerful open source libraries like <a href="https://laravel.com/docs/billing" class="rounded-sm underline hover:text-black focus:outline-none focus-visible:ring-1 focus-visible:ring-[#FF2D20] dark:hover:text-white">Cashier</a>, <a href="https://laravel.com/docs/dusk" class="rounded-sm underline hover:text-black focus:outline-none focus-visible:ring-1 focus-visible:ring-[#FF2D20] dark:hover:text-white">Dusk</a>, <a href="https://laravel.com/docs/broadcasting" class="rounded-sm underline hover:text-black focus:outline-none focus-visible:ring-1 focus-visible:ring-[#FF2D20] dark:hover:text-white">Echo</a>, <a href="https://laravel.com/docs/horizon" class="rounded-sm underline hover:text-black focus:outline-none focus-visible:ring-1 focus-visible:ring-[#FF2D20] dark:hover:text-white">Horizon</a>, <a href="https://laravel.com/docs/sanctum" class="rounded-sm underline hover:text-black focus:outline-none focus-visible:ring-1 focus-visible:ring-[#FF2D20] dark:hover:text-white">Sanctum</a>, <a href="https://laravel.com/docs/telescope" class="rounded-sm underline hover:text-black focus:outline-none focus-visible:ring-1 focus-visible:ring-[#FF2D20] dark:hover:text-white">Telescope</a>, and more.
-                                    </p>
-                                </div>
+    {{-- ════════ TESTIMONIALS ════════ --}}
+    <section id="testimonials">
+        <div class="testi-layout">
+            <div class="testi-left">
+                <h2 class="sec-h2 reveal reveal-delay-1">Kata<br>mereka.</h2>
+                <div class="testi-avg reveal reveal-delay-2">
+                    <div class="testi-avg-stars">★★★★★</div>
+                    <div class="testi-avg-val">4.9</div>
+                    <div class="testi-avg-sub">dari 500+ ulasan terverifikasi</div>
+                </div>
+                <div class="testi-count reveal reveal-delay-3" style="margin-top:2.5rem;">
+                    <div class="testi-count" style="font-family:'Syne';font-size:4rem;font-weight:800;color:var(--ink);line-height:1;">98%</div>
+                    <div class="testi-count-label">pelanggan puas dan kembali lagi</div>
+                </div>
+            </div>
+            <div class="testi-grid">
+                <div class="testi-track" id="testiTrack">
+                    @php $testimonials = [
+                        ['init'=>'BW','name'=>'Budi Wijaya','role'=>'Direktur, PT Maju Bersama','stars'=>5,'text'=>'Pengemudi sangat ramah dan tepat waktu. Kendaraan bersih dan nyaman. Sudah 5 kali pakai DriveEase untuk perjalanan bisnis.'],
+                        ['init'=>'SR','name'=>'Sari Rahayu','role'=>'Travel Blogger','stars'=>5,'text'=>'Booking via aplikasi sangat mudah. Pembayaran aman. Pengemudi membantu angkat koper tanpa diminta — sangat profesional!'],
+                        ['init'=>'AP','name'=>'Ahmad Pratama','role'=>'Event Organizer','stars'=>4,'text'=>'Harga kompetitif untuk kualitas yang diberikan. Sewa Alphard untuk acara pernikahan — semua tamu sangat terkesan.'],
+                        ['init'=>'DK','name'=>'Diana Kusuma','role'=>'Ibu Rumah Tangga','stars'=>5,'text'=>'Fitur tracking real-time bikin tenang. Bisa pantau perjalanan suami yang dinas dari rumah. Fiturnya sangat membantu.'],
+                        ['init'=>'RS','name'=>'Rizal Santoso','role'=>'HR Manager, FMCG','stars'=>5,'text'=>'Sebagai klien korporat, kami butuh layanan yang konsisten. DriveEase selalu hadir tepat waktu untuk 20+ perjalanan tim kami.'],
+                    ]; @endphp
+                    @foreach($testimonials as $t)
+                    <div class="testi-card">
+                        <div class="testi-stars">{{ str_repeat('★',$t['stars']) }}{{ str_repeat('☆', 5-$t['stars']) }}</div>
+                        <p class="testi-text">"{{ $t['text'] }}"</p>
+                        <div class="testi-author">
+                            <div class="testi-avatar">{{ $t['init'] }}</div>
+                            <div>
+                                <div class="testi-name">{{ $t['name'] }}</div>
+                                <div class="testi-role">{{ $t['role'] }}</div>
                             </div>
                         </div>
-                    </main>
-
-                    <footer class="py-16 text-center text-sm text-black dark:text-white/70">
-                        Laravel v{{ Illuminate\Foundation\Application::VERSION }} (PHP v{{ PHP_VERSION }})
-                    </footer>
+                    </div>
+                    @endforeach
                 </div>
             </div>
         </div>
-    </body>
+    </section>
+
+    {{-- ════════ CTA ════════ --}}
+    <div class="cta-section">
+        <div class="cta-left">
+            <h2 class="reveal">Siap Memulai<br>Perjalanan Anda?</h2>
+            <p class="reveal reveal-delay-1">Bergabunglah dengan {{ number_format(max($stats['happy_customers'], 200)) }}+ pelanggan yang telah mempercayakan perjalanan mereka kepada DriveEase.</p>
+            <div class="cta-btns reveal reveal-delay-2">
+                @guest
+                    <a href="{{ route('register') }}" class="btn-cta-fill">Daftar Sekarang — Gratis</a>
+                    <a href="{{ route('login') }}" class="btn-cta-ghost">Sudah Punya Akun?</a>
+                @else
+                    <a href="{{ route('vehicles.index') }}" class="btn-cta-fill">Pesan Kendaraan</a>
+                    <a href="{{ route('dashboard') }}" class="btn-cta-ghost">Ke Dashboard</a>
+                @endguest
+            </div>
+        </div>
+        <div class="cta-right reveal">
+            <div class="cta-right-overlay"></div>
+            <img src="{{ $landingImages['cta_image'] }}" alt="">
+        </div>
+    </div>
+
+    {{-- ════════ FOOTER ════════ --}}
+    <footer>
+        <div class="footer-top">
+            <div class="footer-brand">
+                <a href="/" class="footer-logo">DriveEase<sup>™</sup></a>
+                <p>Rental mobil premium dengan pengemudi profesional untuk perjalanan bisnis dan leisure di seluruh Indonesia.</p>
+                <div class="footer-socials">
+                    <a href="#" class="social-btn"><i class="fab fa-instagram"></i></a>
+                    <a href="#" class="social-btn"><i class="fab fa-whatsapp"></i></a>
+                    <a href="#" class="social-btn"><i class="fab fa-twitter"></i></a>
+                    <a href="#" class="social-btn"><i class="fab fa-linkedin-in"></i></a>
+                </div>
+            </div>
+            <div class="footer-col">
+                <h4>Layanan</h4>
+                <ul>
+                    <li><a href="#">Rental Harian</a></li>
+                    <li><a href="#">Rental Mingguan</a></li>
+                    <li><a href="#">Paket Korporat</a></li>
+                    <li><a href="#">Airport Transfer</a></li>
+                    <li><a href="#">Wisata & Leisure</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h4>Perusahaan</h4>
+                <ul>
+                    <li><a href="#history">Tentang Kami</a></li>
+                    <li><a href="#">Karir</a></li>
+                    <li><a href="#">Blog</a></li>
+                    <li><a href="#">Press Kit</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h4>Bantuan</h4>
+                <ul>
+                    <li><a href="#">FAQ</a></li>
+                    <li><a href="#">Syarat & Ketentuan</a></li>
+                    <li><a href="#">Kebijakan Privasi</a></li>
+                    <li><a href="#">Hubungi Kami</a></li>
+                    <li><a href="{{ route('login') }}">Login</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <span>© {{ date('Y') }} INEZ RENT CAR. Semua hak dilindungi.</span>
+        </div>
+    </footer>
+
+    {{-- ════════ SCRIPTS ════════ --}}
+    <script>
+    /* ── Navbar ── */
+    const navbar = document.getElementById('navbar');
+    function updateNav() {
+        const scrolled = window.scrollY > 60;
+        navbar.classList.toggle('scrolled', scrolled);
+        navbar.classList.toggle('hero-over', !scrolled);
+    }
+    window.addEventListener('scroll', updateNav, { passive: true });
+    updateNav();
+
+    /* ── Hamburger ── */
+    const ham = document.getElementById('hamburger');
+    const mobMenu = document.getElementById('mobileMenu');
+    ham.addEventListener('click', () => {
+        ham.classList.toggle('open');
+        mobMenu.classList.toggle('open');
+    });
+    mobMenu.querySelectorAll('a').forEach(a => {
+        a.addEventListener('click', () => { ham.classList.remove('open'); mobMenu.classList.remove('open'); });
+    });
+
+    /* ── Desktop Hero Slider ── */
+    const heroSlides = document.querySelectorAll('#heroDesktop .hero-slide');
+    const heroDots   = document.querySelectorAll('#heroDots .hero-dot');
+    const heroCounter = document.getElementById('slideCounter');
+    let heroIdx = 0, heroTimer;
+
+    function gotoHeroSlide(n) {
+        heroSlides[heroIdx].classList.remove('active');
+        heroDots[heroIdx].classList.remove('active');
+        heroIdx = (n + heroSlides.length) % heroSlides.length;
+        heroSlides[heroIdx].classList.add('active');
+        heroDots[heroIdx].classList.add('active');
+        heroCounter.textContent = String(heroIdx + 1).padStart(2,'0') + ' / ' + String(heroSlides.length).padStart(2,'0');
+    }
+    function startHeroAuto() {
+        clearInterval(heroTimer);
+        heroTimer = setInterval(() => gotoHeroSlide(heroIdx + 1), 5500);
+    }
+    document.getElementById('heroNext').addEventListener('click', () => { gotoHeroSlide(heroIdx + 1); startHeroAuto(); });
+    document.getElementById('heroPrev').addEventListener('click', () => { gotoHeroSlide(heroIdx - 1); startHeroAuto(); });
+    heroDots.forEach(d => d.addEventListener('click', () => { gotoHeroSlide(+d.dataset.idx); startHeroAuto(); }));
+    startHeroAuto();
+
+    /* ── Mobile Slider ── */
+    const mobSlideEls = document.querySelectorAll('#mobSlides .mob-slide');
+    const mobDotEls   = document.querySelectorAll('#mobDots .mob-dot');
+    let mobIdx = 0, mobTimer;
+
+    function gotoMobSlide(n) {
+        mobSlideEls[mobIdx].classList.remove('active');
+        mobDotEls[mobIdx].classList.remove('active');
+        mobIdx = (n + mobSlideEls.length) % mobSlideEls.length;
+        mobSlideEls[mobIdx].classList.add('active');
+        mobDotEls[mobIdx].classList.add('active');
+    }
+    function startMobAuto() {
+        clearInterval(mobTimer);
+        mobTimer = setInterval(() => gotoMobSlide(mobIdx + 1), 5000);
+    }
+    mobDotEls.forEach(d => d.addEventListener('click', () => { gotoMobSlide(+d.dataset.idx); startMobAuto(); }));
+
+    /* Touch swipe for mobile slider */
+    let touchStartX = 0;
+    const mobSlider = document.getElementById('mobSlides');
+    mobSlider.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; }, { passive: true });
+    mobSlider.addEventListener('touchend', e => {
+        const diff = touchStartX - e.changedTouches[0].clientX;
+        if (Math.abs(diff) > 40) { gotoMobSlide(mobIdx + (diff > 0 ? 1 : -1)); startMobAuto(); }
+    }, { passive: true });
+    startMobAuto();
+
+    /* ── Scroll Reveal ── */
+    const revealEls = document.querySelectorAll('.reveal');
+    const revObs = new IntersectionObserver(entries => {
+        entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+    }, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' });
+    revealEls.forEach(el => revObs.observe(el));
+
+    /* ── Counter ── */
+    const counters = document.querySelectorAll('[data-target]');
+    const cntObs = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+            if (!entry.isIntersecting) return;
+            const el = entry.target;
+            const target = parseFloat(el.dataset.target);
+            const suffix = el.dataset.suffix || '';
+            const decimal = parseInt(el.dataset.decimal || '0');
+            const step = 16, duration = 1800;
+            const inc = target / (duration / step);
+            let cur = 0;
+            const tick = () => {
+                cur += inc;
+                if (cur >= target) {
+                    el.textContent = (decimal > 0 ? target.toFixed(decimal) : Math.floor(target).toLocaleString('id-ID')) + suffix;
+                    return;
+                }
+                el.textContent = (decimal > 0 ? cur.toFixed(decimal) : Math.floor(cur).toLocaleString('id-ID')) + suffix;
+                setTimeout(tick, step);
+            };
+            tick();
+            cntObs.unobserve(el);
+        });
+    }, { threshold: 0.5 });
+    counters.forEach(c => cntObs.observe(c));
+
+    /* ── Fleet filter ── */
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            const f = btn.dataset.filter;
+            document.querySelectorAll('.car-card').forEach(card => {
+                card.style.display = (f === 'all' || card.dataset.type === f) ? '' : 'none';
+            });
+        });
+    });
+    
+    const blob = document.querySelector('.nav-logo-blob');
+
+    window.addEventListener('scroll', () => {
+        if (window.scrollY > 10) {
+            navbar.classList.add('scrolled');
+            navbar.classList.remove('hero-over');
+            blob.classList.add('scrolled');
+        } else {
+            navbar.classList.remove('scrolled');
+            navbar.classList.add('hero-over');
+            blob.classList.remove('scrolled');
+        }
+    });
+
+    // Infinite testimonial scroll — clone cards
+    const testiTrack = document.getElementById('testiTrack');
+    if (testiTrack) {
+        const cards = testiTrack.innerHTML;
+        testiTrack.innerHTML += cards; // duplikat sekali cukup
+    }
+    </script>
+</body>
 </html>

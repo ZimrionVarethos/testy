@@ -1,389 +1,525 @@
-{{-- resources/views/admin/dashboard.blade.php --}}
-{{-- 
-    STATIC VEHICLE DATA (untuk testing):
-    Ganti $vehicleLocations dengan data dari API/database kamu.
-    Lihat bagian "CARA KONEKSI API LOKASI" di bawah.
+{{--
+    resources/views/admin/dashboard.blade.php
+    (atau dashboard.blade.php jika route ke view('dashboard', ...))
+
+    Data yang dibutuhkan dari DashboardController::adminDashboard():
+    - $stats             → array: total_bookings, pending_bookings, ongoing_bookings, monthly_revenue
+    - $vehicleStats      → array: available, rented, maintenance
+    - $recentBookings    → Collection Booking (limit 5)
+    - $acceptedBookings  → Collection Booking (status = accepted)
+    - $vehicleLocations  → array of {id, plate, driver, status, lat, lon, location_updated_at}
+    - $bookingTrend      → array of {date, total}  ← TAMBAHKAN ke controller (lihat komentar bawah)
+    - $revenueChart      → array of {month, revenue} ← TAMBAHKAN ke controller (lihat komentar bawah)
 --}}
 
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <style>
-    :root {
-        --brand-primary: #4F46E5;
-        --brand-secondary: #0EA5E9;
-        --brand-accent: #10B981;
-        --brand-warn: #F59E0B;
-        --brand-danger: #EF4444;
-        --surface: #F8FAFC;
-        --card: #FFFFFF;
-        --border: #E2E8F0;
-        --text-primary: #0F172A;
-        --text-secondary: #64748B;
-        --text-muted: #94A3B8;
+    /* ── Dashboard Variables (extends app.blade.php tokens) ── */
+    .db-section-label {
+        font-family: 'Epilogue', sans-serif;
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.09em;
+        color: var(--text-3);
+        margin-bottom: 10px;
     }
-
-    body, .dashboard-root { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--surface); }
 
     /* ── Stat Cards ── */
-    .stat-card {
-        background: var(--card);
+    .db-stat-card {
+        background: var(--white);
         border: 1px solid var(--border);
-        border-radius: 16px;
-        padding: 20px 24px;
+        border-radius: 14px;
+        padding: 20px 20px 16px;
+        cursor: pointer;
         position: relative;
         overflow: hidden;
-        transition: transform .2s, box-shadow .2s;
+        transition: border-color 0.15s, transform 0.15s, box-shadow 0.15s;
     }
-    .stat-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,.07); }
-    .stat-card::before {
-        content: '';
-        position: absolute;
-        top: 0; left: 0; right: 0;
-        height: 3px;
-        border-radius: 16px 16px 0 0;
+    .db-stat-card:hover {
+        border-color: var(--border-md);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 24px rgba(17,24,39,0.07);
     }
-    .stat-card.indigo::before  { background: linear-gradient(90deg, #4F46E5, #818CF8); }
-    .stat-card.amber::before   { background: linear-gradient(90deg, #F59E0B, #FCD34D); }
-    .stat-card.green::before   { background: linear-gradient(90deg, #10B981, #6EE7B7); }
-    .stat-card.sky::before     { background: linear-gradient(90deg, #0EA5E9, #7DD3FC); }
+    .db-stat-card:active { transform: translateY(0); }
 
-    .stat-icon {
-        width: 40px; height: 40px;
-        border-radius: 10px;
+    .db-stat-arrow {
+        position: absolute; top: 14px; right: 14px;
+        width: 22px; height: 22px;
+        border-radius: 7px;
+        background: var(--bg);
         display: flex; align-items: center; justify-content: center;
+        opacity: 0;
+        transition: opacity 0.15s;
+    }
+    .db-stat-card:hover .db-stat-arrow { opacity: 1; }
+    .db-stat-arrow svg { width: 10px; height: 10px; color: var(--text-2); }
+
+    .db-stat-tag {
+        display: inline-flex; align-items: center; gap: 5px;
+        font-size: 10px; font-weight: 600;
+        padding: 3px 8px; border-radius: 6px;
         margin-bottom: 14px;
     }
-    .stat-icon.indigo { background: #EEF2FF; color: #4F46E5; }
-    .stat-icon.amber  { background: #FFFBEB; color: #D97706; }
-    .stat-icon.green  { background: #ECFDF5; color: #059669; }
-    .stat-icon.sky    { background: #F0F9FF; color: #0284C7; }
+    .db-stat-tag svg { width: 11px; height: 11px; }
+    .tag-indigo { background: #eef2ff; color: #4338ca; }
+    .tag-amber  { background: var(--s-amber-bg); color: var(--s-amber-text); }
+    .tag-green  { background: var(--s-green-bg); color: var(--s-green-text); }
+    .tag-neutral{ background: rgba(17,24,39,0.06); color: var(--text-2); }
 
-    .stat-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--text-muted); }
-    .stat-value { font-size: 28px; font-weight: 800; color: var(--text-primary); line-height: 1.1; margin: 6px 0 4px; }
-    .stat-sub   { font-size: 12px; font-weight: 500; }
+    .db-stat-value {
+        font-family: 'Epilogue', sans-serif;
+        font-size: 32px; font-weight: 800;
+        color: var(--text-1);
+        letter-spacing: -1.2px;
+        line-height: 1;
+        margin-bottom: 5px;
+    }
+    .db-stat-value.mono-val {
+        font-family: 'DM Mono', monospace;
+        font-size: 20px;
+        letter-spacing: -0.5px;
+    }
+    .db-stat-label { font-size: 12px; color: var(--text-2); font-weight: 500; }
+    .db-stat-divider { height: 1px; background: var(--border); margin: 14px 0 10px; }
+    .db-stat-footer { display: flex; align-items: center; justify-content: space-between; }
+    .db-stat-footer-text { font-size: 11px; color: var(--text-3); }
+    .db-chip {
+        font-size: 10px; font-weight: 700;
+        padding: 2px 7px; border-radius: 5px;
+        line-height: 1.5;
+    }
+    .db-chip-green { background: var(--s-green-bg); color: var(--s-green-text); }
+    .db-chip-amber { background: var(--s-amber-bg); color: var(--s-amber-text); }
 
     /* ── Section Card ── */
-    .section-card {
-        background: var(--card);
+    .db-card {
+        background: var(--white);
         border: 1px solid var(--border);
-        border-radius: 16px;
+        border-radius: 14px;
         overflow: hidden;
     }
-    .section-header {
-        display: flex; align-items: center; justify-content: space-between;
-        padding: 16px 20px;
+    .db-card-header {
+        padding: 14px 18px;
         border-bottom: 1px solid var(--border);
+        display: flex; align-items: center; justify-content: space-between;
     }
-    .section-title { font-size: 14px; font-weight: 700; color: var(--text-primary); }
-    .section-link  { font-size: 12px; font-weight: 600; color: var(--brand-primary); text-decoration: none; }
-    .section-link:hover { text-decoration: underline; }
-
-    /* ── Status Badge ── */
-    .badge {
-        display: inline-flex; align-items: center; gap: 5px;
-        padding: 3px 10px; border-radius: 99px;
+    .db-card-title {
+        font-family: 'Epilogue', sans-serif;
+        font-size: 13px; font-weight: 700;
+        color: var(--text-1);
+    }
+    .db-card-sub { font-size: 11px; color: var(--text-3); margin-top: 1px; }
+    .db-card-link {
         font-size: 11px; font-weight: 600;
+        color: var(--text-3); text-decoration: none;
+        transition: color 0.15s;
     }
-    .badge::before { content: ''; width: 6px; height: 6px; border-radius: 50%; }
-    .badge-pending   { background: #FFFBEB; color: #92400E; } .badge-pending::before   { background: #F59E0B; }
-    .badge-accepted  { background: #EFF6FF; color: #1E40AF; } .badge-accepted::before  { background: #3B82F6; }
-    .badge-confirmed { background: #EEF2FF; color: #3730A3; } .badge-confirmed::before { background: #6366F1; }
-    .badge-ongoing   { background: #ECFDF5; color: #065F46; } .badge-ongoing::before   { background: #10B981; }
-    .badge-completed { background: #F8FAFC; color: #475569; } .badge-completed::before { background: #94A3B8; }
-    .badge-cancelled { background: #FEF2F2; color: #991B1B; } .badge-cancelled::before { background: #EF4444; }
+    .db-card-link:hover { color: var(--text-1); }
 
-    /* ── Chart Container ── */
-    .chart-wrap { position: relative; }
-    
-    /* ── Map ── */
-
-    /* ── Confirm button ── */
-    .btn-confirm {
-        padding: 6px 14px;
-        background: var(--brand-primary);
-        color: white;
-        border: none;
-        border-radius: 8px;
-        font-size: 12px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: background .15s, transform .1s;
-        font-family: 'Plus Jakarta Sans', sans-serif;
+    /* ── Badge ── */
+    .db-badge {
+        display: inline-flex; align-items: center; gap: 5px;
+        font-size: 10px; font-weight: 600;
+        padding: 3px 8px; border-radius: 6px;
     }
-    .btn-confirm:hover { background: #4338CA; transform: translateY(-1px); }
+    .db-badge::before { content:''; width:5px; height:5px; border-radius:50%; }
+    .badge-pending   { background:var(--s-amber-bg);  color:var(--s-amber-text);  } .badge-pending::before  { background:var(--s-amber); }
+    .badge-accepted  { background:var(--s-blue-bg);   color:var(--s-blue-text);   } .badge-accepted::before { background:var(--s-blue); }
+    .badge-confirmed { background:var(--s-violet-bg); color:var(--s-violet-text); } .badge-confirmed::before{ background:var(--s-violet); }
+    .badge-ongoing   { background:var(--s-green-bg);  color:var(--s-green-text);  } .badge-ongoing::before  { background:var(--s-green); }
+    .badge-completed { background:var(--s-gray-bg);   color:var(--s-gray-text);   } .badge-completed::before{ background:var(--s-gray); }
+    .badge-cancelled { background:var(--s-red-bg);    color:var(--s-red-text);    } .badge-cancelled::before{ background:var(--s-red); }
 
-    /* ── Revenue Mono ── */
-    .mono { font-family: 'JetBrains Mono', monospace; }
-
-    /* ── Alert Banner ── */
-    .alert-banner {
-        background: linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%);
-        border: 1px solid #FDE68A;
-        border-radius: 16px;
-        overflow: hidden;
-    }
-    .alert-header {
-        padding: 14px 20px;
-        border-bottom: 1px solid #FDE68A;
-        display: flex; align-items: center; gap-x: 8px; gap: 8px;
-    }
-
-    /* ── Fleet Donut Label ── */
-    .fleet-row {
+    /* ── Table row ── */
+    .db-row {
         display: flex; align-items: center; justify-content: space-between;
-        padding: 10px 0;
+        padding: 11px 18px;
+        border-bottom: 1px solid var(--border);
+        transition: background 0.1s;
+        cursor: default;
+    }
+    .db-row:last-child { border-bottom: none; }
+    .db-row:hover { background: var(--bg); }
+    .db-row-icon {
+        width: 32px; height: 32px;
+        border-radius: 8px;
+        background: var(--bg);
+        display: flex; align-items: center; justify-content: center;
+        flex-shrink: 0;
+    }
+    .db-row-icon svg { width: 14px; height: 14px; color: var(--text-2); }
+    .db-row-code {
+        font-family: 'DM Mono', monospace;
+        font-size: 12px; font-weight: 500;
+        color: var(--text-1);
+    }
+    .db-row-sub { font-size: 11px; color: var(--text-3); margin-top: 1px; }
+
+    /* ── Fleet card ── */
+    .db-fleet-grid {
+        display: grid;
+        grid-template-columns: 130px 1fr;
+        align-items: center;
+    }
+    .db-fleet-canvas-wrap {
+        display: flex; align-items: center; justify-content: center;
+        padding: 20px;
+        border-right: 1px solid var(--border);
+    }
+    .db-fleet-legend { padding: 14px 18px; }
+    .db-fleet-row {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 7px 0;
         border-bottom: 1px solid var(--border);
     }
-    .fleet-row:last-child { border-bottom: none; }
-    .fleet-dot { width: 10px; height: 10px; border-radius: 50%; }
-    .fleet-label { font-size: 13px; color: var(--text-secondary); font-weight: 500; }
-    .fleet-count { font-size: 15px; font-weight: 700; color: var(--text-primary); }
+    .db-fleet-row:last-child { border-bottom: none; }
+    .db-fleet-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+    .db-fleet-label { font-size: 12px; color: var(--text-2); font-weight: 500; }
+    .db-fleet-val {
+        font-family: 'DM Mono', monospace;
+        font-size: 15px; font-weight: 500;
+        color: var(--text-1);
+    }
+    .db-util-wrap { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); }
+    .db-util-label { font-size: 10px; color: var(--text-3); font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
+    .db-util-val {
+        font-family: 'DM Mono', monospace;
+        font-size: 24px; font-weight: 500;
+        color: var(--text-1);
+        margin: 2px 0 6px;
+    }
+    .db-util-track {
+        height: 3px; background: var(--border); border-radius: 99px; overflow: hidden;
+    }
+    .db-util-fill { height: 100%; background: var(--dark); border-radius: 99px; transition: width 0.6s ease; }
 
-    /* Responsive */
+    /* ── Map ── */
+    #db-map {
+        height: 380px; width: 100%;
+        border-radius: 0 0 14px 14px;
+    }
+    .leaflet-container { font-family: 'DM Sans', sans-serif; }
+    .leaflet-popup-content-wrapper {
+        border-radius: 10px !important;
+        box-shadow: 0 8px 28px rgba(17,24,39,0.13) !important;
+        border: 1px solid var(--border) !important;
+        padding: 0 !important;
+    }
+    .leaflet-popup-content { margin: 0 !important; }
+    .leaflet-popup-tip-container { display: none; }
+    .db-map-popup { padding: 12px 15px; }
+    .db-map-popup-plate { font-family: 'DM Mono', monospace; font-size: 13px; font-weight: 500; color: var(--dark); }
+    .db-map-popup-driver { font-size: 11px; color: var(--text-3); margin: 2px 0 7px; }
+    .db-map-legend {
+        background: var(--white);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 9px 12px;
+    }
+    .db-map-legend-title { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text-3); margin-bottom: 6px; }
+    .db-map-legend-row { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-2); margin-bottom: 4px; font-weight: 500; }
+    .db-map-legend-row:last-child { margin-bottom: 0; }
+    .leg-dot { width: 7px; height: 7px; border-radius: 50%; }
+    .leaflet-control-zoom { border: none !important; box-shadow: 0 2px 8px rgba(0,0,0,0.08) !important; }
+    .leaflet-control-zoom a { border: 1px solid var(--border) !important; color: var(--text-1) !important; width: 28px !important; height: 28px !important; line-height: 27px !important; border-radius: 8px !important; }
+
+    /* ── Alert banner ── */
+    .db-alert {
+        background: var(--white);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        overflow: hidden;
+    }
+    .db-alert-header {
+        padding: 12px 18px;
+        background: var(--s-amber-bg);
+        border-bottom: 1px solid rgba(217,119,6,0.15);
+        display: flex; align-items: center; gap: 7px;
+    }
+    .db-alert-title {
+        font-family: 'Epilogue', sans-serif;
+        font-size: 12px; font-weight: 700;
+        color: var(--s-amber-text);
+        flex: 1;
+    }
+    .db-alert-count {
+        background: var(--s-amber); color: white;
+        font-size: 10px; font-weight: 700; font-family: 'DM Mono', monospace;
+        padding: 1px 7px; border-radius: 99px;
+    }
+    .btn-confirm {
+        padding: 5px 14px;
+        background: var(--dark); color: white;
+        border: none; border-radius: 8px;
+        font-size: 11px; font-weight: 600;
+        cursor: pointer;
+        font-family: 'DM Sans', sans-serif;
+        transition: opacity 0.15s;
+        flex-shrink: 0;
+    }
+    .btn-confirm:hover { opacity: 0.75; }
+
+    /* ── Modal ── */
     @media (max-width: 768px) {
-        .stat-value { font-size: 22px; }
-        #indonesia-map { height: 260px; }
+        #db-map { height: 260px; }
+        .db-fleet-grid { grid-template-columns: 1fr; }
+        .db-fleet-canvas-wrap { border-right: none; border-bottom: 1px solid var(--border); }
     }
 </style>
 
-<div class="dashboard-root py-6">
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+<div class="py-6">
+<div style="max-width:1200px;margin:0 auto;padding:0 24px 48px;display:flex;flex-direction:column;gap:24px">
 
     {{-- ══ GREETING ══ --}}
-    <div class="flex items-center justify-between">
-        <div>
-            <h2 class="text-xl font-extrabold text-gray-900">Selamat datang, {{ Auth::user()->name }} 👋</h2>
-            <p class="text-sm text-gray-500 mt-0.5">{{ now()->locale('id')->isoFormat('dddd, D MMMM YYYY') }} · Ringkasan aktivitas hari ini</p>
-        </div>
-        <span class="hidden sm:flex items-center gap-1.5 text-xs font-semibold text-emerald-600 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-full">
-            <span class="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-            Live
-        </span>
+    <div>
+        <h2 style="font-family:'Epilogue',sans-serif;font-size:22px;font-weight:800;color:var(--text-1);letter-spacing:-0.5px">
+            Selamat datang, {{ Auth::user()->name }} 👋
+        </h2>
+        <p style="font-size:13px;color:var(--text-2);margin-top:3px">
+            {{ now()->locale('id')->isoFormat('dddd, D MMMM YYYY') }} · Ringkasan aktivitas hari ini
+        </p>
     </div>
 
     {{-- ══ STAT CARDS ══ --}}
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div class="stat-card indigo">
-            <div class="stat-icon indigo">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+    <div>
+        <p class="db-section-label">Ringkasan</p>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px">
+
+            {{-- Total Pesanan --}}
+            <div class="db-stat-card" onclick="window.location='{{ route('admin.reports.index') }}'" style="cursor:pointer">
+                <span class="db-stat-arrow">
+                    <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 10L10 2M10 2H5M10 2v5"/></svg>
+                </span>
+                <div class="db-stat-tag tag-indigo">
+                    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 2H4a2 2 0 00-2 2v9a2 2 0 002 2h8a2 2 0 002-2V4a2 2 0 00-2-2h-2M6 2a1 1 0 011-1h2a1 1 0 011 1v1H6V2z"/></svg>
+                    Pesanan
+                </div>
+                <div class="db-stat-value">{{ $stats['total_bookings'] ?? 0 }}</div>
+                <div class="db-stat-label">Total semua waktu</div>
+                <div class="db-stat-divider"></div>
+                <div class="db-stat-footer">
+                    <span class="db-stat-footer-text">Klik untuk detail</span>
+                    <span class="db-chip db-chip-green">Aktif</span>
+                </div>
             </div>
-            <p class="stat-label">Total Pesanan</p>
-            <p class="stat-value">{{ $stats['total_bookings'] ?? 0 }}</p>
-            <p class="stat-sub text-indigo-400">Semua waktu</p>
-        </div>
-        <div class="stat-card amber">
-            <div class="stat-icon amber">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+
+            {{-- Pending / Menunggu --}}
+            <div class="db-stat-card" onclick="window.location='{{ route('admin.reports.index') }}'" style="cursor:pointer">
+                <span class="db-stat-arrow">
+                    <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 10L10 2M10 2H5M10 2v5"/></svg>
+                </span>
+                <div class="db-stat-tag tag-amber">
+                    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="8" cy="8" r="6"/><polyline points="8 4 8 8 10.5 9.5"/></svg>
+                    Pending
+                </div>
+                <div class="db-stat-value" style="color:var(--s-amber)">{{ $stats['pending_bookings'] ?? 0 }}</div>
+                <div class="db-stat-label">Menunggu konfirmasi</div>
+                <div class="db-stat-divider"></div>
+                <div class="db-stat-footer">
+                    <span class="db-stat-footer-text">Perlu tindakan</span>
+                    @if(($stats['pending_bookings'] ?? 0) > 0)
+                    <span class="db-chip db-chip-amber">Urgent</span>
+                    @else
+                    <span class="db-chip db-chip-green">Bersih</span>
+                    @endif
+                </div>
             </div>
-            <p class="stat-label">Menunggu Konfirmasi</p>
-            <p class="stat-value" style="color:#D97706">{{ $stats['pending_bookings'] ?? 0 }}</p>
-            <p class="stat-sub text-amber-400">Perlu tindakan</p>
-        </div>
-        <div class="stat-card green">
-            <div class="stat-icon green">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12l5 5L20 7"/></svg>
+
+            {{-- Ongoing --}}
+            <div class="db-stat-card" onclick="window.location='{{ route('admin.reports.index') }}'" style="cursor:pointer">
+                <span class="db-stat-arrow">
+                    <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 10L10 2M10 2H5M10 2v5"/></svg>
+                </span>
+                <div class="db-stat-tag tag-green">
+                    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 8l4 4 6-7"/></svg>
+                    Aktif
+                </div>
+                <div class="db-stat-value" style="color:var(--s-green)">{{ $stats['ongoing_bookings'] ?? 0 }}</div>
+                <div class="db-stat-label">Sedang berjalan</div>
+                <div class="db-stat-divider"></div>
+                <div class="db-stat-footer">
+                    <span class="db-stat-footer-text">Aktif sekarang</span>
+                    <span class="db-chip db-chip-green">Live</span>
+                </div>
             </div>
-            <p class="stat-label">Sedang Berjalan</p>
-            <p class="stat-value" style="color:#059669">{{ $stats['ongoing_bookings'] ?? 0 }}</p>
-            <p class="stat-sub text-emerald-400">Aktif sekarang</p>
-        </div>
-        <div class="stat-card sky">
-            <div class="stat-icon sky">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+
+            {{-- Revenue --}}
+            <div class="db-stat-card" onclick="window.location='{{ route('admin.reports.index') }}'" style="cursor:pointer">
+                <span class="db-stat-arrow">
+                    <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 10L10 2M10 2H5M10 2v5"/></svg>
+                </span>
+                <div class="db-stat-tag tag-neutral">
+                    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="8" y1="1" x2="8" y2="15"/><path d="M11 4H6.5a2.5 2.5 0 000 5h3a2.5 2.5 0 010 5H4"/></svg>
+                    Revenue
+                </div>
+                <div class="db-stat-value mono-val">
+                    Rp {{ number_format(($stats['monthly_revenue'] ?? 0) / 1000000, 1, ',', '.') }}jt
+                </div>
+                <div class="db-stat-label">Pendapatan bulan ini</div>
+                <div class="db-stat-divider"></div>
+                <div class="db-stat-footer">
+                    <span class="db-stat-footer-text">{{ now()->locale('id')->isoFormat('MMMM YYYY') }}</span>
+                    <span class="db-chip db-chip-green">Detail →</span>
+                </div>
             </div>
-            <p class="stat-label">Pendapatan Bulan Ini</p>
-            <p class="stat-value mono text-xl" style="color:#0284C7">Rp {{ number_format($stats['monthly_revenue'] ?? 0, 0, ',', '.') }}</p>
-            <p class="stat-sub text-sky-400">Bulan ini</p>
+
         </div>
     </div>
 
     {{-- ══ CHARTS ROW ══ --}}
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div>
+        <p class="db-section-label">Analitik</p>
+        <div style="display:grid;grid-template-columns:1fr 360px;gap:12px">
 
-        {{-- Booking Trend Chart (7 hari) --}}
-        <div class="section-card lg:col-span-2">
-            <div class="section-header">
-                <div>
-                    <p class="section-title">Tren Pesanan</p>
-                    <p class="text-xs text-gray-400 mt-0.5">7 hari terakhir</p>
+            <div class="db-card">
+                <div class="db-card-header">
+                    <div>
+                        <div class="db-card-title">Tren Pesanan</div>
+                        <div class="db-card-sub">7 hari terakhir</div>
+                    </div>
+                    <span style="font-size:10px;font-weight:600;background:rgba(17,24,39,0.06);color:var(--text-2);padding:3px 9px;border-radius:6px">Mingguan</span>
                 </div>
-                <span class="text-xs font-semibold bg-indigo-50 text-indigo-600 px-2.5 py-1 rounded-full">Mingguan</span>
-            </div>
-            <div class="chart-wrap p-4">
-                <canvas id="bookingChart" height="110"></canvas>
-            </div>
-        </div>
-
-        {{-- Revenue Chart (6 bulan) --}}
-        <div class="section-card">
-            <div class="section-header">
-                <div>
-                    <p class="section-title">Pendapatan</p>
-                    <p class="text-xs text-gray-400 mt-0.5">6 bulan terakhir</p>
+                <div style="padding:16px">
+                    <canvas id="dbBookingChart" height="100"></canvas>
                 </div>
             </div>
-            <div class="chart-wrap p-4">
-                <canvas id="revenueChart" height="178"></canvas>
+
+            <div class="db-card">
+                <div class="db-card-header">
+                    <div>
+                        <div class="db-card-title">Pendapatan</div>
+                        <div class="db-card-sub">6 bulan terakhir</div>
+                    </div>
+                </div>
+                <div style="padding:16px">
+                    <canvas id="dbRevenueChart" height="148"></canvas>
+                </div>
             </div>
+
         </div>
     </div>
 
-    {{-- ══ BOOKINGS + FLEET ROW ══ --}}
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    {{-- ══ BOOKINGS + FLEET ══ --}}
+    <div>
+        <p class="db-section-label">Operasional</p>
+        <div style="display:grid;grid-template-columns:1fr 360px;gap:12px">
 
-        {{-- Pesanan Terbaru --}}
-        <div class="section-card">
-            <div class="section-header">
-                <p class="section-title">Pesanan Terbaru</p>
-                <a href="{{ route('admin.bookings.index') }}" class="section-link">Lihat semua →</a>
-            </div>
-            <div>
+            {{-- Pesanan Terbaru --}}
+            <div class="db-card">
+                <div class="db-card-header">
+                    <div class="db-card-title">Pesanan Terbaru</div>
+                    <a href="{{ route('admin.bookings.index') }}" class="db-card-link">Lihat semua →</a>
+                </div>
                 @forelse($recentBookings ?? [] as $booking)
-                <div class="flex items-center justify-between px-5 py-3 hover:bg-slate-50 transition-colors">
-                    <div class="flex items-center gap-3">
-                        <div class="h-8 w-8 rounded-lg bg-indigo-50 flex items-center justify-center flex-shrink-0">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-indigo-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+                <div class="db-row">
+                    <div style="display:flex;align-items:center;gap:10px">
+                        <div class="db-row-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
                         </div>
                         <div>
-                            <p class="text-sm font-semibold text-gray-800 mono">{{ $booking->booking_code }}</p>
-                            <p class="text-xs text-gray-400">{{ $booking->user['name'] ?? '-' }}</p>
+                            <div class="db-row-code">{{ $booking->booking_code }}</div>
+                            <div class="db-row-sub">{{ $booking->user['name'] ?? '-' }}</div>
                         </div>
                     </div>
-                    <span class="badge badge-{{ $booking->status }}">{{ ucfirst($booking->status) }}</span>
+                    <span class="db-badge badge-{{ $booking->status }}">{{ ucfirst($booking->status) }}</span>
                 </div>
                 @empty
-                <div class="flex flex-col items-center justify-center py-10 text-gray-400">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 mb-2 text-gray-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2"/></svg>
-                    <p class="text-sm">Belum ada pesanan.</p>
+                <div style="padding:32px 18px;text-align:center">
+                    <div style="font-size:12px;color:var(--text-3)">Belum ada pesanan</div>
                 </div>
                 @endforelse
             </div>
-        </div>
 
-        {{-- Status Armada + Donut ── --}}
-        <div class="section-card">
-            <div class="section-header">
-                <p class="section-title">Status Armada</p>
-                <a href="{{ route('admin.vehicles.index') }}" class="section-link">Kelola →</a>
-            </div>
-            <div class="grid grid-cols-2 gap-4 p-5 items-center">
-                <div>
-                    <canvas id="fleetDonut" width="160" height="160"></canvas>
+            {{-- Status Armada --}}
+            <div class="db-card">
+                <div class="db-card-header">
+                    <div class="db-card-title">Status Armada</div>
+                    <a href="{{ route('admin.vehicles.index') }}" class="db-card-link">Kelola →</a>
                 </div>
-                <div class="space-y-1">
-                    <div class="fleet-row">
-                        <div class="flex items-center gap-2">
-                            <span class="fleet-dot" style="background:#10B981"></span>
-                            <span class="fleet-label">Tersedia</span>
-                        </div>
-                        <span class="fleet-count">{{ $vehicleStats['available'] ?? 0 }}</span>
+                <div class="db-fleet-grid">
+                    <div class="db-fleet-canvas-wrap">
+                        <canvas id="dbFleetDonut" width="100" height="100"></canvas>
                     </div>
-                    <div class="fleet-row">
-                        <div class="flex items-center gap-2">
-                            <span class="fleet-dot" style="background:#3B82F6"></span>
-                            <span class="fleet-label">Disewa</span>
+                    <div class="db-fleet-legend">
+                        <div class="db-fleet-row">
+                            <div style="display:flex;align-items:center;gap:7px">
+                                <span class="db-fleet-dot" style="background:var(--s-green)"></span>
+                                <span class="db-fleet-label">Tersedia</span>
+                            </div>
+                            <span class="db-fleet-val">{{ $vehicleStats['available'] ?? 0 }}</span>
                         </div>
-                        <span class="fleet-count">{{ $vehicleStats['rented'] ?? 0 }}</span>
-                    </div>
-                    <div class="fleet-row">
-                        <div class="flex items-center gap-2">
-                            <span class="fleet-dot" style="background:#F59E0B"></span>
-                            <span class="fleet-label">Maintenance</span>
+                        <div class="db-fleet-row">
+                            <div style="display:flex;align-items:center;gap:7px">
+                                <span class="db-fleet-dot" style="background:var(--s-blue)"></span>
+                                <span class="db-fleet-label">Disewa</span>
+                            </div>
+                            <span class="db-fleet-val">{{ $vehicleStats['rented'] ?? 0 }}</span>
                         </div>
-                        <span class="fleet-count">{{ $vehicleStats['maintenance'] ?? 0 }}</span>
-                    </div>
-                    <div class="mt-3 pt-2 border-t border-gray-100">
+                        <div class="db-fleet-row">
+                            <div style="display:flex;align-items:center;gap:7px">
+                                <span class="db-fleet-dot" style="background:var(--s-amber)"></span>
+                                <span class="db-fleet-label">Maintenance</span>
+                            </div>
+                            <span class="db-fleet-val">{{ $vehicleStats['maintenance'] ?? 0 }}</span>
+                        </div>
                         @php
-                            $total = ($vehicleStats['available'] ?? 0) + ($vehicleStats['rented'] ?? 0) + ($vehicleStats['maintenance'] ?? 0);
-                            $utilization = $total > 0 ? round((($vehicleStats['rented'] ?? 0) / $total) * 100) : 0;
+                            $dbTotal    = ($vehicleStats['available'] ?? 0) + ($vehicleStats['rented'] ?? 0) + ($vehicleStats['maintenance'] ?? 0);
+                            $dbUtilPct  = $dbTotal > 0 ? round((($vehicleStats['rented'] ?? 0) / $dbTotal) * 100) : 0;
                         @endphp
-                        <p class="text-xs text-gray-400 font-medium">Utilisasi Armada</p>
-                        <p class="text-xl font-extrabold text-gray-800 mono">{{ $utilization }}%</p>
-                        <div class="mt-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                            <div class="h-full bg-blue-500 rounded-full transition-all" style="width:{{ $utilization }}%"></div>
+                        <div class="db-util-wrap">
+                            <div class="db-util-label">Utilisasi</div>
+                            <div class="db-util-val">{{ $dbUtilPct }}%</div>
+                            <div class="db-util-track">
+                                <div class="db-util-fill" style="width:{{ $dbUtilPct }}%"></div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
+
         </div>
     </div>
 
-    {{-- ══ PETA REAL-TIME ══ --}}
-    <div class="section-card">
-        
-        <div class="section-header">
-            <div class="flex items-center gap-2">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-indigo-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/></svg>
-                <p class="section-title">Lokasi Armada Real-time</p>
+    {{-- ══ MAP ══ --}}
+    <div>
+        <p class="db-section-label">Lokasi Real-time</p>
+        <div class="db-card">
+            <div class="db-card-header">
+                <div style="display:flex;align-items:center;gap:7px">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-2)" stroke-width="1.8"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
+                    <div class="db-card-title">Lokasi Armada</div>
+                </div>
+                <a href="{{ route('admin.maps.index') }}" class="db-card-link">Peta detail →</a>
             </div>
-            <a href="{{ route('admin.maps.index') }}" class="section-link">Peta Detail →</a>
+            <div id="db-map"></div>
         </div>
-
-        {{-- Leaflet CSS (inline, bukan @push) --}}
-        <style>
-            #leaflet-map { height: 420px; width: 100%; border-radius: 0 0 16px 16px; z-index: 0; }
-            .leaflet-container { font-family: 'Plus Jakarta Sans', sans-serif; background: #DBEAFE; }
-            /* Custom pin styles */
-            .v-marker-wrap { position: relative; }
-            .leaflet-control-zoom { border: none !important; box-shadow: 0 2px 8px rgba(0,0,0,.12) !important; }
-            .leaflet-control-zoom a {
-                font-size: 16px !important; color: #374151 !important;
-                border-radius: 8px !important; border: none !important;
-                width: 30px !important; height: 30px !important; line-height: 30px !important;
-            }
-            .leaflet-control-zoom a:hover { background: #EEF2FF !important; color: #4F46E5 !important; }
-            /* Map legend */
-            .map-legend-leaflet {
-                background: white; border: 1px solid #E2E8F0;
-                border-radius: 10px; padding: 10px 14px;
-                font-family: 'Plus Jakarta Sans', sans-serif;
-                box-shadow: 0 2px 8px rgba(0,0,0,.06);
-                line-height: 1.6;
-            }
-            .map-legend-leaflet p { font-size: 10px; font-weight: 800; color: #374151; margin: 0 0 5px; letter-spacing: .04em; }
-            .map-legend-leaflet span { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 600; color: #475569; }
-            .leg-dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
-            /* Popup */
-            .leaflet-popup-content-wrapper {
-                border-radius: 12px !important; padding: 0 !important;
-                box-shadow: 0 8px 24px rgba(0,0,0,.15) !important; border: none !important;
-            }
-            .leaflet-popup-content { margin: 0 !important; }
-            .leaflet-popup-tip-container { display: none; }
-            .pin-popup { padding: 12px 16px; min-width: 180px; }
-            .pin-popup-plate { font-size: 14px; font-weight: 800; color: #0F172A; font-family: 'JetBrains Mono', monospace; }
-            .pin-popup-driver { font-size: 11px; color: #94A3B8; margin: 2px 0 6px; }
-            .pin-popup-status { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 99px; }
-            .pin-popup-link { display: block; margin-top: 8px; font-size: 11px; font-weight: 600; color: #4F46E5; text-decoration: none; }
-            .pin-popup-link:hover { text-decoration: underline; }
-        </style>
-
-        <div id="leaflet-map"></div>
     </div>
 
-    {{-- ══ ALERT BANNER: Perlu Konfirmasi ══ --}}
+    {{-- ══ ALERT: Perlu Konfirmasi ══ --}}
     @if(isset($acceptedBookings) && $acceptedBookings->count() > 0)
-    <div class="alert-banner">
-        <div class="alert-header">
-            <svg class="h-4 w-4 text-amber-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M12 3a9 9 0 110 18A9 9 0 0112 3z"/>
-            </svg>
-            <h4 class="font-bold text-amber-800 text-sm">Perlu Konfirmasi Admin ({{ $acceptedBookings->count() }})</h4>
-        </div>
-        <div>
+    <div>
+        <p class="db-section-label">Perlu Tindakan</p>
+        <div class="db-alert">
+            <div class="db-alert-header">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--s-amber)" stroke-width="2"><path d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+                <span class="db-alert-title">Menunggu Konfirmasi Admin</span>
+                <span class="db-alert-count">{{ $acceptedBookings->count() }}</span>
+            </div>
             @foreach($acceptedBookings as $booking)
-            <div class="flex items-center justify-between px-5 py-3 hover:bg-amber-50/50 transition-colors">
-                <div class="flex items-center gap-3">
-                    <div class="h-7 w-7 rounded-md bg-amber-100 flex items-center justify-center flex-shrink-0">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-amber-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+            <div class="db-row">
+                <div style="display:flex;align-items:center;gap:10px">
+                    <div class="db-row-icon" style="background:var(--s-amber-bg)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="var(--s-amber)" stroke-width="1.8" width="14" height="14"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
                     </div>
                     <div>
-                        <p class="text-sm font-bold text-gray-800 mono">{{ $booking->booking_code }}</p>
-                        <p class="text-xs text-gray-500">Driver: <span class="font-semibold">{{ $booking->driver['name'] ?? '-' }}</span> · User: <span class="font-semibold">{{ $booking->user['name'] ?? '-' }}</span></p>
+                        <div class="db-row-code">{{ $booking->booking_code }}</div>
+                        <div class="db-row-sub">
+                            Driver: <strong style="color:var(--text-2)">{{ $booking->driver['name'] ?? '-' }}</strong>
+                            · User: <strong style="color:var(--text-2)">{{ $booking->user['name'] ?? '-' }}</strong>
+                        </div>
                     </div>
                 </div>
-                <form method="POST" action="{{ route('admin.bookings.confirm', $booking->_id) }}">
+                <form method="POST" action="{{ route('admin.bookings.confirm', $booking->_id) }}" style="margin:0">
                     @csrf
                     <button type="submit" class="btn-confirm">Konfirmasi</button>
                 </form>
@@ -396,223 +532,224 @@
 </div>
 </div>
 
+</div>
+
 {{-- ══ SCRIPTS ══ --}}
 @php
-$defaultBookingTrend = [
-    ['date'=>'Sen','total'=>8],
-    ['date'=>'Sel','total'=>14],
-    ['date'=>'Rab','total'=>11],
-    ['date'=>'Kam','total'=>19],
-    ['date'=>'Jum','total'=>22],
-    ['date'=>'Sab','total'=>17],
-    ['date'=>'Min','total'=>9],
+/* ── Default fallback data (ganti dengan data nyata dari controller) ──
+ *
+ * Tambahkan ke adminDashboard() di DashboardController:
+ *
+ * $bookingTrend = Booking::selectRaw("DATE_FORMAT(created_at, '%a') as date, COUNT(*) as total")
+ *     ->where('created_at', '>=', now()->subDays(6)->startOfDay())
+ *     ->groupBy('date')
+ *     ->orderBy('created_at')
+ *     ->get()->toArray();
+ *
+ * $revenueChart = Booking::whereIn('status', ['confirmed','ongoing','completed'])
+ *     ->where('confirmed_at', '>=', now()->subMonths(5)->startOfMonth())
+ *     ->selectRaw("DATE_FORMAT(confirmed_at, '%b') as month, SUM(total_price) as revenue")
+ *     ->groupBy('month')
+ *     ->orderBy('confirmed_at')
+ *     ->get()->toArray();
+ */
+$dbBookingTrend = $bookingTrend ?? [
+    ['date'=>'Sen','total'=>8],['date'=>'Sel','total'=>14],['date'=>'Rab','total'=>11],
+    ['date'=>'Kam','total'=>19],['date'=>'Jum','total'=>22],['date'=>'Sab','total'=>17],['date'=>'Min','total'=>9],
 ];
-$defaultRevenueChart = [
-    ['month'=>'Okt','revenue'=>12000000],
-    ['month'=>'Nov','revenue'=>18500000],
-    ['month'=>'Des','revenue'=>22000000],
-    ['month'=>'Jan','revenue'=>16000000],
-    ['month'=>'Feb','revenue'=>25500000],
-    ['month'=>'Mar','revenue'=>28000000],
+$dbRevenueData = $revenueChart ?? [
+    ['month'=>'Okt','revenue'=>12000000],['month'=>'Nov','revenue'=>18500000],
+    ['month'=>'Des','revenue'=>22000000],['month'=>'Jan','revenue'=>16000000],
+    ['month'=>'Feb','revenue'=>25500000],['month'=>'Mar','revenue'=>28000000],
 ];
-$chartBookingTrend = $bookingTrend ?? $defaultBookingTrend;
-$chartRevenueData  = $revenueChart ?? $defaultRevenueChart;
-$mapVehicleLocations = isset($vehicleLocations) ? (array) $vehicleLocations : [];
 @endphp
 
+@push('scripts')
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<link  rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+
 <script>
-// ─────────────────────────────────────────────
-//  CHART DATA (ganti dengan data dari controller)
-// ─────────────────────────────────────────────
+/* ── Chart defaults ── */
+Chart.defaults.font.family = "'DM Sans', sans-serif";
+Chart.defaults.color = 'rgba(17,24,39,0.35)';
 
-// Booking trend — dari: $bookingTrend = Booking::selectRaw('DATE(created_at) as date, COUNT(*) as total')...
-const bookingTrendData = @json($chartBookingTrend);
+const dbBookingData  = @json($dbBookingTrend);
+const dbRevenueData  = @json($dbRevenueData);
 
-// Revenue per bulan — dari: $revenueChart = Booking::selectRaw('MONTH(created_at) as month, SUM(total_price) as revenue')...
-const revenueData = @json($chartRevenueData);
+/* ── Booking Trend (line) ── */
+(function(){
+    const ctx = document.getElementById('dbBookingChart').getContext('2d');
+    const grad = ctx.createLinearGradient(0,0,0,180);
+    grad.addColorStop(0,'rgba(17,24,39,0.08)');
+    grad.addColorStop(1,'rgba(17,24,39,0)');
 
-// ── Booking Trend Line Chart ──
-const bookingCtx = document.getElementById('bookingChart').getContext('2d');
-const gradientBooking = bookingCtx.createLinearGradient(0,0,0,200);
-gradientBooking.addColorStop(0,'rgba(79,70,229,0.18)');
-gradientBooking.addColorStop(1,'rgba(79,70,229,0)');
-
-new Chart(bookingCtx, {
-    type: 'line',
-    data: {
-        labels: bookingTrendData.map(d => d.date),
-        datasets: [{
-            label: 'Pesanan',
-            data: bookingTrendData.map(d => d.total),
-            borderColor: '#4F46E5',
-            backgroundColor: gradientBooking,
-            borderWidth: 2.5,
-            fill: true,
-            tension: 0.4,
-            pointBackgroundColor: '#4F46E5',
-            pointBorderColor: '#fff',
-            pointBorderWidth: 2,
-            pointRadius: 4,
-            pointHoverRadius: 6,
-        }]
-    },
-    options: {
-        responsive: true, maintainAspectRatio: true,
-        plugins: { legend: { display: false }, tooltip: {
-            backgroundColor: '#0F172A',
-            titleFont: { family: 'Plus Jakarta Sans', size: 12 },
-            bodyFont:  { family: 'Plus Jakarta Sans', size: 12 },
-            padding: 10, cornerRadius: 8,
-            callbacks: { label: ctx => `  ${ctx.raw} pesanan` }
-        }},
-        scales: {
-            y: { beginAtZero: true, grid: { color: '#F1F5F9' }, ticks: { font: { family: 'Plus Jakarta Sans', size: 11 }, color: '#94A3B8' } },
-            x: { grid: { display: false }, ticks: { font: { family: 'Plus Jakarta Sans', size: 11 }, color: '#94A3B8' } }
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: dbBookingData.map(d=>d.date),
+            datasets: [{
+                data: dbBookingData.map(d=>d.total),
+                borderColor: 'rgb(17,24,39)',
+                backgroundColor: grad,
+                borderWidth: 2,
+                fill: true, tension: 0.4,
+                pointBackgroundColor: 'rgb(17,24,39)',
+                pointBorderColor: '#fff', pointBorderWidth: 2,
+                pointRadius: 3.5, pointHoverRadius: 5,
+            }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: true,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: 'rgb(17,24,39)',
+                    titleFont: { size: 11 }, bodyFont: { size: 11 },
+                    padding: 10, cornerRadius: 8,
+                    callbacks: { label: c => `  ${c.raw} pesanan` }
+                }
+            },
+            scales: {
+                y: { beginAtZero: true, grid: { color: 'rgba(17,24,39,0.05)' }, ticks: { font: { size: 10 } } },
+                x: { grid: { display: false }, ticks: { font: { size: 10 } } }
+            }
         }
-    }
-});
+    });
+})();
 
-// ── Revenue Bar Chart ──
-const revenueCtx = document.getElementById('revenueChart').getContext('2d');
-const gradientRevenue = revenueCtx.createLinearGradient(0,0,0,250);
-gradientRevenue.addColorStop(0,'rgba(14,165,233,0.9)');
-gradientRevenue.addColorStop(1,'rgba(14,165,233,0.3)');
+/* ── Revenue Bar ── */
+(function(){
+    const ctx = document.getElementById('dbRevenueChart').getContext('2d');
 
-new Chart(revenueCtx, {
-    type: 'bar',
-    data: {
-        labels: revenueData.map(d => d.month),
-        datasets: [{
-            label: 'Pendapatan',
-            data: revenueData.map(d => d.revenue),
-            backgroundColor: gradientRevenue,
-            borderRadius: 6,
-            borderSkipped: false,
-        }]
-    },
-    options: {
-        responsive: true, maintainAspectRatio: true,
-        plugins: { legend: { display: false }, tooltip: {
-            backgroundColor: '#0F172A',
-            titleFont: { family: 'Plus Jakarta Sans', size: 12 },
-            bodyFont:  { family: 'JetBrains Mono', size: 11 },
-            padding: 10, cornerRadius: 8,
-            callbacks: { label: ctx => `  Rp ${ctx.raw.toLocaleString('id-ID')}` }
-        }},
-        scales: {
-            y: { beginAtZero: true, grid: { color: '#F1F5F9' },
-                 ticks: { font: { family: 'Plus Jakarta Sans', size: 10 }, color: '#94A3B8',
-                          callback: v => 'Rp' + (v/1000000).toFixed(0) + 'jt' } },
-            x: { grid: { display: false }, ticks: { font: { family: 'Plus Jakarta Sans', size: 11 }, color: '#94A3B8' } }
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: dbRevenueData.map(d=>d.month),
+            datasets: [{
+                data: dbRevenueData.map(d=>d.revenue),
+                backgroundColor: 'rgba(17,24,39,0.1)',
+                hoverBackgroundColor: 'rgba(17,24,39,0.7)',
+                borderRadius: 5, borderSkipped: false,
+            }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: true,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: 'rgb(17,24,39)',
+                    bodyFont: { family: "'DM Mono', monospace", size: 11 },
+                    padding: 10, cornerRadius: 8,
+                    callbacks: { label: c => `  Rp ${c.raw.toLocaleString('id-ID')}` }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true, grid: { color: 'rgba(17,24,39,0.05)' },
+                    ticks: { font: { size: 10 }, callback: v => 'Rp'+(v/1000000).toFixed(0)+'jt' }
+                },
+                x: { grid: { display: false }, ticks: { font: { size: 10 } } }
+            }
         }
-    }
-});
+    });
+})();
 
-// ── Fleet Donut Chart ──
-const fleetCtx = document.getElementById('fleetDonut').getContext('2d');
-new Chart(fleetCtx, {
-    type: 'doughnut',
-    data: {
-        labels: ['Tersedia', 'Disewa', 'Maintenance'],
-        datasets: [{
-            data: [
-                {{ $vehicleStats['available'] ?? 5 }},
-                {{ $vehicleStats['rented'] ?? 3 }},
-                {{ $vehicleStats['maintenance'] ?? 1 }}
-            ],
-            backgroundColor: ['#10B981','#3B82F6','#F59E0B'],
-            borderWidth: 0,
-            hoverOffset: 6,
-        }]
-    },
-    options: {
-        responsive: false, cutout: '70%',
-        plugins: { legend: { display: false }, tooltip: {
-            backgroundColor: '#0F172A',
-            bodyFont: { family: 'Plus Jakarta Sans', size: 12 },
-            padding: 10, cornerRadius: 8,
-        }},
-    }
-});
+/* ── Fleet Donut ── */
+(function(){
+    const ctx = document.getElementById('dbFleetDonut').getContext('2d');
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Tersedia','Disewa','Maintenance'],
+            datasets: [{
+                data: [
+                    {{ $vehicleStats['available'] ?? 0 }},
+                    {{ $vehicleStats['rented'] ?? 0 }},
+                    {{ $vehicleStats['maintenance'] ?? 0 }}
+                ],
+                backgroundColor: ['#16a34a','#2563eb','#d97706'],
+                borderWidth: 0, hoverOffset: 4,
+            }]
+        },
+        options: {
+            responsive: false, cutout: '72%',
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: 'rgb(17,24,39)',
+                    bodyFont: { size: 12 }, padding: 10, cornerRadius: 8
+                }
+            }
+        }
+    });
+})();
 
-// ─────────────────────────────────────────────
-//  LEAFLET MAP — Indonesia + Vehicle Pins
-// ─────────────────────────────────────────────
+/* ── Leaflet Map ── */
 document.addEventListener('DOMContentLoaded', function() {
+    const vehicles = @json(isset($vehicleLocations) ? $vehicleLocations : []);
 
-    const vehicles = @json($mapVehicleLocations);
-
-    const statusConfig = {
-        ongoing:     { color: '#10B981', bg: '#ECFDF5', text: '#065F46', label: 'Berjalan' },
-        available:   { color: '#3B82F6', bg: '#EFF6FF', text: '#1E40AF', label: 'Tersedia' },
-        maintenance: { color: '#F59E0B', bg: '#FFFBEB', text: '#92400E', label: 'Maintenance' },
-        rented:      { color: '#3B82F6', bg: '#EFF6FF', text: '#1E40AF', label: 'Disewa' },
+    const statusCfg = {
+        ongoing:     { color:'#16a34a', bg:'#f0fdf4', text:'#14532d', label:'Berjalan',    badgeClass:'badge-ongoing'   },
+        available:   { color:'#2563eb', bg:'#eff6ff', text:'#1e3a8a', label:'Tersedia',    badgeClass:'badge-accepted'  },
+        rented:      { color:'#2563eb', bg:'#eff6ff', text:'#1e3a8a', label:'Disewa',      badgeClass:'badge-accepted'  },
+        maintenance: { color:'#d97706', bg:'#fffbeb', text:'#78350f', label:'Maintenance', badgeClass:'badge-pending'   },
     };
 
-    const map = L.map('leaflet-map', {
-        center: [-2.5, 118],
-        zoom: 5,
-        minZoom: 4,
-        maxZoom: 14,
-        zoomControl: true,
-        scrollWheelZoom: false,
-        maxBounds: [[-15, 90], [10, 145]],
-        maxBoundsViscosity: 0.9,
+    const map = L.map('db-map', {
+        center: [-2.5, 118], zoom: 5, minZoom: 4, maxZoom: 14,
+        zoomControl: true, scrollWheelZoom: false,
+        maxBounds: [[-15, 90], [10, 145]], maxBoundsViscosity: 0.9,
     });
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        attribution: '© <a href="https://openstreetmap.org/copyright">OpenStreetMap</a>',
         maxZoom: 19,
     }).addTo(map);
 
     function makeIcon(status) {
-        const cfg = statusConfig[status] || statusConfig.available;
+        const c = statusCfg[status] || statusCfg.available;
         const pulse = status === 'ongoing' ? `
-            <circle cx="16" cy="16" r="14" fill="none" stroke="${cfg.color}" stroke-width="2" opacity="0.5">
+            <circle cx="18" cy="18" r="14" fill="none" stroke="${c.color}" stroke-width="1.5" opacity="0.4">
                 <animate attributeName="r" values="14;22;14" dur="2s" repeatCount="indefinite"/>
-                <animate attributeName="opacity" values="0.5;0;0.5" dur="2s" repeatCount="indefinite"/>
+                <animate attributeName="opacity" values="0.4;0;0.4" dur="2s" repeatCount="indefinite"/>
             </circle>` : '';
         const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 36 36">
             ${pulse}
-            <circle cx="18" cy="18" r="14" fill="${cfg.color}" fill-opacity="0.18"/>
-            <circle cx="18" cy="18" r="9"  fill="${cfg.color}"/>
-            <circle cx="18" cy="18" r="3.5" fill="white"/>
+            <circle cx="18" cy="18" r="12" fill="${c.color}" fill-opacity="0.15"/>
+            <circle cx="18" cy="18" r="8" fill="${c.color}"/>
+            <circle cx="18" cy="18" r="3" fill="white"/>
         </svg>`;
         return L.divIcon({ html: svg, className: '', iconSize: [36,36], iconAnchor: [18,18], popupAnchor: [0,-20] });
     }
 
     vehicles.forEach(v => {
         if (!v.lat || !v.lon) return;
-        const cfg = statusConfig[v.status] || statusConfig.available;
+        const c = statusCfg[v.status] || statusCfg.available;
         const updatedNote = v.location_updated_at
-            ? `<div style="font-size:10px;color:#94A3B8;margin-top:6px">🕐 Update: ${v.location_updated_at}</div>`
-            : '';
+            ? `<div style="font-size:10px;color:var(--text-3);margin-top:5px">Update: ${v.location_updated_at}</div>` : '';
         L.marker([v.lat, v.lon], { icon: makeIcon(v.status) })
-            .bindPopup(`<div class="pin-popup">
-                <div class="pin-popup-plate">${v.plate}</div>
-                <div class="pin-popup-driver">Driver: ${v.driver || '-'}</div>
-                <span class="pin-popup-status" style="background:${cfg.bg};color:${cfg.text}">
-                    <span style="width:7px;height:7px;border-radius:50%;background:${cfg.color};display:inline-block;margin-right:4px"></span>
-                    ${cfg.label}
-                </span>
+            .bindPopup(`<div class="db-map-popup">
+                <div class="db-map-popup-plate">${v.plate}</div>
+                <div class="db-map-popup-driver">Driver: ${v.driver || '-'}</div>
+                <span class="db-badge ${c.badgeClass}">${c.label}</span>
                 ${updatedNote}
-            </div>`, { maxWidth: 220, className: '' })
+            </div>`, { maxWidth: 200, className: '' })
             .addTo(map);
     });
 
     const legend = L.control({ position: 'bottomleft' });
     legend.onAdd = () => {
-        const d = L.DomUtil.create('div','map-legend-leaflet');
-        d.innerHTML = `<p>LEGENDA</p>
-            <span><i class="leg-dot" style="background:#10B981"></i> Berjalan</span>
-            <span><i class="leg-dot" style="background:#3B82F6"></i> Tersedia</span>
-            <span><i class="leg-dot" style="background:#F59E0B"></i> Maintenance</span>`;
+        const d = L.DomUtil.create('div', 'db-map-legend');
+        d.innerHTML = `<div class="db-map-legend-title">Legenda</div>
+            <div class="db-map-legend-row"><span class="leg-dot" style="background:#16a34a"></span>Berjalan</div>
+            <div class="db-map-legend-row"><span class="leg-dot" style="background:#2563eb"></span>Tersedia</div>
+            <div class="db-map-legend-row"><span class="leg-dot" style="background:#d97706"></span>Maintenance</div>`;
         return d;
     };
     legend.addTo(map);
-
     setTimeout(() => map.invalidateSize(), 400);
 });
-</script>
 
+</script>
+@endpush
