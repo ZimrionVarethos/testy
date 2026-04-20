@@ -63,12 +63,12 @@ class Payment extends Model
     public function isExpired(): bool
     {
         if ($this->status === self::STATUS_EXPIRED) return true;
-    
+
         // Jika expired_at ada, pakai itu
         if ($this->expired_at !== null) {
             return \Carbon\Carbon::parse($this->expired_at)->isPast();
         }
-    
+
         // Fallback untuk payment lama tanpa expired_at:
         // anggap expired setelah 24 jam dari created_at
         return \Carbon\Carbon::parse($this->created_at)->addHours(24)->isPast();
@@ -126,7 +126,7 @@ class Payment extends Model
             ? \Carbon\Carbon::parse($this->expired_at)
             : \Carbon\Carbon::parse($this->created_at)->addHours(24); // fallback
     
-        return 'tersisa ' . $deadline->diffForHumans(absolute: true);
+        return 'tersisa ' . $deadline->diffForHumans(null, true);
     }
 
 }

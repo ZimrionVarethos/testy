@@ -79,16 +79,18 @@ class PaymentController extends Controller
         }
 
         // ── BARU: hitung deadline bayar = min(created_at+24jam, start_date) ──
+        // Hitung deadline bayar
         $expiredAt = \Carbon\Carbon::parse($booking->created_at)->addHours(24);
         $startDate = \Carbon\Carbon::parse($booking->start_date);
+
         if ($startDate->lt($expiredAt)) {
             $expiredAt = $startDate;
         }
 
-        // Jika deadline sudah lewat, tolak langsung tanpa buat token
+        // Jika deadline sudah lewat, tolak
         if ($expiredAt->isPast()) {
             return redirect()->route('bookings.show', $bookingId)
-                ->with('error', 'Batas waktu pembayaran sudah terlewat. Pesanan akan dibatalkan otomatis.');
+                ->with('error', 'Batas waktu pembayaran sudah terlewat.');
         }
 
         // Reuse snap token jika masih pending, belum expired, dan token ada
@@ -108,9 +110,16 @@ class PaymentController extends Controller
         $orderId = 'PAY-' . (string) $booking->_id . '-' . time();
         $user    = Auth::user();
 
-        // Durasi expiry Midtrans disesuaikan dengan sisa waktu sistem
+        // ── DIUPDATE: minimum 30 menit, maksimal sesuai deadline ──
         $minutesLeft = (int) \Carbon\Carbon::now()->diffInMinutes($expiredAt, false);
-        $minutesLeft = max(5, $minutesLeft); // minimal 5 menit
+
+        if ($minutesLeft < 30) {
+            // Deadline terlalu mepet — beri minimal 30 menit
+            // tapi jangan lebih dari original deadline
+            $minutesLeft = 30;
+            // Geser expired_at ikut
+            $expiredAt = \Carbon\Carbon::now()->addMinutes(30);
+        }
 
         $params = [
             'transaction_details' => [
