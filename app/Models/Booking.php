@@ -12,20 +12,20 @@ class Booking extends Model
 
     protected $fillable = [
         'booking_code',
-        'status',        // pending | accepted | confirmed | ongoing | completed | cancelled
-        'user',          // embedded snapshot
-        'vehicle',       // embedded snapshot
-        'driver',        // embedded snapshot (nullable sampai driver ambil)
+        'status',
+        'user',
+        'vehicle',
+        'driver',
         'pickup',
         'dropoff',
-        'start_date',    // tanggal mulai sewa
-        'end_date',      // tanggal selesai sewa
+        'start_date',
+        'end_date',
         'duration_days',
         'total_price',
         'notes',
-        'accepted_at',   // waktu driver accept
-        'confirmed_at',  // waktu admin confirm
-        'started_at',    // waktu status jadi ongoing (otomatis via scheduler)
+        'assigned_at',   // ← baru: waktu admin assign driver
+        'confirmed_at',
+        'started_at',
         'completed_at',
         'cancelled_at',
         'cancel_reason',
@@ -34,7 +34,7 @@ class Booking extends Model
     protected $casts = [
         'start_date'   => 'datetime',
         'end_date'     => 'datetime',
-        'accepted_at'  => 'datetime',
+        'assigned_at'  => 'datetime',
         'confirmed_at' => 'datetime',
         'started_at'   => 'datetime',
         'completed_at' => 'datetime',
@@ -42,24 +42,28 @@ class Booking extends Model
     ];
 
     // ── Scopes ──────────────────────────────────────────────
-    public function scopePending($q)       { return $q->where('status', 'pending'); }
-    public function scopeAccepted($q)      { return $q->where('status', 'accepted'); }
-    public function scopeConfirmed($q)     { return $q->where('status', 'confirmed'); }
-    public function scopeOngoing($q)       { return $q->where('status', 'ongoing'); }
-    public function scopeCompleted($q)     { return $q->where('status', 'completed'); }
+    public function scopePending($q)    { return $q->where('status', 'pending'); }
+    public function scopeConfirmed($q)  { return $q->where('status', 'confirmed'); }
+    public function scopeOngoing($q)    { return $q->where('status', 'ongoing'); }
+    public function scopeCompleted($q)  { return $q->where('status', 'completed'); }
 
-    // Booking yang sudah confirmed & start_date-nya sudah lewat tapi belum ongoing
     public function scopeReadyToStart($q)
     {
         return $q->where('status', 'confirmed')
                  ->where('start_date', '<=', Carbon::now());
     }
 
-    // Booking yang ongoing & end_date-nya sudah lewat
     public function scopeReadyToComplete($q)
     {
         return $q->where('status', 'ongoing')
                  ->where('end_date', '<=', Carbon::now());
+    }
+
+    // Booking aktif milik driver tertentu
+    public function scopeActiveByDriver($q, string $driverId)
+    {
+        return $q->whereIn('status', ['confirmed', 'ongoing'])
+                 ->where('driver.driver_id', $driverId);
     }
 
     // ── Helpers ─────────────────────────────────────────────
@@ -71,5 +75,48 @@ class Booking extends Model
     public static function generateCode(): string
     {
         return 'BRN-' . now()->format('Ymd') . '-' . strtoupper(\Str::random(5));
+    }
+
+    /**
+     * Kembalikan array string ID driver yang sedang punya pesanan aktif.
+     * Dipakai controller untuk menyaring driver tersedia.
+     */
+    public static function busyDriverIds(): array
+    {
+        return static::whereIn('status', ['confirmed', 'ongoing'])
+            ->whereNotNull('driver.driver_id')
+            ->get()
+            ->pluck('driver.driver_id')
+            ->map(fn($id) => (string) $id)
+            ->unique()
+            ->values()
+            ->toArray();
+    }
+
+    /**
+     * Hitung deadline konfirmasi:
+     * mana yang lebih awal antara created_at+24jam dan start_date.
+     */
+    public function confirmationDeadline(): \Carbon\Carbon
+    {
+        $byTime    = \Carbon\Carbon::parse($this->created_at)->addHours(24);
+        $byStart   = \Carbon\Carbon::parse($this->start_date);
+    
+        return $byTime->lt($byStart) ? $byTime : $byStart;
+    }
+    
+    /**
+     * Sisa waktu sebelum deadline, dalam format human-readable.
+     * Contoh: "tersisa 3 jam 45 menit" atau "sudah terlewat"
+     */
+    public function confirmationDeadlineLabel(): string
+    {
+        $deadline = $this->confirmationDeadline();
+    
+        if ($deadline->isPast()) {
+            return 'sudah terlewat';
+        }
+    
+        return 'tersisa ' . $deadline->diffForHumans(absolute: true);
     }
 }

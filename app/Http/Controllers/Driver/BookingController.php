@@ -1,51 +1,53 @@
 <?php
 
-// ─────────────────────────────────────────────────────────────
-
 namespace App\Http\Controllers\Driver;
+
 use App\Http\Controllers\Controller;
-use App\Models\Booking; use App\Models\User;
-use App\Services\BookingService;
+use App\Models\Booking;
 use Illuminate\Support\Facades\Auth;
 
 class BookingController extends Controller
 {
-    public function __construct(private BookingService $bookingService) {}
-
-    public function available()
-    {
-        $bookings = Booking::where('status', 'pending')->orderBy('created_at', 'asc')->paginate(10);
-        return view('driver.bookings.available', compact('bookings'));
-    }
-
+    /**
+     * Daftar pesanan yang sudah di-assign ke driver ini.
+     */
     public function index()
     {
         $driverId = (string) Auth::id();
-        $bookings = Booking::where('driver.driver_id', $driverId)->orderBy('created_at', 'desc')->paginate(10);
+
+        $bookings = Booking::where('driver.driver_id', $driverId)
+            ->orderBy('created_at', 'desc')
+            ->paginate(10);
+
         return view('driver.bookings.index', compact('bookings'));
     }
 
+    /**
+     * Detail pesanan — hanya bisa dilihat driver yang bersangkutan.
+     */
     public function show(string $id)
     {
         $booking = Booking::findOrFail($id);
+
+        abort_if(
+            ($booking->driver['driver_id'] ?? null) !== (string) Auth::id(),
+            403,
+            'Anda tidak punya akses ke pesanan ini.'
+        );
+
         return view('driver.bookings.show', compact('booking'));
     }
 
-    public function accept(string $id)
-    {
-        try {
-            $booking = $this->bookingService->driverAcceptBooking($id, Auth::user());
-            return redirect()->route('driver.bookings.show', $booking->_id)->with('success', 'Berhasil mengambil pesanan!');
-        } catch (\Exception $e) {
-            return back()->withErrors(['error' => $e->getMessage()]);
-        }
-    }
-
+    /**
+     * Toggle status ketersediaan driver (is_available di driver_profile).
+     */
     public function toggleAvailability()
     {
-        $driver = Auth::user();
+        $driver  = Auth::user();
         $current = $driver->driver_profile['is_available'] ?? false;
         $driver->update(['driver_profile.is_available' => !$current]);
-        return back()->with('success', 'Status ketersediaan diperbarui.');
+
+        $label = $current ? 'tidak tersedia' : 'tersedia';
+        return back()->with('success', "Status Anda sekarang: {$label}.");
     }
 }

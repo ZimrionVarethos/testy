@@ -19,12 +19,16 @@ class Payment extends Model
         'status',           // pending | paid | failed | expired | cancelled
         'midtrans',         // array: snap_token, order_id, payment_type, transaction_id, dst
         'paid_at',          // datetime
+        'expired_at',  // ← BARU
     ];
 
     protected $casts = [
         'paid_at' => 'datetime',
         'amount'  => 'integer',
+        'expired_at' => 'datetime',  // ← BARU
     ];
+
+
 
     // ── Status constants ─────────────────────────────────────
     const STATUS_PENDING   = 'pending';
@@ -37,10 +41,39 @@ class Payment extends Model
     public function scopePending($q)   { return $q->where('status', self::STATUS_PENDING); }
     public function scopePaid($q)      { return $q->where('status', self::STATUS_PAID); }
     public function scopeFailed($q)    { return $q->where('status', self::STATUS_FAILED); }
+    public function scopeExpiredPending($q)
+    {
+        $now = \Carbon\Carbon::now();
+    
+        return $q->where('status', self::STATUS_PENDING)
+            ->where(function ($q) use ($now) {
+                // Payment baru: pakai expired_at
+                $q->where('expired_at', '<=', $now)
+                // Payment lama tanpa expired_at: fallback ke created_at + 24 jam
+                  ->orWhere(function ($q) use ($now) {
+                      $q->whereNull('expired_at')
+                        ->where('created_at', '<=', $now->copy()->subHours(24));
+                  });
+            });
+    }
 
     // ── Helpers ──────────────────────────────────────────────
     public function isPaid(): bool     { return $this->status === self::STATUS_PAID; }
     public function isPending(): bool  { return $this->status === self::STATUS_PENDING; }
+    public function isExpired(): bool
+    {
+        if ($this->status === self::STATUS_EXPIRED) return true;
+    
+        // Jika expired_at ada, pakai itu
+        if ($this->expired_at !== null) {
+            return \Carbon\Carbon::parse($this->expired_at)->isPast();
+        }
+    
+        // Fallback untuk payment lama tanpa expired_at:
+        // anggap expired setelah 24 jam dari created_at
+        return \Carbon\Carbon::parse($this->created_at)->addHours(24)->isPast();
+    }
+
 
     /**
      * Ambil payment yang aktif (pending atau paid) untuk booking tertentu.
@@ -52,6 +85,7 @@ class Payment extends Model
                    ->latest()
                    ->first();
     }
+
 
     /**
      * Label status dalam bahasa Indonesia.
@@ -82,4 +116,17 @@ class Payment extends Model
             default                => 'bg-gray-100 text-gray-600',
         };
     }
+
+
+    public function expiryLabel(): string
+    {
+        if ($this->isExpired()) return 'sudah kedaluwarsa';
+    
+        $deadline = $this->expired_at
+            ? \Carbon\Carbon::parse($this->expired_at)
+            : \Carbon\Carbon::parse($this->created_at)->addHours(24); // fallback
+    
+        return 'tersisa ' . $deadline->diffForHumans(absolute: true);
+    }
+
 }

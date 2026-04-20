@@ -13,6 +13,12 @@
                         ? \Carbon\Carbon::parse($payment->paid_at)->format('d M Y H:i')
                         : \Carbon\Carbon::parse($payment->created_at)->format('d M Y H:i') }}
                 </p>
+                {{-- ← BARU: tampilkan sisa waktu jika pending & belum expired --}}
+                @if($payment->isPending() && !$payment->isExpired() && $payment->expired_at)
+                <p class="text-xs text-amber-600 mt-0.5">
+                    ⏱ {{ $payment->expiryLabel() }}
+                </p>
+                @endif
             </div>
 
             <div class="text-right shrink-0 space-y-1">
@@ -22,13 +28,17 @@
                 <span class="px-2 py-0.5 text-xs rounded-full font-medium {{ $payment->statusBadgeClass() }}">
                     {{ $payment->statusLabel() }}
                 </span>
-                {{-- Tombol bayar jika masih pending --}}
-                @if($payment->status === 'pending')
+                {{-- ← BARU: cek expired sebelum tampilkan tombol --}}
+                @if($payment->isPending() && !$payment->isExpired())
                 <div>
                     <a href="{{ route('bookings.pay', $payment->booking_id) }}"
                        class="text-xs text-indigo-600 hover:underline font-medium">
                         Selesaikan Pembayaran →
                     </a>
+                </div>
+                @elseif($payment->isPending() && $payment->isExpired())
+                <div>
+                    <span class="text-xs text-gray-400">Waktu pembayaran habis</span>
                 </div>
                 @endif
             </div>

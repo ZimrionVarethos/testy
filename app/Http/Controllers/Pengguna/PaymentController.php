@@ -56,35 +56,61 @@ class PaymentController extends Controller
         $userId  = (string) Auth::id();
         $booking = Booking::findOrFail($bookingId);
 
-        // Pastikan booking milik pengguna ini
         if (($booking->user['user_id'] ?? null) !== $userId) abort(403);
 
-        // Hanya pending/confirmed yang boleh bayar
         if (!in_array($booking->status, ['pending', 'confirmed'])) {
             return redirect()->route('bookings.show', $bookingId)
-                             ->with('error', 'Pesanan ini tidak bisa dibayar (status: ' . $booking->status . ').');
+                ->with('error', 'Pesanan ini tidak bisa dibayar.');
         }
 
-        // Sudah lunas → tidak perlu bayar lagi
         $existing = Payment::activeForBooking((string) $booking->_id);
+
+        // Sudah lunas
         if ($existing && $existing->isPaid()) {
             return redirect()->route('bookings.show', $bookingId)
-                             ->with('info', 'Pesanan ini sudah lunas.');
+                ->with('info', 'Pesanan ini sudah lunas.');
         }
 
-        // Reuse snap token jika masih pending dan token ada
-        if ($existing && $existing->isPending() && !empty($existing->midtrans['snap_token'])) {
+        // ── BARU: payment pending tapi sudah expired dari sisi sistem ──
+        if ($existing && $existing->isPending() && $existing->isExpired()) {
+            // Tandai expired, lalu buat payment baru di bawah
+            $existing->update(['status' => Payment::STATUS_EXPIRED]);
+            $existing = null;
+        }
+
+        // ── BARU: hitung deadline bayar = min(created_at+24jam, start_date) ──
+        $expiredAt = \Carbon\Carbon::parse($booking->created_at)->addHours(24);
+        $startDate = \Carbon\Carbon::parse($booking->start_date);
+        if ($startDate->lt($expiredAt)) {
+            $expiredAt = $startDate;
+        }
+
+        // Jika deadline sudah lewat, tolak langsung tanpa buat token
+        if ($expiredAt->isPast()) {
+            return redirect()->route('bookings.show', $bookingId)
+                ->with('error', 'Batas waktu pembayaran sudah terlewat. Pesanan akan dibatalkan otomatis.');
+        }
+
+        // Reuse snap token jika masih pending, belum expired, dan token ada
+        if ($existing && $existing->isPending()
+            && !$existing->isExpired()
+            && !empty($existing->midtrans['snap_token'])) {
             return view('pengguna.payments.snap', [
                 'payment'    => $existing,
                 'booking'    => $booking,
                 'snap_token' => $existing->midtrans['snap_token'],
                 'client_key' => config('midtrans.client_key'),
+                'expired_at' => $existing->expired_at,  // ← kirim ke view
             ]);
         }
 
-        // Buat Snap token baru ke Midtrans
+        // Buat Snap token baru
         $orderId = 'PAY-' . (string) $booking->_id . '-' . time();
         $user    = Auth::user();
+
+        // Durasi expiry Midtrans disesuaikan dengan sisa waktu sistem
+        $minutesLeft = (int) \Carbon\Carbon::now()->diffInMinutes($expiredAt, false);
+        $minutesLeft = max(5, $minutesLeft); // minimal 5 menit
 
         $params = [
             'transaction_details' => [
@@ -96,30 +122,28 @@ class PaymentController extends Controller
                 'email'      => $user->email,
                 'phone'      => $user->phone ?? '',
             ],
-            'item_details' => [
-                [
-                    'id'       => (string) $booking->_id,
-                    'price'    => (int) $booking->total_price,
-                    'quantity' => 1,
-                    'name'     => 'Sewa ' . ($booking->vehicle['name'] ?? 'Kendaraan') . ' (' . $booking->booking_code . ')',
-                ],
-            ],
+            'item_details' => [[
+                'id'       => (string) $booking->_id,
+                'price'    => (int) $booking->total_price,
+                'quantity' => 1,
+                'name'     => 'Sewa ' . ($booking->vehicle['name'] ?? 'Kendaraan')
+                               . ' (' . $booking->booking_code . ')',
+            ]],
+            // ── BARU: sinkronkan expiry Midtrans dengan expiry sistem ──
             'expiry' => [
                 'start_time' => now()->format('Y-m-d H:i:s O'),
-                'unit'       => 'hours',
-                'duration'   => 24,
+                'unit'       => 'minutes',
+                'duration'   => $minutesLeft,
             ],
         ];
 
         try {
             $snapToken = \Midtrans\Snap::getSnapToken($params);
-            } catch (\Throwable $e) {
-                Log::error('Midtrans Snap token error', ['error' => $e->getMessage()]);
-                // DEBUG — hapus setelah ketemu masalahnya
-                return back()->with('error', 'Midtrans error: ' . $e->getMessage());
-            }
+        } catch (\Throwable $e) {
+            Log::error('Midtrans Snap token error', ['error' => $e->getMessage()]);
+            return back()->with('error', 'Gagal menghubungi Midtrans: ' . $e->getMessage());
+        }
 
-        // Simpan Payment baru
         $payment = $existing ?? new Payment();
         $payment->fill([
             'booking_id'   => (string) $booking->_id,
@@ -128,6 +152,7 @@ class PaymentController extends Controller
             'amount'       => (int) $booking->total_price,
             'method'       => 'snap',
             'status'       => Payment::STATUS_PENDING,
+            'expired_at'   => $expiredAt,  // ← BARU: simpan deadline
             'midtrans'     => [
                 'snap_token' => $snapToken,
                 'order_id'   => $orderId,
@@ -140,14 +165,14 @@ class PaymentController extends Controller
             'booking'    => $booking,
             'snap_token' => $snapToken,
             'client_key' => config('midtrans.client_key'),
+            'expired_at' => $expiredAt,  // ← kirim ke view
         ]);
     }
-
-    /**
-     * Finish callback setelah Snap — status sebenarnya diupdate via webhook.
-     */
-    public function finish(string $paymentId)
-    {
+     /**
+      * Finish callback setelah Snap — status sebenarnya diupdate via webhook.
+      */
+     public function finish(string $paymentId)
+     {
         $payment = Payment::findOrFail($paymentId);
 
         if ($payment->user_id !== (string) Auth::id()) abort(403);

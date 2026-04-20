@@ -42,10 +42,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
 Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
 
     // Pesanan
-    Route::get('bookings',               [AdminBookingController::class, 'index'])  ->name('bookings.index');
-    Route::get('bookings/{id}',          [AdminBookingController::class, 'show'])   ->name('bookings.show');
-    Route::post('bookings/{id}/confirm', [AdminBookingController::class, 'confirm'])->name('bookings.confirm');
-    Route::post('bookings/{id}/cancel',  [AdminBookingController::class, 'cancel']) ->name('bookings.cancel');
+    Route::get('bookings',                      [AdminBookingController::class, 'index'])       ->name('bookings.index');
+    Route::get('bookings/{id}',                 [AdminBookingController::class, 'show'])        ->name('bookings.show');
+    Route::post('bookings/{id}/assign-driver',  [AdminBookingController::class, 'assignDriver'])->name('bookings.assign-driver'); // ← BARU
+    Route::post('bookings/{id}/confirm',        [AdminBookingController::class, 'confirm'])     ->name('bookings.confirm');
+    Route::post('bookings/{id}/cancel',         [AdminBookingController::class, 'cancel'])      ->name('bookings.cancel');
+
 
     // Kendaraan
     Route::get('vehicles',           [AdminVehicleController::class, 'index']) ->name('vehicles.index');
@@ -124,11 +126,9 @@ Route::middleware(['auth', 'verified', 'role:pengguna,user'])->group(function ()
 // ── DRIVER ───────────────────────────────────────────────────
 Route::middleware(['auth', 'verified', 'role:driver'])->prefix('driver')->name('driver.')->group(function () {
 
-    Route::get('bookings/available',    [DriverBookingController::class, 'available'])         ->name('bookings.available');
-    Route::get('bookings',              [DriverBookingController::class, 'index'])             ->name('bookings.index');
-    Route::get('bookings/{id}',         [DriverBookingController::class, 'show'])              ->name('bookings.show');
-    Route::post('bookings/{id}/accept', [DriverBookingController::class, 'accept'])            ->name('bookings.accept');
-    Route::post('toggle-availability',  [DriverBookingController::class, 'toggleAvailability'])->name('toggle-availability');
+    Route::get('bookings',             [DriverBookingController::class, 'index'])              ->name('bookings.index');
+    Route::get('bookings/{id}',        [DriverBookingController::class, 'show'])               ->name('bookings.show');
+    Route::post('toggle-availability', [DriverBookingController::class, 'toggleAvailability']) ->name('toggle-availability');
 });
 
 // ── PROFILE ──────────────────────────────────────────────────
