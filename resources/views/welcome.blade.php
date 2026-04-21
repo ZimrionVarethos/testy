@@ -1386,20 +1386,13 @@
 <body>
 
     {{-- ════════ NAVBAR ════════ --}}
-    {{-- Blob di LUAR navbar, layer paling bawah --}}
     <div class="nav-logo-blob"></div>
-    
-    {{-- Logo img juga di luar, tapi z-index di atas blob dan navbar --}}
     <a href="/" class="nav-logo-link" aria-label="Bening Rental">
         <img src="{{ asset('image/logo.webp') }}" alt="Bening Rental Logo">
     </a>
-    
-    {{-- ════════ NAVBAR ════════ --}}
+
     <header id="navbar" class="hero-over">
-    
-        {{-- Spacer kiri biar nav tetap center --}}
         <div class="nav-logo-spacer"></div>
-    
         <nav>
             <ul>
                 <li><a href="#how-it-works">Cara Kerja</a></li>
@@ -1408,7 +1401,6 @@
                 <li><a href="#history">About</a></li>
             </ul>
         </nav>
-    
         <div class="nav-right">
             @guest
                 <a href="{{ route('login') }}" class="nav-btn nav-btn-ghost">Masuk</a>
@@ -1421,8 +1413,7 @@
             </div>
         </div>
     </header>
-    
-    {{-- Mobile menu — full screen --}}
+
     <div class="mobile-menu" id="mobileMenu">
         <ul>
             <li><a href="#how-it-works">Cara Kerja</a></li>
@@ -1449,25 +1440,19 @@
             </div>
             @endforeach
         </div>
-
         <div class="hero-body">
             <div class="hero-slide-label">Rental Mobil Premium — Indonesia</div>
             <p class="hero-desc">Armada premium, pengemudi terverifikasi, dan layanan tanpa batas — untuk bisnis, leisure, dan semua kebutuhan Anda.</p>
             <div class="hero-actions">
                 @guest
-                    <a href="{{ route('register') }}" class="btn-hero-fill">
-                        Mulai Pesan <i class="fas fa-arrow-right"></i>
-                    </a>
+                    <a href="{{ route('register') }}" class="btn-hero-fill">Mulai Pesan <i class="fas fa-arrow-right"></i></a>
                     <a href="#fleet" class="btn-hero-border">Lihat Armada</a>
                 @else
-                    <a href="{{ route('vehicles.index') }}" class="btn-hero-fill">
-                        Pesan Sekarang <i class="fas fa-arrow-right"></i>
-                    </a>
+                    <a href="{{ route('vehicles.index') }}" class="btn-hero-fill">Pesan Sekarang <i class="fas fa-arrow-right"></i></a>
                     <a href="{{ route('dashboard') }}" class="btn-hero-border">Dashboard</a>
                 @endguest
             </div>
         </div>
-
         <div class="hero-controls">
             <div class="hero-dots" id="heroDots">
                 @foreach($heroSlides as $i => $url)
@@ -1479,7 +1464,6 @@
                 <button class="hero-arrow" id="heroNext" aria-label="Next"><i class="fas fa-arrow-right"></i></button>
             </div>
         </div>
-
         <div class="hero-counter">
             <span id="slideCounter">01 / {{ str_pad(count($heroSlides), 2, '0', STR_PAD_LEFT) }}</span>
             <div class="hero-counter-line"></div>
@@ -1497,26 +1481,18 @@
     </div>
 
     {{-- ════════ MOBILE SLIDER ════════ --}}
-    {{-- Ganti seluruh blok mobile-slider-section dengan ini --}}
-    
     <div class="mobile-slider-section" id="mobileHero">
         <div class="mob-slider" id="mobSlides">
-    
-            {{-- Dots — pakai id="mobDots" agar JS bisa temukan --}}
             <div class="mob-dots" id="mobDots">
                 @foreach($heroSlides as $i => $url)
                     <div class="mob-dot {{ $i === 0 ? 'active' : '' }}" data-idx="{{ $i }}"></div>
                 @endforeach
             </div>
-    
-            {{-- Slides — hanya gambar, semua dari $heroSlides --}}
             @foreach($heroSlides as $i => $url)
                 <div class="mob-slide {{ $i === 0 ? 'active' : '' }}">
                     <img src="{{ $url }}" alt="Slide {{ $i + 1 }}">
                 </div>
             @endforeach
-    
-            {{-- Konten teks — diletakkan di luar slide, tetap absolute di atas semua slide --}}
             <div class="mob-slide-body">
                 <div class="mob-slide-tag">Rental Premium — Indonesia</div>
                 <h1 class="mob-slide-title">Perjalanan<br><em>Tanpa</em><br>Kompromi.</h1>
@@ -1531,11 +1507,8 @@
                     @endguest
                 </div>
             </div>
-    
             <div class="mob-swipe-hint"><i class="fas fa-arrow-right"></i> Geser</div>
         </div>
-    
-        {{-- Mobile ticker --}}
         <div class="mob-ticker">
             <div class="ticker-track" aria-hidden="true">
                 @php $items = ['Pengemudi Terverifikasi','Layanan 24/7','Coverage Nasional','Pembayaran Aman','Support Responsif','Asuransi Perjalanan','Armada Prima','GPS Real-time']; @endphp
@@ -1550,37 +1523,24 @@
     <section id="how-it-works">
         <div class="works-layout">
             <div>
-               
                 <h2 class="sec-h2 reveal reveal-delay-1">Simple</h2>
                 <p class="sec-sub reveal reveal-delay-2">Tidak perlu antri atau ribet. Daftar, pilih, bayar, dan pengemudi kami tiba tepat waktu.</p>
                 <div class="works-list" style="margin-top:2.5rem;">
                     <div class="works-item reveal">
                         <div class="works-num">01</div>
-                        <div class="works-content">
-                            <h3>Buat Akun</h3>
-                            <p>Daftar gratis dalam hitungan detik. Lengkapi profil untuk pengalaman yang lebih personal.</p>
-                        </div>
+                        <div class="works-content"><h3>Buat Akun</h3><p>Daftar gratis dalam hitungan detik. Lengkapi profil untuk pengalaman yang lebih personal.</p></div>
                     </div>
                     <div class="works-item reveal reveal-delay-1">
                         <div class="works-num">02</div>
-                        <div class="works-content">
-                            <h3>Pilih Kendaraan</h3>
-                            <p>Jelajahi armada lengkap kami. Saring berdasarkan tipe, kapasitas, atau harga.</p>
-                        </div>
+                        <div class="works-content"><h3>Pilih Kendaraan</h3><p>Jelajahi armada lengkap kami. Saring berdasarkan tipe, kapasitas, atau harga.</p></div>
                     </div>
                     <div class="works-item reveal reveal-delay-2">
                         <div class="works-num">03</div>
-                        <div class="works-content">
-                            <h3>Bayar & Konfirmasi</h3>
-                            <p>Pembayaran aman via Midtrans. Admin konfirmasi, pengemudi siap menjemput.</p>
-                        </div>
+                        <div class="works-content"><h3>Bayar & Konfirmasi</h3><p>Pembayaran aman via Midtrans. Admin konfirmasi, pengemudi siap menjemput.</p></div>
                     </div>
                     <div class="works-item reveal reveal-delay-3">
                         <div class="works-num">04</div>
-                        <div class="works-content">
-                            <h3>Nikmati & Beri Ulasan</h3>
-                            <p>Selesaikan perjalanan dan bagikan pengalaman Anda untuk membantu pengemudi kami.</p>
-                        </div>
+                        <div class="works-content"><h3>Nikmati & Beri Ulasan</h3><p>Selesaikan perjalanan dan bagikan pengalaman Anda untuk membantu pengemudi kami.</p></div>
                     </div>
                 </div>
             </div>
@@ -1593,9 +1553,7 @@
     {{-- ════════ FLEET ════════ --}}
     <section id="fleet">
         <div class="fleet-head">
-            <div>
-                <h2 class="sec-h2 reveal reveal-delay-1">Best Service</h2>
-            </div>
+            <div><h2 class="sec-h2 reveal reveal-delay-1">Best Service</h2></div>
             <div class="fleet-filters reveal">
                 <button class="filter-btn active" data-filter="all">Semua</button>
                 <button class="filter-btn" data-filter="sedan">Sedan</button>
@@ -1604,7 +1562,6 @@
                 <button class="filter-btn" data-filter="van">Van</button>
             </div>
         </div>
-
         <div class="fleet-grid" id="fleet-grid">
             @forelse($vehicles as $vehicle)
             <div class="car-card reveal" data-type="{{ strtolower($vehicle->type ?? 'sedan') }}">
@@ -1625,7 +1582,7 @@
                         <div class="spec"><i class="fas fa-users"></i> {{ $vehicle->capacity ?? 4 }} Kursi</div>
                         <div class="spec"><i class="fas fa-star"></i> {{ number_format($vehicle->rating_avg ?? 4.8, 1) }}</div>
                         @if(!empty($vehicle->features))
-                            <div class="spec"><i class="fas fa-snowflake"></i> AC</div>
+                        <div class="spec"><i class="fas fa-snowflake"></i> AC</div>
                         @endif
                     </div>
                     <div class="car-footer">
@@ -1648,27 +1605,19 @@
             @empty
             @php
             $showcases = [
-                ['brand'=>'Toyota','model'=>'Alphard','type'=>'MPV','price'=>1800000,'cap'=>7,'rating'=>4.9,'status'=>'available',
-                 'img'=>'https://images.unsplash.com/photo-1621007947382-bb3c3994e3fb?auto=format&fit=crop&q=80&w=600'],
-                ['brand'=>'BMW','model'=>'520i','type'=>'Sedan','price'=>2500000,'cap'=>5,'rating'=>4.8,'status'=>'available',
-                 'img'=>'https://images.unsplash.com/photo-1555215695-3004980ad54e?auto=format&fit=crop&q=80&w=600'],
-                ['brand'=>'Toyota','model'=>'Fortuner','type'=>'SUV','price'=>1500000,'cap'=>7,'rating'=>4.7,'status'=>'available',
-                 'img'=>'https://images.unsplash.com/photo-1606016159991-dfe4f2746ad5?auto=format&fit=crop&q=80&w=600'],
-                ['brand'=>'Honda','model'=>'Odyssey','type'=>'MPV','price'=>1200000,'cap'=>8,'rating'=>4.8,'status'=>'rented',
-                 'img'=>'https://images.unsplash.com/photo-1594502184342-2e12f877aa73?auto=format&fit=crop&q=80&w=600'],
-                ['brand'=>'Mercedes','model'=>'E350','type'=>'Sedan','price'=>3200000,'cap'=>5,'rating'=>5.0,'status'=>'available',
-                 'img'=>'https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?auto=format&fit=crop&q=80&w=600'],
-                ['brand'=>'Mitsubishi','model'=>'Pajero Sport','type'=>'SUV','price'=>1400000,'cap'=>7,'rating'=>4.6,'status'=>'available',
-                 'img'=>'https://images.unsplash.com/photo-1519641471654-76ce0107ad1b?auto=format&fit=crop&q=80&w=600'],
+                ['brand'=>'Toyota','model'=>'Alphard','type'=>'MPV','price'=>1800000,'cap'=>7,'rating'=>4.9,'status'=>'available','img'=>'https://images.unsplash.com/photo-1621007947382-bb3c3994e3fb?auto=format&fit=crop&q=80&w=600'],
+                ['brand'=>'BMW','model'=>'520i','type'=>'Sedan','price'=>2500000,'cap'=>5,'rating'=>4.8,'status'=>'available','img'=>'https://images.unsplash.com/photo-1555215695-3004980ad54e?auto=format&fit=crop&q=80&w=600'],
+                ['brand'=>'Toyota','model'=>'Fortuner','type'=>'SUV','price'=>1500000,'cap'=>7,'rating'=>4.7,'status'=>'available','img'=>'https://images.unsplash.com/photo-1606016159991-dfe4f2746ad5?auto=format&fit=crop&q=80&w=600'],
+                ['brand'=>'Honda','model'=>'Odyssey','type'=>'MPV','price'=>1200000,'cap'=>8,'rating'=>4.8,'status'=>'rented','img'=>'https://images.unsplash.com/photo-1594502184342-2e12f877aa73?auto=format&fit=crop&q=80&w=600'],
+                ['brand'=>'Mercedes','model'=>'E350','type'=>'Sedan','price'=>3200000,'cap'=>5,'rating'=>5.0,'status'=>'available','img'=>'https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?auto=format&fit=crop&q=80&w=600'],
+                ['brand'=>'Mitsubishi','model'=>'Pajero Sport','type'=>'SUV','price'=>1400000,'cap'=>7,'rating'=>4.6,'status'=>'available','img'=>'https://images.unsplash.com/photo-1519641471654-76ce0107ad1b?auto=format&fit=crop&q=80&w=600'],
             ];
             @endphp
             @foreach($showcases as $car)
             <div class="car-card reveal" data-type="{{ strtolower($car['type']) }}">
                 <div class="car-img">
                     <img src="{{ $car['img'] }}" alt="{{ $car['brand'] }} {{ $car['model'] }}" loading="lazy">
-                    <span class="car-badge badge-{{ $car['status'] }}">
-                        {{ $car['status'] === 'available' ? 'Tersedia' : 'Disewa' }}
-                    </span>
+                    <span class="car-badge badge-{{ $car['status'] }}">{{ $car['status'] === 'available' ? 'Tersedia' : 'Disewa' }}</span>
                 </div>
                 <div class="car-body">
                     <div class="car-type">{{ $car['type'] }}</div>
@@ -1679,10 +1628,7 @@
                         <div class="spec"><i class="fas fa-snowflake"></i> AC</div>
                     </div>
                     <div class="car-footer">
-                        <div class="car-price">
-                            <strong>Rp {{ number_format($car['price'], 0, ',', '.') }}</strong>
-                            <span>/ hari</span>
-                        </div>
+                        <div class="car-price"><strong>Rp {{ number_format($car['price'], 0, ',', '.') }}</strong><span>/ hari</span></div>
                         <a href="{{ route('login') }}" class="btn-book">Pesan</a>
                     </div>
                 </div>
@@ -1690,16 +1636,11 @@
             @endforeach
             @endforelse
         </div>
-
         <div class="fleet-cta reveal">
             @auth
-                <a href="{{ route('vehicles.index') }}" class="btn-outline-ink">
-                    Lihat Semua Kendaraan <i class="fas fa-arrow-right"></i>
-                </a>
+                <a href="{{ route('vehicles.index') }}" class="btn-outline-ink">Lihat Semua Kendaraan <i class="fas fa-arrow-right"></i></a>
             @else
-                <a href="{{ route('register') }}" class="btn-outline-ink">
-                    Daftar & Lihat Semua Armada <i class="fas fa-arrow-right"></i>
-                </a>
+                <a href="{{ route('register') }}" class="btn-outline-ink">Daftar & Lihat Semua Armada <i class="fas fa-arrow-right"></i></a>
             @endauth
         </div>
     </section>
@@ -1707,53 +1648,24 @@
     {{-- ════════ WHY US ════════ --}}
     <section id="why-us">
         <div class="why-layout">
-
-            <!-- KIRI: Mockup Mobile -->
             <div class="why-mockup reveal">
                 <div class="why-mockup-frame">
-                    <img src="{{ $landingImages['why_us_mockup'] }}" alt="Mockup Aplikasi ">
+                    <img src="{{ $landingImages['why_us_mockup'] }}" alt="Mockup Aplikasi">
                 </div>
             </div>
-
-            <!-- KANAN: Grid Benefit -->
             <div class="why-right">
                 <span class="sec-tag reveal">Aplikasi Kami</span>
                 <h2 class="sec-h2 reveal reveal-delay-1" style="color:var(--white);">make it simple with our app</h2>
                 <p class="sec-sub reveal reveal-delay-2" style="color:rgba(255,255,255,0.35);">Semua kebutuhan perjalanan Anda ada di satu genggaman</p>
                 <div class="why-grid reveal reveal-delay-3">
-                    <div class="why-card">
-                        <div class="why-icon"><i class="fas fa-mobile-screen"></i></div>
-                        <h3>Pemesanan Instan</h3>
-                        <p>Pesan kendaraan dalam hitungan detik. Tanpa antre, tanpa telepon, langsung konfirmasi.</p>
-                    </div>
-                    <div class="why-card">
-                        <div class="why-icon"><i class="fas fa-map-location-dot"></i></div>
-                        <h3>Lacak Secara Real-time</h3>
-                        <p>Pantau posisi kendaraan langsung dari aplikasi. Tahu kapan pengemudi tiba.</p>
-                    </div>
-                    <div class="why-card">
-                        <div class="why-icon"><i class="fas fa-calendar-check"></i></div>
-                        <h3>Jadwal Fleksibel</h3>
-                        <p>Atur tanggal dan jam penjemputan sesuai kebutuhan Anda, kapan saja.</p>
-                    </div>
-                    <div class="why-card">
-                        <div class="why-icon"><i class="fas fa-wallet"></i></div>
-                        <h3>Bayar Lebih Mudah</h3>
-                        <p>Berbagai metode pembayaran tersedia — transfer, e-wallet, hingga kartu kredit.</p>
-                    </div>
-                    <div class="why-card">
-                        <div class="why-icon"><i class="fas fa-bell"></i></div>
-                        <h3>Notifikasi Otomatis</h3>
-                        <p>Update status perjalanan secara real-time langsung ke ponsel Anda.</p>
-                    </div>
-                    <div class="why-card">
-                        <div class="why-icon"><i class="fas fa-headset"></i></div>
-                        <h3>Support Dalam Aplikasi</h3>
-                        <p>Hubungi tim kami langsung dari chat aplikasi — respons cepat 24/7.</p>
-                    </div>
+                    <div class="why-card"><div class="why-icon"><i class="fas fa-mobile-screen"></i></div><h3>Pemesanan Instan</h3><p>Pesan kendaraan dalam hitungan detik. Tanpa antre, tanpa telepon, langsung konfirmasi.</p></div>
+                    <div class="why-card"><div class="why-icon"><i class="fas fa-map-location-dot"></i></div><h3>Lacak Secara Real-time</h3><p>Pantau posisi kendaraan langsung dari aplikasi. Tahu kapan pengemudi tiba.</p></div>
+                    <div class="why-card"><div class="why-icon"><i class="fas fa-calendar-check"></i></div><h3>Jadwal Fleksibel</h3><p>Atur tanggal dan jam penjemputan sesuai kebutuhan Anda, kapan saja.</p></div>
+                    <div class="why-card"><div class="why-icon"><i class="fas fa-wallet"></i></div><h3>Bayar Lebih Mudah</h3><p>Berbagai metode pembayaran tersedia — transfer, e-wallet, hingga kartu kredit.</p></div>
+                    <div class="why-card"><div class="why-icon"><i class="fas fa-bell"></i></div><h3>Notifikasi Otomatis</h3><p>Update status perjalanan secara real-time langsung ke ponsel Anda.</p></div>
+                    <div class="why-card"><div class="why-icon"><i class="fas fa-headset"></i></div><h3>Support Dalam Aplikasi</h3><p>Hubungi tim kami langsung dari chat aplikasi — respons cepat 24/7.</p></div>
                 </div>
             </div>
-
         </div>
     </section>
 
@@ -1773,7 +1685,8 @@
                 <div class="stat-label">Pelanggan Puas</div>
             </div>
             <div class="stat-item reveal reveal-delay-3">
-                <div class="stat-num" data-target="4.9" data-decimal="1">0</div>
+                {{-- Rata-rata rating real dari DB, fallback 4.9 --}}
+                <div class="stat-num" data-target="{{ number_format($ratingAvg, 1, '.', '') }}" data-decimal="1">0</div>
                 <div class="stat-label">Rating Rata-rata</div>
             </div>
         </div>
@@ -1797,10 +1710,7 @@
             <div class="tl-entry reveal">
                 <div class="tl-dot"></div>
                 <div class="tl-year-num">{{ $tl['year'] }}</div>
-                <div class="tl-content">
-                    <h3>{{ $tl['title'] }}</h3>
-                    <p>{{ $tl['desc'] }}</p>
-                </div>
+                <div class="tl-content"><h3>{{ $tl['title'] }}</h3><p>{{ $tl['desc'] }}</p></div>
             </div>
             @endforeach
         </div>
@@ -1812,37 +1722,68 @@
             <div class="testi-left">
                 <h2 class="sec-h2 reveal reveal-delay-1">Kata<br>mereka.</h2>
                 <div class="testi-avg reveal reveal-delay-2">
-                    <div class="testi-avg-stars">★★★★★</div>
-                    <div class="testi-avg-val">4.9</div>
-                    <div class="testi-avg-sub">dari 500+ ulasan terverifikasi</div>
+                    <div class="testi-avg-stars">
+                        @php
+                            $fullStars = floor($ratingAvg);
+                            $halfStar  = ($ratingAvg - $fullStars) >= 0.5;
+                        @endphp
+                        @for($s = 1; $s <= 5; $s++)
+                            @if($s <= $fullStars)★@elseif($halfStar && $s === $fullStars + 1)★@else☆@endif
+                        @endfor
+                    </div>
+                    <div class="testi-avg-val">{{ number_format($ratingAvg, 1) }}</div>
+                    <div class="testi-avg-sub">
+                        dari {{ $ratingCount > 0 ? number_format($ratingCount) : '500' }}+
+                        ulasan terverifikasi
+                    </div>
                 </div>
                 <div class="testi-count reveal reveal-delay-3" style="margin-top:2.5rem;">
                     <div class="testi-count" style="font-family:'Syne';font-size:4rem;font-weight:800;color:var(--ink);line-height:1;">98%</div>
                     <div class="testi-count-label">pelanggan puas dan kembali lagi</div>
                 </div>
             </div>
+
             <div class="testi-grid">
                 <div class="testi-track" id="testiTrack">
-                    @php $testimonials = [
-                        ['init'=>'BW','name'=>'Budi Wijaya','role'=>'Direktur, PT Maju Bersama','stars'=>5,'text'=>'Pengemudi sangat ramah dan tepat waktu. Kendaraan bersih dan nyaman. Sudah 5 kali pakai DriveEase untuk perjalanan bisnis.'],
-                        ['init'=>'SR','name'=>'Sari Rahayu','role'=>'Travel Blogger','stars'=>5,'text'=>'Booking via aplikasi sangat mudah. Pembayaran aman. Pengemudi membantu angkat koper tanpa diminta — sangat profesional!'],
-                        ['init'=>'AP','name'=>'Ahmad Pratama','role'=>'Event Organizer','stars'=>4,'text'=>'Harga kompetitif untuk kualitas yang diberikan. Sewa Alphard untuk acara pernikahan — semua tamu sangat terkesan.'],
-                        ['init'=>'DK','name'=>'Diana Kusuma','role'=>'Ibu Rumah Tangga','stars'=>5,'text'=>'Fitur tracking real-time bikin tenang. Bisa pantau perjalanan suami yang dinas dari rumah. Fiturnya sangat membantu.'],
-                        ['init'=>'RS','name'=>'Rizal Santoso','role'=>'HR Manager, FMCG','stars'=>5,'text'=>'Sebagai klien korporat, kami butuh layanan yang konsisten. DriveEase selalu hadir tepat waktu untuk 20+ perjalanan tim kami.'],
-                    ]; @endphp
-                    @foreach($testimonials as $t)
-                    <div class="testi-card">
-                        <div class="testi-stars">{{ str_repeat('★',$t['stars']) }}{{ str_repeat('☆', 5-$t['stars']) }}</div>
-                        <p class="testi-text">"{{ $t['text'] }}"</p>
-                        <div class="testi-author">
-                            <div class="testi-avatar">{{ $t['init'] }}</div>
-                            <div>
-                                <div class="testi-name">{{ $t['name'] }}</div>
-                                <div class="testi-role">{{ $t['role'] }}</div>
+                    @if($testimonials->isNotEmpty())
+                        @foreach($testimonials as $t)
+                        <div class="testi-card">
+                            <div class="testi-stars">
+                                {{ str_repeat('★', $t['stars']) }}{{ str_repeat('☆', 5 - $t['stars']) }}
+                            </div>
+                            <p class="testi-text">"{{ $t['text'] }}"</p>
+                            <div class="testi-author">
+                                <div class="testi-avatar">{{ $t['init'] }}</div>
+                                <div>
+                                    <div class="testi-name">{{ $t['name'] }}</div>
+                                    <div class="testi-role">{{ $t['role'] }}</div>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    @endforeach
+                        @endforeach
+                    @else
+                        {{-- Fallback dummy jika belum ada rating --}}
+                        @php $dummies = [
+                            ['init'=>'BW','name'=>'Budi Wijaya','role'=>'Direktur, PT Maju Bersama','stars'=>5,'text'=>'Pengemudi sangat ramah dan tepat waktu. Kendaraan bersih dan nyaman. Sudah 5 kali pakai untuk perjalanan bisnis.'],
+                            ['init'=>'SR','name'=>'Sari Rahayu','role'=>'Travel Blogger','stars'=>5,'text'=>'Booking sangat mudah. Pembayaran aman. Pengemudi membantu angkat koper tanpa diminta — sangat profesional!'],
+                            ['init'=>'AP','name'=>'Ahmad Pratama','role'=>'Event Organizer','stars'=>4,'text'=>'Harga kompetitif untuk kualitas yang diberikan. Sewa Alphard untuk acara pernikahan — semua tamu sangat terkesan.'],
+                            ['init'=>'DK','name'=>'Diana Kusuma','role'=>'Ibu Rumah Tangga','stars'=>5,'text'=>'Fitur tracking real-time bikin tenang. Bisa pantau perjalanan suami dari rumah. Fiturnya sangat membantu.'],
+                            ['init'=>'RS','name'=>'Rizal Santoso','role'=>'HR Manager','stars'=>5,'text'=>'Sebagai klien korporat, kami butuh layanan yang konsisten. Selalu hadir tepat waktu untuk 20+ perjalanan tim kami.'],
+                        ]; @endphp
+                        @foreach($dummies as $t)
+                        <div class="testi-card">
+                            <div class="testi-stars">{{ str_repeat('★',$t['stars']) }}{{ str_repeat('☆', 5-$t['stars']) }}</div>
+                            <p class="testi-text">"{{ $t['text'] }}"</p>
+                            <div class="testi-author">
+                                <div class="testi-avatar">{{ $t['init'] }}</div>
+                                <div>
+                                    <div class="testi-name">{{ $t['name'] }}</div>
+                                    <div class="testi-role">{{ $t['role'] }}</div>
+                                </div>
+                            </div>
+                        </div>
+                        @endforeach
+                    @endif
                 </div>
             </div>
         </div>
@@ -1852,7 +1793,7 @@
     <div class="cta-section">
         <div class="cta-left">
             <h2 class="reveal">Siap Memulai<br>Perjalanan Anda?</h2>
-            <p class="reveal reveal-delay-1">Bergabunglah dengan {{ number_format(max($stats['happy_customers'], 200)) }}+ pelanggan yang telah mempercayakan perjalanan mereka kepada DriveEase.</p>
+            <p class="reveal reveal-delay-1">Bergabunglah dengan {{ number_format(max($stats['happy_customers'], 200)) }}+ pelanggan yang telah mempercayakan perjalanan mereka kepada kami.</p>
             <div class="cta-btns reveal reveal-delay-2">
                 @guest
                     <a href="{{ route('register') }}" class="btn-cta-fill">Daftar Sekarang — Gratis</a>
@@ -1882,35 +1823,9 @@
                     <a href="#" class="social-btn"><i class="fab fa-linkedin-in"></i></a>
                 </div>
             </div>
-            <div class="footer-col">
-                <h4>Layanan</h4>
-                <ul>
-                    <li><a href="#">Rental Harian</a></li>
-                    <li><a href="#">Rental Mingguan</a></li>
-                    <li><a href="#">Paket Korporat</a></li>
-                    <li><a href="#">Airport Transfer</a></li>
-                    <li><a href="#">Wisata & Leisure</a></li>
-                </ul>
-            </div>
-            <div class="footer-col">
-                <h4>Perusahaan</h4>
-                <ul>
-                    <li><a href="#history">Tentang Kami</a></li>
-                    <li><a href="#">Karir</a></li>
-                    <li><a href="#">Blog</a></li>
-                    <li><a href="#">Press Kit</a></li>
-                </ul>
-            </div>
-            <div class="footer-col">
-                <h4>Bantuan</h4>
-                <ul>
-                    <li><a href="#">FAQ</a></li>
-                    <li><a href="#">Syarat & Ketentuan</a></li>
-                    <li><a href="#">Kebijakan Privasi</a></li>
-                    <li><a href="#">Hubungi Kami</a></li>
-                    <li><a href="{{ route('login') }}">Login</a></li>
-                </ul>
-            </div>
+            <div class="footer-col"><h4>Layanan</h4><ul><li><a href="#">Rental Harian</a></li><li><a href="#">Rental Mingguan</a></li><li><a href="#">Paket Korporat</a></li><li><a href="#">Airport Transfer</a></li><li><a href="#">Wisata & Leisure</a></li></ul></div>
+            <div class="footer-col"><h4>Perusahaan</h4><ul><li><a href="#history">Tentang Kami</a></li><li><a href="#">Karir</a></li><li><a href="#">Blog</a></li><li><a href="#">Press Kit</a></li></ul></div>
+            <div class="footer-col"><h4>Bantuan</h4><ul><li><a href="#">FAQ</a></li><li><a href="#">Syarat & Ketentuan</a></li><li><a href="#">Kebijakan Privasi</a></li><li><a href="#">Hubungi Kami</a></li><li><a href="{{ route('login') }}">Login</a></li></ul></div>
         </div>
         <div class="footer-bottom">
             <span>© {{ date('Y') }} INEZ RENT CAR. Semua hak dilindungi.</span>
@@ -1919,69 +1834,49 @@
 
     {{-- ════════ SCRIPTS ════════ --}}
     <script>
-    /* ── Navbar ── */
     const navbar = document.getElementById('navbar');
+    const blob   = document.querySelector('.nav-logo-blob');
+
     function updateNav() {
         const scrolled = window.scrollY > 60;
         navbar.classList.toggle('scrolled', scrolled);
         navbar.classList.toggle('hero-over', !scrolled);
+        blob.classList.toggle('scrolled', scrolled);
     }
     window.addEventListener('scroll', updateNav, { passive: true });
     updateNav();
 
-    /* ── Hamburger ── */
     const ham = document.getElementById('hamburger');
     const mobMenu = document.getElementById('mobileMenu');
-    ham.addEventListener('click', () => {
-        ham.classList.toggle('open');
-        mobMenu.classList.toggle('open');
-    });
-    mobMenu.querySelectorAll('a').forEach(a => {
-        a.addEventListener('click', () => { ham.classList.remove('open'); mobMenu.classList.remove('open'); });
-    });
+    ham.addEventListener('click', () => { ham.classList.toggle('open'); mobMenu.classList.toggle('open'); });
+    mobMenu.querySelectorAll('a').forEach(a => a.addEventListener('click', () => { ham.classList.remove('open'); mobMenu.classList.remove('open'); }));
 
-    /* ── Desktop Hero Slider ── */
-    const heroSlides = document.querySelectorAll('#heroDesktop .hero-slide');
-    const heroDots   = document.querySelectorAll('#heroDots .hero-dot');
-    const heroCounter = document.getElementById('slideCounter');
+    const heroSlideEls = document.querySelectorAll('#heroDesktop .hero-slide');
+    const heroDots     = document.querySelectorAll('#heroDots .hero-dot');
+    const heroCounter  = document.getElementById('slideCounter');
     let heroIdx = 0, heroTimer;
-
     function gotoHeroSlide(n) {
-        heroSlides[heroIdx].classList.remove('active');
-        heroDots[heroIdx].classList.remove('active');
-        heroIdx = (n + heroSlides.length) % heroSlides.length;
-        heroSlides[heroIdx].classList.add('active');
-        heroDots[heroIdx].classList.add('active');
-        heroCounter.textContent = String(heroIdx + 1).padStart(2,'0') + ' / ' + String(heroSlides.length).padStart(2,'0');
+        heroSlideEls[heroIdx].classList.remove('active'); heroDots[heroIdx].classList.remove('active');
+        heroIdx = (n + heroSlideEls.length) % heroSlideEls.length;
+        heroSlideEls[heroIdx].classList.add('active'); heroDots[heroIdx].classList.add('active');
+        heroCounter.textContent = String(heroIdx+1).padStart(2,'0') + ' / ' + String(heroSlideEls.length).padStart(2,'0');
     }
-    function startHeroAuto() {
-        clearInterval(heroTimer);
-        heroTimer = setInterval(() => gotoHeroSlide(heroIdx + 1), 5500);
-    }
-    document.getElementById('heroNext').addEventListener('click', () => { gotoHeroSlide(heroIdx + 1); startHeroAuto(); });
-    document.getElementById('heroPrev').addEventListener('click', () => { gotoHeroSlide(heroIdx - 1); startHeroAuto(); });
+    function startHeroAuto() { clearInterval(heroTimer); heroTimer = setInterval(() => gotoHeroSlide(heroIdx+1), 5500); }
+    document.getElementById('heroNext').addEventListener('click', () => { gotoHeroSlide(heroIdx+1); startHeroAuto(); });
+    document.getElementById('heroPrev').addEventListener('click', () => { gotoHeroSlide(heroIdx-1); startHeroAuto(); });
     heroDots.forEach(d => d.addEventListener('click', () => { gotoHeroSlide(+d.dataset.idx); startHeroAuto(); }));
     startHeroAuto();
 
-    /* ── Mobile Slider ── */
     const mobSlideEls = document.querySelectorAll('#mobSlides .mob-slide');
     const mobDotEls   = document.querySelectorAll('#mobDots .mob-dot');
     let mobIdx = 0, mobTimer;
-
     function gotoMobSlide(n) {
-        mobSlideEls[mobIdx].classList.remove('active');
-        mobDotEls[mobIdx].classList.remove('active');
+        mobSlideEls[mobIdx].classList.remove('active'); mobDotEls[mobIdx].classList.remove('active');
         mobIdx = (n + mobSlideEls.length) % mobSlideEls.length;
-        mobSlideEls[mobIdx].classList.add('active');
-        mobDotEls[mobIdx].classList.add('active');
+        mobSlideEls[mobIdx].classList.add('active'); mobDotEls[mobIdx].classList.add('active');
     }
-    function startMobAuto() {
-        clearInterval(mobTimer);
-        mobTimer = setInterval(() => gotoMobSlide(mobIdx + 1), 5000);
-    }
+    function startMobAuto() { clearInterval(mobTimer); mobTimer = setInterval(() => gotoMobSlide(mobIdx+1), 5000); }
     mobDotEls.forEach(d => d.addEventListener('click', () => { gotoMobSlide(+d.dataset.idx); startMobAuto(); }));
-
-    /* Touch swipe for mobile slider */
     let touchStartX = 0;
     const mobSlider = document.getElementById('mobSlides');
     mobSlider.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; }, { passive: true });
@@ -1991,31 +1886,26 @@
     }, { passive: true });
     startMobAuto();
 
-    /* ── Scroll Reveal ── */
     const revealEls = document.querySelectorAll('.reveal');
     const revObs = new IntersectionObserver(entries => {
         entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
     }, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' });
     revealEls.forEach(el => revObs.observe(el));
 
-    /* ── Counter ── */
     const counters = document.querySelectorAll('[data-target]');
     const cntObs = new IntersectionObserver(entries => {
         entries.forEach(entry => {
             if (!entry.isIntersecting) return;
             const el = entry.target;
-            const target = parseFloat(el.dataset.target);
-            const suffix = el.dataset.suffix || '';
+            const target  = parseFloat(el.dataset.target);
+            const suffix  = el.dataset.suffix || '';
             const decimal = parseInt(el.dataset.decimal || '0');
             const step = 16, duration = 1800;
             const inc = target / (duration / step);
             let cur = 0;
             const tick = () => {
                 cur += inc;
-                if (cur >= target) {
-                    el.textContent = (decimal > 0 ? target.toFixed(decimal) : Math.floor(target).toLocaleString('id-ID')) + suffix;
-                    return;
-                }
+                if (cur >= target) { el.textContent = (decimal > 0 ? target.toFixed(decimal) : Math.floor(target).toLocaleString('id-ID')) + suffix; return; }
                 el.textContent = (decimal > 0 ? cur.toFixed(decimal) : Math.floor(cur).toLocaleString('id-ID')) + suffix;
                 setTimeout(tick, step);
             };
@@ -2025,38 +1915,17 @@
     }, { threshold: 0.5 });
     counters.forEach(c => cntObs.observe(c));
 
-    /* ── Fleet filter ── */
     document.querySelectorAll('.filter-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             const f = btn.dataset.filter;
-            document.querySelectorAll('.car-card').forEach(card => {
-                card.style.display = (f === 'all' || card.dataset.type === f) ? '' : 'none';
-            });
+            document.querySelectorAll('.car-card').forEach(card => { card.style.display = (f === 'all' || card.dataset.type === f) ? '' : 'none'; });
         });
     });
-    
-    const blob = document.querySelector('.nav-logo-blob');
 
-    window.addEventListener('scroll', () => {
-        if (window.scrollY > 10) {
-            navbar.classList.add('scrolled');
-            navbar.classList.remove('hero-over');
-            blob.classList.add('scrolled');
-        } else {
-            navbar.classList.remove('scrolled');
-            navbar.classList.add('hero-over');
-            blob.classList.remove('scrolled');
-        }
-    });
-
-    // Infinite testimonial scroll — clone cards
     const testiTrack = document.getElementById('testiTrack');
-    if (testiTrack) {
-        const cards = testiTrack.innerHTML;
-        testiTrack.innerHTML += cards; // duplikat sekali cukup
-    }
+    if (testiTrack) { testiTrack.innerHTML += testiTrack.innerHTML; }
     </script>
 </body>
 </html>
