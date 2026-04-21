@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Vehicle;
 use App\Models\Booking;
 use App\Models\User;
+use Carbon\Carbon;
 
 class MapsController extends Controller
 {
@@ -13,21 +14,13 @@ class MapsController extends Controller
     {
         $vehicles = Vehicle::all();
 
+        // ── Mirror persis pola DashboardController::adminDashboard() ──
         $activeBookings = Booking::whereIn('status', ['confirmed', 'ongoing'])
+            ->where('end_date', '>', Carbon::now())   // ← tambahkan ini
             ->get()
             ->keyBy(fn($b) => (string) ($b->vehicle['vehicle_id'] ?? ''));
 
-        $driverIds = $activeBookings
-            ->map(fn($b) => $b->driver['driver_id'] ?? null)
-            ->filter()
-            ->values()
-            ->all();
-
-        $drivers = User::whereIn('_id', $driverIds)
-            ->get()
-            ->keyBy(fn($d) => (string) $d->_id);
-
-        $mappedVehicles = $vehicles->map(function ($v) use ($activeBookings, $drivers) {
+        $mappedVehicles = $vehicles->map(function ($v) use ($activeBookings) {
             $vid   = (string) $v->_id;
             $name  = trim($v->name  ?? '');
             $brand = trim($v->brand ?? '');
@@ -42,8 +35,9 @@ class MapsController extends Controller
             $locationUpdatedAt = null;
             $isStale           = false;
 
+            // ── Gunakan User::find() seperti dashboard, bukan whereIn+keyBy ──
             if ($booking && !empty($booking->driver['driver_id'])) {
-                $driver            = $drivers->get((string) $booking->driver['driver_id']);
+                $driver            = User::find($booking->driver['driver_id']);
                 $lat               = $driver?->last_lat ?? null;
                 $lon               = $driver?->last_lon ?? null;
                 $locationUpdatedAt = $driver?->last_location_updated_at ?? null;
@@ -54,24 +48,29 @@ class MapsController extends Controller
             }
 
             return [
-                'id'                  => $vid,
-                'plate'               => $v->plate_number ?? '-',
-                'label'               => $label ?: '-',
-                'driver'              => $driverName,
-                'status'              => $v->status ?? 'available',
-                'lat'                 => $lat,
-                'lon'                 => $lon,
-                'has_active_booking'  => $booking !== null,
-                'location_updated_at' => $locationUpdatedAt
-                    ? \Carbon\Carbon::parse($locationUpdatedAt)->diffForHumans()
+                'id'                     => $vid,
+                'plate'                  => $v->plate_number ?? '-',
+                'label'                  => $label ?: '-',
+                'driver'                 => $driverName,
+                'status'                 => $v->status ?? 'available',
+                'lat'                    => $lat,
+                'lon'                    => $lon,
+                'has_active_booking'     => $booking !== null,
+                // Format sama persis dengan dashboard
+                'location_updated_at'    => $locationUpdatedAt
+                    ? Carbon::parse($locationUpdatedAt)->format('H:i, d M')
                     : null,
-                'is_stale'            => $isStale,
+                // Extra: human-readable untuk popup stale
+                'location_updated_human' => $locationUpdatedAt
+                    ? Carbon::parse($locationUpdatedAt)->diffForHumans()
+                    : null,
+                'is_stale'               => $isStale,
             ];
         });
 
         $stats = [
             'total'       => $mappedVehicles->count(),
-            'ongoing' => $mappedVehicles->where('status', 'rented')->count(),
+            'ongoing'     => $mappedVehicles->where('status', 'rented')->count(),
             'available'   => $mappedVehicles->where('status', 'available')->count(),
             'maintenance' => $mappedVehicles->where('status', 'maintenance')->count(),
         ];
@@ -88,6 +87,7 @@ class MapsController extends Controller
 
         $activeBooking = Booking::whereIn('status', ['confirmed', 'ongoing'])
             ->where('vehicle.vehicle_id', $id)
+            ->where('end_date', '>', Carbon::now())   // ← tambahkan ini
             ->latest('created_at')
             ->first();
 
@@ -97,10 +97,8 @@ class MapsController extends Controller
         $isStale           = false;
 
         if ($activeBooking && !empty($activeBooking->driver['driver_id'])) {
-            $driver = User::find(
-                $activeBooking->driver['driver_id'],
-                ['last_lat', 'last_lon', 'last_location_updated_at']
-            );
+            // ── Konsisten: User::find() langsung ──
+            $driver            = User::find($activeBooking->driver['driver_id']);
             $lat               = $driver?->last_lat ?? null;
             $lon               = $driver?->last_lon ?? null;
             $locationUpdatedAt = $driver?->last_location_updated_at ?? null;
@@ -110,7 +108,6 @@ class MapsController extends Controller
             }
         }
 
-        // Inject lokasi driver ke vehicle (tidak disimpan ke DB)
         $vehicle->last_lat                 = $lat;
         $vehicle->last_lon                 = $lon;
         $vehicle->last_location_updated_at = $locationUpdatedAt;

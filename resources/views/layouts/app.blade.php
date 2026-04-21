@@ -150,6 +150,8 @@
         .notif-mark-all-btn:hover { color: var(--text-1); }
 
         .notif-list { max-height: 340px; overflow-y: auto; }
+
+        /* notif-item sekarang <a> — reset default anchor styles */
         .notif-item {
             display: flex;
             align-items: flex-start;
@@ -159,10 +161,12 @@
             cursor: pointer;
             transition: background 0.1s;
             text-decoration: none;
+            color: inherit;
         }
         .notif-item:last-child { border-bottom: none; }
         .notif-item:hover { background: var(--bg); }
         .notif-item.is-unread { background: rgba(239,68,68,0.025); }
+        .notif-item.no-link { cursor: default; }
         .notif-item-icon {
             width: 30px; height: 30px;
             border-radius: 8px;
@@ -310,9 +314,12 @@
             $__notifItems  = collect();
             $__unreadCount = 0;
         }
+
+        // Helper: resolve action_url fallback berdasarkan type & role
+        $__role = Auth::user()->role ?? 'pengguna';
     @endphp
     @else
-    @php $__notifItems = collect(); $__unreadCount = 0; @endphp
+    @php $__notifItems = collect(); $__unreadCount = 0; $__role = null; @endphp
     @endauth
 
     <div class="flex h-screen overflow-hidden"
@@ -438,8 +445,36 @@
                                             'path'=>'<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>'],
                                     };
                                     $__isUnread = !($__notif->is_read ?? true);
+
+                                    // Resolve URL: pakai action_url jika ada, fallback berdasarkan type + role
+                                    $__notifUrl = $__notif->action_url ?? null;
+                                    if (!$__notifUrl && $__notif->related_id) {
+                                        $__notifUrl = match($__notif->type ?? 'system') {
+                                            'booking' => ($__role === 'admin'
+                                                ? (Route::has('admin.tickets.show') && str_contains($__notif->title ?? '', 'Tiket')
+                                                    ? null  // akan di-handle oleh action_url yang sudah diset
+                                                    : route('admin.bookings.show', $__notif->related_id))
+                                                : route('bookings.show', $__notif->related_id)),
+                                            'payment' => ($__role === 'admin'
+                                                ? route('admin.payments.show', $__notif->related_id)
+                                                : route('payments.show', $__notif->related_id)),
+                                            default => null,
+                                        };
+                                    }
                                 @endphp
-                                <div class="notif-item {{ $__isUnread ? 'is-unread' : '' }}">
+
+                                {{-- Item notif: <a> jika punya URL, div jika tidak --}}
+                                @if($__notifUrl)
+                                <a href="{{ $__notifUrl }}"
+                                   class="notif-item {{ $__isUnread ? 'is-unread' : '' }}"
+                                   @if($__isUnread)
+                                   onclick="fetch('{{ route('notifications.read', $__notif->_id) }}',{method:'POST',headers:{'X-CSRF-TOKEN':'{{ csrf_token() }}','Content-Type':'application/json'}})"
+                                   @endif
+                                >
+                                @else
+                                <div class="notif-item no-link {{ $__isUnread ? 'is-unread' : '' }}">
+                                @endif
+
                                     <div class="notif-item-icon" style="background:{{ $__cfg['bg'] }};color:{{ $__cfg['color'] }}">
                                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">{!! $__cfg['path'] !!}</svg>
                                     </div>
@@ -451,7 +486,13 @@
                                     @if($__isUnread)
                                     <span class="notif-unread-marker"></span>
                                     @endif
+
+                                @if($__notifUrl)
+                                </a>
+                                @else
                                 </div>
+                                @endif
+
                                 @empty
                                 <div class="notif-empty">
                                     <div class="notif-empty-icon">

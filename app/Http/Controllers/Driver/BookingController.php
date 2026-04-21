@@ -1,10 +1,14 @@
 <?php
 
-namespace App\Http\Controllers\Driver;
+/**
+ * app/http/Controllers/Driver/BookingController.php
+ */
 
+namespace App\Http\Controllers\Driver;
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
 use Illuminate\Support\Facades\Auth;
+
 
 class BookingController extends Controller
 {

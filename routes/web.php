@@ -19,6 +19,12 @@ use App\Http\Controllers\Admin\StorageController;
 use App\Http\Controllers\Admin\LandingPageController;
 use App\Http\Controllers\WelcomeController;
 use App\Http\Controllers\Admin\ReportController;
+use App\Http\Controllers\Pengguna\TicketController as PenggunaTicketController;
+use App\Http\Controllers\Admin\TicketController    as AdminTicketController;
+use App\Http\Controllers\ChatController;
+use App\Http\Controllers\Pengguna\ChatController  as PenggunaChatController;
+use App\Http\Controllers\Driver\ChatController    as DriverChatController;
+use App\Http\Controllers\Pengguna\RatingController;
 
 // ── WELCOME ──────────────────────────────────────────────────
 Route::get('/', [WelcomeController::class, 'index'])->name('welcome');
@@ -33,9 +39,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 // ── NOTIFIKASI ───────────────────────────────────────────────
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('/notifications',            [NotificationController::class, 'index'])      ->name('notifications.index');
-    Route::post('/notifications/{id}/read', [NotificationController::class, 'markRead'])   ->name('notifications.read');
-    Route::post('/notifications/read-all',  [NotificationController::class, 'markAllRead'])->name('notifications.read-all');
+    Route::get('/notifications',                   [NotificationController::class, 'index'])          ->name('notifications.index');
+    Route::post('/notifications/{id}/read',        [NotificationController::class, 'markRead'])        ->name('notifications.read');
+    Route::post('/notifications/read-all',         [NotificationController::class, 'markAllRead'])     ->name('notifications.read-all');
+    Route::delete('/notifications/{id}',           [NotificationController::class, 'destroy'])         ->name('notifications.destroy');
+    Route::delete('/notifications',                [NotificationController::class, 'destroyAll'])      ->name('notifications.destroy-all');
+    Route::delete('/notifications/bulk',           [NotificationController::class, 'destroySelected']) ->name('notifications.destroy-selected');
 });
 
 // ── ADMIN ────────────────────────────────────────────────────
@@ -88,6 +97,12 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('ad
     Route::post('/reports/export-old', [ReportController::class, 'exportOld'])->name('reports.export-old');
     Route::delete('/reports/delete-old', [ReportController::class, 'deleteOld'])->name('reports.delete-old');
 
+    // Tiket Bantuan
+    Route::get('tickets',             [AdminTicketController::class, 'index'])       ->name('tickets.index');
+    Route::get('tickets/{id}',        [AdminTicketController::class, 'show'])        ->name('tickets.show');
+    Route::post('tickets/{id}/reply', [AdminTicketController::class, 'reply'])       ->name('tickets.reply');
+    Route::post('tickets/{id}/status',[AdminTicketController::class, 'updateStatus'])->name('tickets.status');
+
     // Storage (MongoDB)
     Route::get('/storage',                        [StorageController::class, 'index'])           ->name('storage.index');
     Route::get('/storage/{collection}',           [StorageController::class, 'show'])            ->name('storage.show');
@@ -121,6 +136,23 @@ Route::middleware(['auth', 'verified', 'role:pengguna,user'])->group(function ()
 
     // Finish callback setelah Snap (Midtrans redirect ke sini)
     Route::get('payments/{id}/finish', [PenggunaPaymentController::class, 'finish'])    ->name('payments.finish');
+
+    // Tiket Bantuan
+    Route::get('tickets',                    [PenggunaTicketController::class, 'index'])  ->name('tickets.index');
+    Route::get('tickets/create/{bookingId}', [PenggunaTicketController::class, 'create'])->name('tickets.create');
+    Route::post('tickets',                   [PenggunaTicketController::class, 'store'])  ->name('tickets.store');
+    Route::get('tickets/{id}',               [PenggunaTicketController::class, 'show'])   ->name('tickets.show');
+    Route::post('tickets/{id}/reply',        [PenggunaTicketController::class, 'reply'])  ->name('tickets.reply');
+
+    // Chat
+    Route::get('bookings/{id}/messages',  [ChatController::class, 'index']) ->name('chat.index');
+    Route::post('bookings/{id}/messages', [ChatController::class, 'store']) ->name('chat.store');
+
+    // Chat room index
+    Route::get('chats', [PenggunaChatController::class, 'index'])->name('pengguna.chats.index');
+ 
+    // Rating
+    Route::post('bookings/{bookingId}/rating', [RatingController::class, 'store'])->name('bookings.rating.store');
 });
 
 // ── DRIVER ───────────────────────────────────────────────────
@@ -129,6 +161,14 @@ Route::middleware(['auth', 'verified', 'role:driver'])->prefix('driver')->name('
     Route::get('bookings',             [DriverBookingController::class, 'index'])              ->name('bookings.index');
     Route::get('bookings/{id}',        [DriverBookingController::class, 'show'])               ->name('bookings.show');
     Route::post('toggle-availability', [DriverBookingController::class, 'toggleAvailability']) ->name('toggle-availability');
+
+
+    // Chat
+    Route::get('bookings/{id}/messages',  [ChatController::class, 'driverIndex']) ->name('chat.index');
+    Route::post('bookings/{id}/messages', [ChatController::class, 'driverStore'])->name('chat.store');
+
+    // Chat room index
+    Route::get('chats', [DriverChatController::class, 'index'])->name('chats.index');
 });
 
 // ── PROFILE ──────────────────────────────────────────────────
