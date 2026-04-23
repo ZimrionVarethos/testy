@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\DriverController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\UserController;
+use App\Http\Controllers\Api\NotificationController;
 
 /*
 |--------------------------------------------------------------------------
@@ -69,9 +70,14 @@ Route::prefix('v1')->group(function () {
         });
 
         // Drivers
+        // routes/api.php — di dalam middleware auth:sanctum, bagian drivers
         Route::prefix('drivers')->group(function () {
             Route::get('/',       [DriverController::class, 'index']);
             Route::get('{id}',    [DriverController::class, 'show']);
+
+            // TAMBAHKAN INI — update lokasi GPS driver
+            Route::middleware('role:driver')
+                 ->post('location', [DriverController::class, 'updateLocation']);
 
             Route::middleware('role:admin')->group(function () {
                 Route::post('{id}/toggle', [DriverController::class, 'toggle']);
