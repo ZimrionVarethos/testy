@@ -10,6 +10,10 @@
         @endif
 
         @forelse($bookings as $b)
+        @php
+            $payment    = $payments[(string) $b->_id] ?? null;
+            $sudahBayar = $payment && $payment->isPaid();
+        @endphp
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
             <div class="flex items-start justify-between">
                 <div>
@@ -24,32 +28,50 @@
                         Rp {{ number_format($b->total_price, 0, ',', '.') }}
                     </p>
 
-                    {{-- ⏱ Deadline konfirmasi — hanya untuk pending, di dalam loop --}}
+                    {{-- Info bawah: sesuai status + payment --}}
                     @if($b->status === 'pending')
-                    <p class="text-xs text-amber-600 mt-1">
-                        ⏱ Konfirmasi sebelum {{ $b->confirmationDeadline()->format('d M Y H:i') }}
-                        · {{ $b->confirmationDeadlineLabel() }}
-                    </p>
+                        @if($sudahBayar)
+                        <p class="text-xs text-blue-600 mt-1">
+                            ✓ Sudah dibayar — menunggu admin assign driver
+                        </p>
+                        @else
+                        <p class="text-xs text-amber-600 mt-1">
+                            ⏱ Bayar sebelum {{ $b->confirmationDeadline()->format('d M Y H:i') }}
+                            · {{ $b->confirmationDeadlineLabel() }}
+                        </p>
+                        @endif
                     @endif
                 </div>
 
                 <div class="flex flex-col items-end gap-2">
+                    {{-- Badge: pending dibedakan sudah bayar / belum --}}
+                    @if($b->status === 'pending')
+                        @if($sudahBayar)
+                        <span class="px-2 py-1 text-xs rounded-full font-medium bg-blue-100 text-blue-700">
+                            Menunggu Admin
+                        </span>
+                        @else
+                        <span class="px-2 py-1 text-xs rounded-full font-medium bg-yellow-100 text-yellow-700">
+                            Belum Dibayar
+                        </span>
+                        @endif
+                    @else
                     <span @class(['px-2 py-1 text-xs rounded-full font-medium',
-                        'bg-yellow-100 text-yellow-700' => $b->status === 'pending',
                         'bg-indigo-100 text-indigo-700' => $b->status === 'confirmed',
                         'bg-green-100 text-green-700'   => $b->status === 'ongoing',
                         'bg-gray-100 text-gray-600'     => $b->status === 'completed',
                         'bg-red-100 text-red-600'       => $b->status === 'cancelled',
                     ])>
                         @switch($b->status)
-                            @case('pending')   Menunggu Konfirmasi @break
-                            @case('confirmed') Dikonfirmasi        @break
-                            @case('ongoing')   Sedang Berjalan     @break
-                            @case('completed') Selesai             @break
-                            @case('cancelled') Dibatalkan          @break
+                            @case('confirmed') Dikonfirmasi    @break
+                            @case('ongoing')   Sedang Berjalan @break
+                            @case('completed') Selesai         @break
+                            @case('cancelled') Dibatalkan      @break
                             @default           {{ ucfirst($b->status) }}
                         @endswitch
                     </span>
+                    @endif
+
                     <a href="{{ route('bookings.show', $b->_id) }}"
                        class="text-xs text-indigo-500 hover:underline">Detail</a>
                 </div>
