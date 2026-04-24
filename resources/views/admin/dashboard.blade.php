@@ -1,6 +1,11 @@
 {{--
-    resources/views/dashboard.blade.php (admin section)
+    resources/views/admin/dashboard.blade.php
     Data dari DashboardController::adminDashboard()
+
+    PERUBAHAN dari versi lama:
+    - Hapus blok "Menunggu Konfirmasi Admin" yang pakai $acceptedBookings (status lama)
+    - Ganti dengan $pendingPaidBookings: pesanan pending yang sudah dibayar, siap di-assign driver
+    - Badge status "accepted" dihapus — tidak ada lagi di alur baru
 --}}
 <style>
     .db-section-label { font-family:'Epilogue',sans-serif; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.09em; color:var(--text-3); margin-bottom:10px; }
@@ -37,7 +42,6 @@
     .db-badge { display:inline-flex; align-items:center; gap:5px; font-size:10px; font-weight:600; padding:3px 8px; border-radius:6px; }
     .db-badge::before { content:''; width:5px; height:5px; border-radius:50%; }
     .badge-pending   { background:var(--s-amber-bg);  color:var(--s-amber-text);  } .badge-pending::before  { background:var(--s-amber); }
-    .badge-accepted  { background:var(--s-blue-bg);   color:var(--s-blue-text);   } .badge-accepted::before { background:var(--s-blue); }
     .badge-confirmed { background:var(--s-violet-bg); color:var(--s-violet-text); } .badge-confirmed::before{ background:var(--s-violet); }
     .badge-ongoing   { background:var(--s-green-bg);  color:var(--s-green-text);  } .badge-ongoing::before  { background:var(--s-green); }
     .badge-completed { background:var(--s-gray-bg);   color:var(--s-gray-text);   } .badge-completed::before{ background:var(--s-gray); }
@@ -87,10 +91,9 @@
     .db-alert-header { padding:12px 18px; background:var(--s-amber-bg); border-bottom:1px solid rgba(217,119,6,0.15); display:flex; align-items:center; gap:7px; }
     .db-alert-title { font-family:'Epilogue',sans-serif; font-size:12px; font-weight:700; color:var(--s-amber-text); flex:1; }
     .db-alert-count { background:var(--s-amber); color:white; font-size:10px; font-weight:700; font-family:'DM Mono',monospace; padding:1px 7px; border-radius:99px; }
-    .btn-confirm { padding:5px 14px; background:var(--dark); color:white; border:none; border-radius:8px; font-size:11px; font-weight:600; cursor:pointer; font-family:'DM Sans',sans-serif; transition:opacity 0.15s; flex-shrink:0; }
-    .btn-confirm:hover { opacity:0.75; }
+    .btn-assign { padding:5px 14px; background:var(--dark); color:white; border:none; border-radius:8px; font-size:11px; font-weight:600; cursor:pointer; font-family:'DM Sans',sans-serif; transition:opacity 0.15s; flex-shrink:0; text-decoration:none; display:inline-block; }
+    .btn-assign:hover { opacity:0.75; color:white; }
 
-    /* ── Responsive grids ── */
     .db-stat-grid    { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
     .db-charts-grid  { display:grid; grid-template-columns:1fr 360px; gap:12px; }
     .db-ops-grid     { display:grid; grid-template-columns:1fr 360px; gap:12px; }
@@ -144,18 +147,19 @@
                     <span class="db-chip db-chip-green">Aktif</span>
                 </div>
             </div>
-            <div class="db-stat-card" onclick="window.location='{{ route('admin.reports.index') }}'">
+            <div class="db-stat-card" onclick="window.location='{{ route('admin.bookings.index') }}?status=pending'">
                 <span class="db-stat-arrow"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 10L10 2M10 2H5M10 2v5"/></svg></span>
                 <div class="db-stat-tag tag-amber">
                     <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="8" cy="8" r="6"/><polyline points="8 4 8 8 10.5 9.5"/></svg>
-                    Pending
+                    Perlu Diproses
                 </div>
-                <div class="db-stat-value" style="color:var(--s-amber)">{{ $stats['pending_bookings'] ?? 0 }}</div>
-                <div class="db-stat-label">Menunggu konfirmasi</div>
+                {{-- Hanya pending yang sudah bayar yang perlu tindakan admin --}}
+                <div class="db-stat-value" style="color:var(--s-amber)">{{ $stats['pending_paid'] ?? 0 }}</div>
+                <div class="db-stat-label">Sudah bayar, belum di-assign</div>
                 <div class="db-stat-divider"></div>
                 <div class="db-stat-footer">
-                    <span class="db-stat-footer-text">Perlu tindakan</span>
-                    @if(($stats['pending_bookings'] ?? 0) > 0)
+                    <span class="db-stat-footer-text">Perlu assign driver</span>
+                    @if(($stats['pending_paid'] ?? 0) > 0)
                     <span class="db-chip db-chip-amber">Urgent</span>
                     @else
                     <span class="db-chip db-chip-green">Bersih</span>
@@ -193,6 +197,40 @@
         </div>
     </div>
 
+    {{-- ALERT: Pesanan sudah bayar, siap di-assign driver --}}
+    @if(isset($pendingPaidBookings) && $pendingPaidBookings->count() > 0)
+    <div>
+        <p class="db-section-label">Perlu Tindakan</p>
+        <div class="db-alert">
+            <div class="db-alert-header">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--s-amber)" stroke-width="2"><path d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+                <span class="db-alert-title">Pesanan Sudah Dibayar — Assign Driver</span>
+                <span class="db-alert-count">{{ $pendingPaidBookings->count() }}</span>
+            </div>
+            @foreach($pendingPaidBookings as $booking)
+            <div class="db-row">
+                <div style="display:flex;align-items:center;gap:10px">
+                    <div class="db-row-icon" style="background:var(--s-amber-bg)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="var(--s-amber)" stroke-width="1.8" width="14" height="14"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+                    </div>
+                    <div>
+                        <div class="db-row-code">{{ $booking->booking_code }}</div>
+                        <div class="db-row-sub">
+                            {{ $booking->user['name'] ?? '-' }} ·
+                            {{ \Carbon\Carbon::parse($booking->start_date)->format('d M Y') }}
+                        </div>
+                    </div>
+                </div>
+                {{-- Link langsung ke halaman assign, bukan form confirm lama --}}
+                <a href="{{ route('admin.bookings.show', $booking->_id) }}" class="btn-assign">
+                    Assign Driver →
+                </a>
+            </div>
+            @endforeach
+        </div>
+    </div>
+    @endif
+
     {{-- CHARTS --}}
     <div>
         <p class="db-section-label">Analitik</p>
@@ -223,7 +261,7 @@
                     <a href="{{ route('admin.bookings.index') }}" class="db-card-link">Lihat semua →</a>
                 </div>
                 @forelse($recentBookings ?? [] as $booking)
-                <div class="db-row">
+                <div class="db-row" style="cursor:pointer" onclick="window.location='{{ route('admin.bookings.show', $booking->_id) }}'">
                     <div style="display:flex;align-items:center;gap:10px">
                         <div class="db-row-icon">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
@@ -233,7 +271,7 @@
                             <div class="db-row-sub">{{ $booking->user['name'] ?? '-' }}</div>
                         </div>
                     </div>
-                    <span class="db-badge badge-{{ $booking->status }}">{{ ucfirst($booking->status) }}</span>
+                    <span class="db-badge badge-{{ $booking->status }}">{{ $booking->statusLabel() }}</span>
                 </div>
                 @empty
                 <div style="padding:32px 18px;text-align:center"><div style="font-size:12px;color:var(--text-3)">Belum ada pesanan</div></div>
@@ -290,40 +328,6 @@
             <div class="db-map-frame"><div id="db-map"></div></div>
         </div>
     </div>
-
-    {{-- ALERT --}}
-    @if(isset($acceptedBookings) && $acceptedBookings->count() > 0)
-    <div>
-        <p class="db-section-label">Perlu Tindakan</p>
-        <div class="db-alert">
-            <div class="db-alert-header">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--s-amber)" stroke-width="2"><path d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
-                <span class="db-alert-title">Menunggu Konfirmasi Admin</span>
-                <span class="db-alert-count">{{ $acceptedBookings->count() }}</span>
-            </div>
-            @foreach($acceptedBookings as $booking)
-            <div class="db-row">
-                <div style="display:flex;align-items:center;gap:10px">
-                    <div class="db-row-icon" style="background:var(--s-amber-bg)">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="var(--s-amber)" stroke-width="1.8" width="14" height="14"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
-                    </div>
-                    <div>
-                        <div class="db-row-code">{{ $booking->booking_code }}</div>
-                        <div class="db-row-sub">
-                            Driver: <strong style="color:var(--text-2)">{{ $booking->driver['name'] ?? '-' }}</strong>
-                            · User: <strong style="color:var(--text-2)">{{ $booking->user['name'] ?? '-' }}</strong>
-                        </div>
-                    </div>
-                </div>
-                <form method="POST" action="{{ route('admin.bookings.confirm', $booking->_id) }}" style="margin:0">
-                    @csrf
-                    <button type="submit" class="btn-confirm">Konfirmasi</button>
-                </form>
-            </div>
-            @endforeach
-        </div>
-    </div>
-    @endif
 
 </div>
 </div>
@@ -390,8 +394,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const statusCfg = {
         ongoing:     { color:'#16a34a', bg:'#f0fdf4', text:'#14532d', label:'Berjalan',   badgeClass:'badge-ongoing'  },
-        available:   { color:'#2563eb', bg:'#eff6ff', text:'#1e3a8a', label:'Tersedia',   badgeClass:'badge-accepted' },
-        rented:      { color:'#2563eb', bg:'#eff6ff', text:'#1e3a8a', label:'Disewa',     badgeClass:'badge-accepted' },
+        available:   { color:'#2563eb', bg:'#eff6ff', text:'#1e3a8a', label:'Tersedia',   badgeClass:'badge-confirmed' },
+        rented:      { color:'#2563eb', bg:'#eff6ff', text:'#1e3a8a', label:'Disewa',     badgeClass:'badge-confirmed' },
         maintenance: { color:'#d97706', bg:'#fffbeb', text:'#78350f', label:'Maintenance',badgeClass:'badge-pending'  },
     };
 
@@ -402,7 +406,6 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution:'© <a href="https://openstreetmap.org/copyright">OpenStreetMap</a>', maxZoom:19 }).addTo(map);
 
-    // ── Pin teardrop (konsisten dengan maps.index) ──
     function makeIcon(status) {
         const c = statusCfg[status] || statusCfg.available;
         const pulse = status === 'ongoing' ? `

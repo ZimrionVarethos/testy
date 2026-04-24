@@ -4,9 +4,9 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
-use App\Models\Notification;
 use App\Models\User;
 use App\Services\BookingService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class BookingController extends Controller
@@ -15,9 +15,9 @@ class BookingController extends Controller
 
     public function index(Request $request)
     {
-        $status = $request->query('status');
-        $search = $request->query('search');
-        $query  = Booking::orderBy('created_at', 'desc');
+        $status  = $request->query('status');
+        $search  = $request->query('search');
+        $query   = Booking::orderBy('created_at', 'desc');
 
         if ($status) $query->where('status', $status);
         if ($search) $query->where('booking_code', 'like', "%{$search}%");
@@ -31,28 +31,33 @@ class BookingController extends Controller
         $booking          = Booking::findOrFail($id);
         $availableDrivers = collect();
 
-        // Muat daftar driver tersedia hanya jika pesanan belum ada driver
-        if (
-            in_array($booking->status, ['pending', 'confirmed']) &&
-            empty($booking->driver['driver_id'])
-        ) {
-            $busyIds = Booking::busyDriverIds();
+        // Tampilkan daftar driver hanya kalau pesanan masih pending dan belum ada driver
+        if ($booking->status === Booking::STATUS_PENDING && empty($booking->driver['driver_id'])) {
+            $startDate = Carbon::parse($booking->start_date);
+            $endDate   = Carbon::parse($booking->end_date);
 
-            // Ambil semua driver aktif, filter yang sedang sibuk di PHP
-            // (lebih aman untuk MongoDB ObjectId vs string comparison)
+            // Driver yang sibuk di RENTANG TANGGAL ini saja (bukan semua yang punya booking aktif)
+            $busyIds = Booking::busyDriverIdsInRange($startDate, $endDate);
+
             $availableDrivers = User::where('role', 'driver')
                 ->where('is_active', true)
                 ->get()
                 ->filter(fn($d) => !in_array((string) $d->_id, $busyIds))
                 ->values();
+
+            // Sertakan juga jadwal tiap driver untuk ditampilkan di dropdown/tooltip
+            $availableDrivers = $availableDrivers->map(function ($driver) {
+                $driver->active_schedules = Booking::activeScheduleForDriver((string) $driver->_id);
+                return $driver;
+            });
         }
 
         return view('admin.bookings.show', compact('booking', 'availableDrivers'));
     }
 
     /**
-     * Admin assign driver ke pesanan.
-     * Otomatis mengubah status → confirmed dan kirim notifikasi ke driver.
+     * Admin assign driver → status pending jadi confirmed.
+     * Menggunakan BookingService agar logika terpusat.
      */
     public function assignDriver(Request $request, string $id)
     {
@@ -61,63 +66,17 @@ class BookingController extends Controller
         ]);
 
         $booking = Booking::findOrFail($id);
-
-        if (!in_array($booking->status, ['pending', 'confirmed'])) {
-            return back()->withErrors([
-                'error' => 'Driver hanya bisa di-assign pada pesanan berstatus pending atau confirmed.',
-            ]);
-        }
-
-        $driver = User::where('role', 'driver')
+        $driver  = User::where('role', 'driver')
             ->where('is_active', true)
             ->findOrFail($request->driver_id);
 
-        // Validasi ulang: driver tidak sedang punya pesanan aktif
-        $isBusy = Booking::whereIn('status', ['confirmed', 'ongoing'])
-            ->where('driver.driver_id', (string) $driver->_id)
-            ->exists();
-
-        if ($isBusy) {
-            return back()->withErrors([
-                'error' => "Driver {$driver->name} sedang punya pesanan aktif. Pilih driver lain.",
-            ]);
-        }
-
-        // Simpan snapshot driver ke dalam dokumen booking (embedded)
-        $booking->update([
-            'driver' => [
-                'driver_id'      => (string) $driver->_id,
-                'name'           => $driver->name,
-                'phone'          => $driver->phone ?? '',
-                'license_number' => $driver->driver_profile['license_number'] ?? '',
-            ],
-            'status'       => 'confirmed',
-            'assigned_at'  => now(),
-            'confirmed_at' => now(),
-        ]);
-
-        // Kirim notifikasi ke driver
-        Notification::send(
-            userId:    (string) $driver->_id,
-            title:     'Pesanan Baru Ditugaskan',
-            message:   "Anda ditugaskan pada pesanan {$booking->booking_code}. "
-                     . "Pelanggan: {$booking->user['name']}. "
-                     . "Mulai: " . \Carbon\Carbon::parse($booking->start_date)->format('d M Y H:i') . ".",
-            type:      'booking',
-            relatedId: (string) $booking->_id,
-            actionUrl: route('driver.bookings.show', $booking->_id),
-        );
-
-        return redirect()
-            ->route('admin.bookings.show', $id)
-            ->with('success', "Driver {$driver->name} berhasil di-assign. Status pesanan → Confirmed.");
-    }
-
-    public function confirm(string $id)
-    {
         try {
-            $this->bookingService->adminConfirmBooking($id);
-            return back()->with('success', 'Pesanan berhasil dikonfirmasi.');
+            $this->bookingService->adminAssignDriver($booking, $driver);
+
+            return redirect()
+                ->route('admin.bookings.show', $id)
+                ->with('success', "Driver {$driver->name} berhasil di-assign. Pesanan sekarang Confirmed.");
+
         } catch (\Exception $e) {
             return back()->withErrors(['error' => $e->getMessage()]);
         }

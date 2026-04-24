@@ -3,162 +3,180 @@
 namespace App\Http\Controllers;
 
 use App\Models\Booking;
+use App\Models\Payment;
+use App\Models\User;
 use App\Models\Vehicle;
 use App\Models\Notification;
-use App\Models\User;
-use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller
 {
     public function index()
     {
-        return match(Auth::user()->role) {
-            'admin'            => $this->adminDashboard(),
-            'pengguna', 'user' => $this->penggunaDashboard(),
-            'driver'           => $this->driverDashboard(),
-            default            => view('dashboard'),
+        $user = Auth::user();
+
+        return match ($user->role) {
+            'admin'    => $this->adminDashboard(),
+            'driver'   => $this->driverDashboard(),
+            default    => $this->penggunaDashboard(),
         };
     }
 
+    // ────────────────────────────────────────────────────────
+    // ADMIN
+    // ────────────────────────────────────────────────────────
     private function adminDashboard()
     {
         $now       = Carbon::now();
         $weekStart = $now->copy()->startOfWeek();
-        $weekEnd   = $now->copy()->endOfWeek();
-        $prevStart = $weekStart->copy()->subWeek();
-        $prevEnd   = $weekEnd->copy()->subWeek();
 
-        // ── Stat cards: data MINGGU INI ──────────────────────
-        $weekBookings = Booking::where('created_at', '>=', $weekStart)
-                                ->where('created_at', '<=', $weekEnd)->count();
-        $prevBookings = Booking::where('created_at', '>=', $prevStart)
-                                ->where('created_at', '<=', $prevEnd)->count();
+        // ── Stats utama ──────────────────────────────────────
+        $totalBookings  = Booking::count();
+        $weekBookings   = Booking::where('created_at', '>=', $weekStart)->count();
+        $ongoingBookings= Booking::ongoing()->count();
+        $weekCompleted  = Booking::completed()->where('completed_at', '>=', $weekStart)->count();
 
-        $weekRevenue  = (int) Booking::whereIn('status', ['confirmed', 'ongoing', 'completed'])
-                            ->where('confirmed_at', '>=', $weekStart)
-                            ->where('confirmed_at', '<=', $weekEnd)
-                            ->sum('total_price');
-        $prevRevenue  = (int) Booking::whereIn('status', ['confirmed', 'ongoing', 'completed'])
-                            ->where('confirmed_at', '>=', $prevStart)
-                            ->where('confirmed_at', '<=', $prevEnd)
-                            ->sum('total_price');
+        $weekRevenue = Payment::where('status', Payment::STATUS_PAID)
+            ->where('paid_at', '>=', $weekStart)
+            ->sum('amount');
 
-        $stats = [
-            'week_bookings'    => $weekBookings,
-            'week_revenue'     => $weekRevenue,
-            'pending_bookings' => Booking::whereIn('status', ['pending', 'accepted'])->count(),
-            'ongoing_bookings' => Booking::where('status', 'ongoing')->count(),
-            'booking_change'   => $prevBookings > 0
-                                    ? round((($weekBookings - $prevBookings) / $prevBookings) * 100)
-                                    : null,
-            'revenue_change'   => $prevRevenue > 0
-                                    ? round((($weekRevenue - $prevRevenue) / $prevRevenue) * 100)
-                                    : null,
-            'week_label'       => $weekStart->locale('id')->isoFormat('D MMM')
-                                    . ' – ' . $weekEnd->locale('id')->isoFormat('D MMM YYYY'),
-        ];
+        // ── Pending yang sudah bayar (perlu tindakan admin) ──
+        // Ini yang muncul di alert "Perlu Tindakan" di dashboard
+        $paidBookingIds = Payment::where('status', Payment::STATUS_PAID)
+            ->pluck('booking_id')
+            ->map(fn($id) => (string) $id)
+            ->toArray();
 
-        // ── Chart: booking trend 7 hari ──────────────────────
-        $bookingTrend = collect(range(6, 0))->map(function (int $d) use ($now) {
-            $day = $now->copy()->subDays($d);
-            return [
-                'date'  => $day->locale('id')->isoFormat('ddd'),
-                'total' => Booking::where('created_at', '>=', $day->copy()->startOfDay())
-                                  ->where('created_at', '<=', $day->copy()->endOfDay())
-                                  ->count(),
-            ];
-        })->values()->toArray();
+        $pendingPaidBookings = Booking::pending()
+            ->whereIn('_id', $paidBookingIds)
+            ->whereNull('driver.driver_id')
+            ->orderBy('created_at', 'asc')
+            ->get();
 
-        // ── Chart: revenue 6 bulan ────────────────────────────
-        $revenueChart = collect(range(5, 0))->map(function (int $m) use ($now) {
-            $month = $now->copy()->subMonths($m);
-            return [
-                'month'   => $month->locale('id')->isoFormat('MMM'),
-                'revenue' => (int) Booking::whereIn('status', ['confirmed', 'ongoing', 'completed'])
-                                ->where('confirmed_at', '>=', $month->copy()->startOfMonth())
-                                ->where('confirmed_at', '<=', $month->copy()->endOfMonth())
-                                ->sum('total_price'),
-            ];
-        })->values()->toArray();
+        $pendingPaidCount = $pendingPaidBookings->count();
 
-        // ── Vehicle stats ─────────────────────────────────────
+        // ── Pesanan terbaru ──────────────────────────────────
+        $recentBookings = Booking::orderBy('created_at', 'desc')->limit(6)->get();
+
+        // ── Vehicle stats ────────────────────────────────────
         $vehicleStats = [
             'available'   => Vehicle::where('status', 'available')->count(),
             'rented'      => Vehicle::where('status', 'rented')->count(),
             'maintenance' => Vehicle::where('status', 'maintenance')->count(),
         ];
 
-        $recentBookings   = Booking::orderBy('created_at', 'desc')->limit(5)->get();
-        $acceptedBookings = Booking::where('status', 'accepted')->orderBy('accepted_at', 'asc')->get();
+        // ── Booking trend (7 hari) ───────────────────────────
+        $bookingTrend = collect(range(6, 0))->map(function ($daysAgo) {
+            $date  = Carbon::now()->subDays($daysAgo);
+            $total = Booking::whereDate('created_at', $date->toDateString())->count();
+            return ['date' => $date->locale('id')->shortDayName, 'total' => $total];
+        })->values()->toArray();
 
-        // ── Map: vehicle locations ────────────────────────────
-        $activeBookings = Booking::whereIn('status', ['confirmed', 'ongoing'])
-            ->get()->keyBy(fn($b) => (string) ($b->vehicle['vehicle_id'] ?? ''));
+        // ── Revenue chart (6 bulan) ──────────────────────────
+        $revenueChart = collect(range(5, 0))->map(function ($monthsAgo) {
+            $date    = Carbon::now()->subMonths($monthsAgo);
+            $revenue = Payment::where('status', Payment::STATUS_PAID)
+                ->whereYear('paid_at', $date->year)
+                ->whereMonth('paid_at', $date->month)
+                ->sum('amount');
+            return ['month' => $date->locale('id')->shortMonthName, 'revenue' => $revenue];
+        })->values()->toArray();
 
-        $vehicleLocations = Vehicle::all()->map(function ($v) use ($activeBookings) {
-            $vid     = (string) $v->_id;
-            $booking = $activeBookings->get($vid);
-            $lat = $lon = $locationUpdatedAt = null;
+        // ── Vehicle locations (untuk peta) ───────────────────
+        $vehicleLocations = User::where('role', 'driver')
+            ->where('is_active', true)
+            ->whereNotNull('last_lat')
+            ->whereNotNull('last_lon')
+            ->get()
+            ->map(function ($driver) {
+                $activeBooking = Booking::activeByDriver((string) $driver->_id)->first();
+                return [
+                    'lat'                => $driver->last_lat,
+                    'lon'                => $driver->last_lon,
+                    'plate'              => $activeBooking->vehicle['plate_number'] ?? '-',
+                    'driver'             => $driver->name,
+                    'status'             => $activeBooking?->status ?? 'available',
+                    'location_updated_at'=> $driver->last_location_updated_at
+                        ? Carbon::parse($driver->last_location_updated_at)->format('d M H:i')
+                        : null,
+                ];
+            })->filter(fn($v) => $v['lat'] && $v['lon'])->values()->toArray();
 
-            if ($booking && !empty($booking->driver['driver_id'])) {
-                $driver            = User::find($booking->driver['driver_id']);
-                $lat               = $driver?->last_lat;
-                $lon               = $driver?->last_lon;
-                $locationUpdatedAt = $driver?->last_location_updated_at;
-            }
-
-            return [
-                'id'                  => $vid,
-                'plate'               => $v->plate_number ?? '-',
-                'driver'              => $booking?->driver['name'] ?? '-',
-                'status'              => $v->status ?? 'available',
-                'lat'                 => $lat,
-                'lon'                 => $lon,
-                'location_updated_at' => $locationUpdatedAt
-                    ? Carbon::parse($locationUpdatedAt)->format('H:i, d M') : null,
-            ];
-        })->filter(fn($v) => !empty($v['lat']) && !empty($v['lon']))->values()->all();
-
-        return view('dashboard', compact(
-            'stats', 'vehicleStats', 'recentBookings', 'acceptedBookings',
-            'vehicleLocations', 'bookingTrend', 'revenueChart',
-        ));
+        return view('dashboard', [
+            'stats' => [
+                'total_bookings'  => $totalBookings,
+                'week_bookings'   => $weekBookings,
+                'ongoing_bookings'=> $ongoingBookings,
+                'week_completed'  => $weekCompleted,
+                'week_revenue'    => $weekRevenue,
+                'pending_paid'    => $pendingPaidCount,   // ← dipakai di stat card
+            ],
+            'pendingPaidBookings' => $pendingPaidBookings, // ← dipakai di alert
+            'recentBookings'      => $recentBookings,
+            'vehicleStats'        => $vehicleStats,
+            'bookingTrend'        => $bookingTrend,
+            'revenueChart'        => $revenueChart,
+            'vehicleLocations'    => $vehicleLocations,
+        ]);
     }
 
+    // ────────────────────────────────────────────────────────
+    // DRIVER
+    // ────────────────────────────────────────────────────────
+    private function driverDashboard()
+    {
+        $driverId = (string) Auth::id();
+
+        $myActiveBookings = Booking::where('driver.driver_id', $driverId)
+            ->whereIn('status', [Booking::STATUS_CONFIRMED, Booking::STATUS_ONGOING])
+            ->orderBy('start_date', 'asc')
+            ->get();
+
+        $stats = [
+            'total_trips' => Booking::where('driver.driver_id', $driverId)->count(),
+            'ongoing'     => Booking::where('driver.driver_id', $driverId)->ongoing()->count(),
+            'confirmed'   => Booking::where('driver.driver_id', $driverId)->confirmed()->count(),
+        ];
+
+        $notifications = Notification::where('user_id', $driverId)
+            ->where('is_read', false)
+            ->orderBy('created_at', 'desc')
+            ->limit(5)
+            ->get();
+
+        return view('dashboard', compact('myActiveBookings', 'stats', 'notifications'));
+    }
+
+    // ────────────────────────────────────────────────────────
+    // PENGGUNA
+    // ────────────────────────────────────────────────────────
     private function penggunaDashboard()
     {
         $userId = (string) Auth::id();
-        $stats  = [
-            'total'     => Booking::where('user.user_id', $userId)->count(),
-            'ongoing'   => Booking::where('user.user_id', $userId)->where('status', 'ongoing')->count(),
-            'completed' => Booking::where('user.user_id', $userId)->where('status', 'completed')->count(),
-        ];
+
         $activeBookings = Booking::where('user.user_id', $userId)
-            ->whereIn('status', ['pending', 'accepted', 'confirmed', 'ongoing'])
-            ->orderBy('created_at', 'desc')->get();
-        $notifications = Notification::where('user_id', $userId)
-            ->orderBy('created_at', 'desc')->limit(5)->get();
+            ->whereIn('status', [
+                Booking::STATUS_PENDING,
+                Booking::STATUS_CONFIRMED,
+                Booking::STATUS_ONGOING,
+            ])
+            ->orderBy('created_at', 'desc')
+            ->limit(5)
+            ->get();
 
-        return view('dashboard', compact('stats', 'activeBookings', 'notifications'));
-    }
-
-    private function driverDashboard()
-    {
-        $driver   = Auth::user();
-        $driverId = (string) $driver->_id;
-        $stats    = [
-            'total_trips'       => $driver->driver_profile['total_trips'] ?? 0,
-            'ongoing'           => Booking::where('driver.driver_id', $driverId)->where('status', 'ongoing')->count(),
-            'pending_available' => Booking::where('status', 'pending')->count(),
-            'rating_avg'        => $driver->driver_profile['rating_avg'] ?? 0,
+        $stats = [
+            'total'     => Booking::where('user.user_id', $userId)->count(),
+            'ongoing'   => Booking::where('user.user_id', $userId)->ongoing()->count(),
+            'completed' => Booking::where('user.user_id', $userId)->completed()->count(),
         ];
-        $myActiveBookings = Booking::where('driver.driver_id', $driverId)
-            ->whereIn('status', ['accepted', 'confirmed', 'ongoing'])
-            ->orderBy('start_date', 'asc')->get();
-        $availableBookings = Booking::where('status', 'pending')
-            ->orderBy('created_at', 'asc')->limit(5)->get();
 
-        return view('dashboard', compact('stats', 'myActiveBookings', 'availableBookings'));
+        $notifications = Notification::where('user_id', $userId)
+            ->where('is_read', false)
+            ->orderBy('created_at', 'desc')
+            ->limit(5)
+            ->get();
+
+        return view('dashboard', compact('activeBookings', 'stats', 'notifications'));
     }
 }

@@ -9,7 +9,7 @@ use Illuminate\Console\Command;
 class UpdateBookingStatus extends Command
 {
     protected $signature   = 'booking:update-status';
-    protected $description = 'Otomatis update status booking berdasarkan tanggal (confirmed→ongoing, ongoing→completed)';
+    protected $description = 'Auto-complete pesanan ongoing yang sudah melewati end_date';
 
     public function __construct(private BookingService $bookingService)
     {
@@ -18,19 +18,24 @@ class UpdateBookingStatus extends Command
 
     public function handle(): void
     {
-        // 1. Confirmed → Ongoing: start_date sudah tiba
-        $toStart = Booking::readyToStart()->get();
-        foreach ($toStart as $booking) {
-            try {
-                $this->bookingService->startBooking($booking);
-                $this->info("[STARTED] {$booking->booking_code}");
-            } catch (\Throwable $e) {
-                $this->error("[ERROR] {$booking->booking_code}: {$e->getMessage()}");
-            }
+        /**
+         * CATATAN ALUR:
+         *
+         * confirmed → ongoing : TIDAK lagi dilakukan di sini.
+         *   Sekarang driver yang trigger lewat tombol "Sudah Jemput" (driverMarkPickup).
+         *   Scheduler tidak paksa status jadi ongoing karena driver harus konfirmasi manual.
+         *
+         * ongoing → completed : Tetap otomatis via scheduler.
+         *   Saat end_date tiba, pesanan diselesaikan, vehicle dikembalikan ke available.
+         */
+
+        $toComplete = Booking::readyToComplete()->get();
+
+        if ($toComplete->isEmpty()) {
+            $this->info('Tidak ada pesanan yang perlu diselesaikan.');
+            return;
         }
 
-        // 2. Ongoing → Completed: end_date sudah tiba
-        $toComplete = Booking::readyToComplete()->get();
         foreach ($toComplete as $booking) {
             try {
                 $this->bookingService->completeBooking($booking);
@@ -40,6 +45,6 @@ class UpdateBookingStatus extends Command
             }
         }
 
-        $this->info('Done. Started: ' . $toStart->count() . ', Completed: ' . $toComplete->count());
+        $this->info("Selesai. {$toComplete->count()} pesanan diselesaikan.");
     }
 }

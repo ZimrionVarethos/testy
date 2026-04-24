@@ -10,42 +10,93 @@
         </div>
         @endif
 
-        {{-- Banner deadline konfirmasi --}}
-        @if($booking->status === 'pending')
+        @php
+            $activePayment = \App\Models\Payment::activeForBooking((string) $booking->_id);
+            $sudahBayar    = $activePayment && $activePayment->isPaid();
+        @endphp
+
+        {{-- ══ BANNER STATUS SESUAI ALUR ════════════════════════════════
+             Alur: pending (belum bayar) → pending (sudah bayar) → confirmed → ongoing → completed
+        ════════════════════════════════════════════════════════════════ --}}
+        @if($booking->status === 'pending' && !$sudahBayar)
+        {{-- Step 1: Belum bayar --}}
         <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 flex gap-3 items-start">
-            <div class="text-amber-500 mt-0.5">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
-            </div>
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-amber-500 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
             <div class="text-sm text-amber-800 space-y-1">
-                <p class="font-medium">Menunggu konfirmasi admin</p>
-                <p>
-                    Pesanan akan dikonfirmasi paling lambat
+                <p class="font-medium">Selesaikan pembayaran untuk mengkonfirmasi pesanan</p>
+                <p>Batas waktu pembayaran:
                     <span class="font-semibold">{{ $booking->confirmationDeadline()->format('d M Y, H:i') }}</span>
-                    <span class="text-amber-600">({{ $booking->confirmationDeadlineLabel() }})</span>.
+                    <span class="text-amber-600">({{ $booking->confirmationDeadlineLabel() }})</span>
                 </p>
-                <p class="text-amber-600 text-xs">
-                    Jika melewati batas waktu tersebut, pesanan akan dibatalkan otomatis.
+                <p class="text-xs text-amber-600">Pesanan akan dibatalkan otomatis jika melewati batas waktu.</p>
+            </div>
+        </div>
+
+        @elseif($booking->status === 'pending' && $sudahBayar)
+        {{-- Step 1 selesai: Sudah bayar, nunggu admin --}}
+        <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 flex gap-3 items-start">
+            <svg class="w-5 h-5 text-blue-500 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <div class="text-sm text-blue-800 space-y-1">
+                <p class="font-medium">Pembayaran diterima — menunggu admin assign driver</p>
+                <p class="text-xs text-blue-600">Admin akan segera mengkonfirmasi dan menugaskan driver untuk pesanan Anda.</p>
+            </div>
+        </div>
+
+        @elseif($booking->status === 'confirmed')
+        {{-- Step 2: Driver sudah di-assign --}}
+        <div class="bg-indigo-50 border border-indigo-200 rounded-xl p-4 flex gap-3 items-start">
+            <svg class="w-5 h-5 text-indigo-500 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+            </svg>
+            <div class="text-sm text-indigo-800 space-y-1">
+                <p class="font-medium">Pesanan dikonfirmasi!</p>
+                @if(!empty($booking->driver['name']))
+                <p>Driver <span class="font-semibold">{{ $booking->driver['name'] }}</span>
+                   akan menjemput pada
+                   <span class="font-semibold">{{ \Carbon\Carbon::parse($booking->start_date)->format('d M Y, H:i') }}</span>.
                 </p>
+                @endif
+                <p class="text-xs text-indigo-600">Harap siap di lokasi penjemputan tepat waktu.</p>
+            </div>
+        </div>
+
+        @elseif($booking->status === 'ongoing')
+        {{-- Step 3: Sedang berjalan --}}
+        <div class="bg-green-50 border border-green-200 rounded-xl p-4 flex gap-3 items-start">
+            <div class="h-2.5 w-2.5 rounded-full bg-green-500 animate-pulse shrink-0 mt-1.5"></div>
+            <div class="text-sm text-green-800 space-y-1">
+                <p class="font-medium">Perjalanan sedang berjalan</p>
+                @if(!empty($booking->driver['phone']))
+                <p class="text-xs">Hubungi driver:
+                    <a href="tel:{{ $booking->driver['phone'] }}" class="text-green-700 font-semibold underline">
+                        {{ $booking->driver['phone'] }}
+                    </a>
+                </p>
+                @endif
             </div>
         </div>
         @endif
 
-        {{-- Status tracker --}}
+        {{-- ══ STATUS TRACKER (3 langkah utama) ═══════════════════════ --}}
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
             @php
                 $steps = [
-                    'pending'   => 'Menunggu Konfirmasi',
+                    'pending'   => 'Bayar',
                     'confirmed' => 'Dikonfirmasi',
-                    'ongoing'   => 'Sedang Berjalan',
+                    'ongoing'   => 'Berjalan',
                     'completed' => 'Selesai',
                 ];
                 $order      = array_keys($steps);
                 $currentIdx = $booking->status === 'cancelled'
                     ? -1
                     : (array_search($booking->status, $order) ?? 0);
+                // Kalau sudah bayar tapi masih pending, anggap step 1 selesai
+                if ($booking->status === 'pending' && $sudahBayar) $currentIdx = 0;
             @endphp
 
             @if($booking->status === 'cancelled')
@@ -67,7 +118,7 @@
                 <div class="flex flex-col items-center flex-1 {{ !$loop->last ? 'relative' : '' }}">
                     @if(!$loop->last)
                     <div class="absolute top-3 left-1/2 w-full h-0.5
-                        {{ $done && $idx < $currentIdx ? 'bg-indigo-500' : 'bg-gray-200' }}"></div>
+                        {{ ($done && $idx < $currentIdx) ? 'bg-indigo-500' : 'bg-gray-200' }}"></div>
                     @endif
                     <div class="h-6 w-6 rounded-full z-10 flex items-center justify-center text-xs font-bold
                         {{ $done ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-400' }}">
@@ -81,6 +132,7 @@
             @endif
         </div>
 
+        {{-- Detail kendaraan & driver --}}
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 space-y-2">
                 <h4 class="font-semibold text-gray-700 border-b pb-2">Kendaraan</h4>
@@ -110,7 +162,7 @@
                     </div>
                 </div>
                 @else
-                <p class="text-sm text-gray-400">Driver akan ditugaskan oleh admin setelah pesanan dikonfirmasi.</p>
+                <p class="text-sm text-gray-400">Driver akan ditugaskan oleh admin setelah pembayaran dikonfirmasi.</p>
                 @endif
 
                 <h4 class="font-semibold text-gray-700 border-b pb-2 pt-2">Penjemputan</h4>
@@ -121,11 +173,7 @@
             </div>
         </div>
 
-        @php
-            $activePayment = \App\Models\Payment::activeForBooking((string) $booking->_id);
-            $sudahBayar    = $activePayment && $activePayment->isPaid();
-        @endphp
-
+        {{-- ══ AKSI PEMBAYARAN ═══════════════════════════════════════ --}}
         @if(!in_array($booking->status, ['ongoing', 'completed', 'cancelled']))
             @if($sudahBayar)
                 <div class="bg-green-50 border border-green-200 rounded-xl px-4 py-3 text-sm text-green-700 flex gap-2 items-center">
@@ -147,7 +195,7 @@
                         Lanjutkan Pembayaran
                     </a>
                 </div>
-            @elseif(!$activePayment || $activePayment->isExpired())
+            @else
                 @if($activePayment && $activePayment->isExpired())
                 <div class="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-600 mb-2">
                     Batas waktu pembayaran sebelumnya sudah habis.
@@ -159,6 +207,7 @@
                 </a>
             @endif
 
+            {{-- Tiket bantuan — hanya muncul kalau sudah bayar --}}
             @if($sudahBayar)
                 @php
                     $existingTicket = \App\Models\Ticket::where('booking_id', (string) $booking->_id)
@@ -186,17 +235,18 @@
                 </a>
                 @endif
             @else
-                <form method="POST" action="{{ route('bookings.destroy', $booking->_id) }}"
-                      onsubmit="return confirm('Batalkan pesanan ini?')">
-                    @csrf @method('DELETE')
-                    <button class="w-full py-2.5 bg-red-50 text-red-500 border border-red-200 rounded-lg hover:bg-red-100 transition text-sm">
-                        Batalkan Pesanan
-                    </button>
-                </form>
+            {{-- Belum bayar = masih bisa cancel --}}
+            <form method="POST" action="{{ route('bookings.destroy', $booking->_id) }}"
+                  onsubmit="return confirm('Batalkan pesanan ini?')">
+                @csrf @method('DELETE')
+                <button class="w-full py-2.5 bg-red-50 text-red-500 border border-red-200 rounded-lg hover:bg-red-100 transition text-sm">
+                    Batalkan Pesanan
+                </button>
+            </form>
             @endif
         @endif
 
-        {{-- ── CHAT ROOM ── --}}
+        {{-- Chat Room --}}
         @include('partials.chat-room', [
             'booking'    => $booking,
             'senderRole' => 'pengguna',

@@ -1,33 +1,33 @@
 <?php
 
-/**
- * app/http/Controllers/Driver/BookingController.php
- */
-
 namespace App\Http\Controllers\Driver;
+
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
+use App\Services\BookingService;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
-
 
 class BookingController extends Controller
 {
+    public function __construct(private BookingService $bookingService) {}
+
     /**
-     * Daftar pesanan yang sudah di-assign ke driver ini.
+     * Daftar semua pesanan yang di-assign ke driver ini.
      */
     public function index()
     {
         $driverId = (string) Auth::id();
 
         $bookings = Booking::where('driver.driver_id', $driverId)
-            ->orderBy('created_at', 'desc')
+            ->orderBy('start_date', 'desc')
             ->paginate(10);
 
         return view('driver.bookings.index', compact('bookings'));
     }
 
     /**
-     * Detail pesanan — hanya bisa dilihat driver yang bersangkutan.
+     * Detail pesanan — hanya driver yang bersangkutan yang bisa akses.
      */
     public function show(string $id)
     {
@@ -39,19 +39,48 @@ class BookingController extends Controller
             'Anda tidak punya akses ke pesanan ini.'
         );
 
-        return view('driver.bookings.show', compact('booking'));
+        // Tentukan apakah tombol "Sudah Jemput" boleh ditampilkan:
+        // - Status harus confirmed
+        // - start_date harus sudah tiba (atau dalam toleransi 30 menit sebelumnya)
+        $canPickup = $booking->status === Booking::STATUS_CONFIRMED
+            && Carbon::parse($booking->start_date)->subMinutes(30)->lte(Carbon::now());
+
+        return view('driver.bookings.show', compact('booking', 'canPickup'));
     }
 
     /**
-     * Toggle status ketersediaan driver (is_available di driver_profile).
+     * Driver klik tombol "Sudah Jemput".
+     * Mengubah status confirmed → ongoing.
+     * Hanya bisa dilakukan saat start_date sudah tiba (toleransi 30 menit sebelumnya).
+     *
+     * POST /driver/bookings/{id}/pickup
      */
-    public function toggleAvailability()
+    public function markPickup(string $id)
     {
+        $booking = Booking::findOrFail($id);
         $driver  = Auth::user();
-        $current = $driver->driver_profile['is_available'] ?? false;
-        $driver->update(['driver_profile.is_available' => !$current]);
 
-        $label = $current ? 'tidak tersedia' : 'tersedia';
-        return back()->with('success', "Status Anda sekarang: {$label}.");
+        // Guard: pastikan driver yang benar
+        if (($booking->driver['driver_id'] ?? null) !== (string) $driver->_id) {
+            abort(403);
+        }
+
+        // Guard: cek waktu — tidak boleh terlalu awal
+        if (Carbon::parse($booking->start_date)->subMinutes(30)->gt(Carbon::now())) {
+            return back()->withErrors([
+                'error' => 'Tombol "Sudah Jemput" hanya bisa diklik mulai 30 menit sebelum waktu penjemputan.'
+            ]);
+        }
+
+        try {
+            $this->bookingService->driverMarkPickup($booking, $driver);
+
+            return redirect()
+                ->route('driver.bookings.show', $id)
+                ->with('success', 'Status perjalanan diperbarui menjadi Sedang Berjalan.');
+
+        } catch (\Exception $e) {
+            return back()->withErrors(['error' => $e->getMessage()]);
+        }
     }
 }

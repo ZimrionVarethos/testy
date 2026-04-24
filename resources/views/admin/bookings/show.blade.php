@@ -19,6 +19,24 @@
             </div>
         @endif
 
+        {{-- Banner: pesanan sudah dibayar dan siap diproses --}}
+        @php
+            $payment = \App\Models\Payment::activeForBooking((string) $booking->_id);
+        @endphp
+        @if($booking->status === 'pending' && $payment && $payment->isPaid())
+        <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 flex gap-3 items-start">
+            <svg class="w-5 h-5 text-blue-500 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <div class="text-sm text-blue-800">
+                <p class="font-medium">Pembayaran sudah dikonfirmasi — assign driver untuk melanjutkan</p>
+                <p class="text-xs text-blue-600 mt-0.5">
+                    Pesanan ini sudah lunas dan siap diproses. Pilih driver yang tersedia di bawah.
+                </p>
+            </div>
+        </div>
+        @endif
+
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             {{-- Info Pesanan --}}
             <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 space-y-3">
@@ -27,18 +45,26 @@
                     <div class="flex justify-between"><span class="text-gray-500">Kode</span><span class="font-medium">{{ $booking->booking_code }}</span></div>
                     <div class="flex justify-between">
                         <span class="text-gray-500">Status</span>
-                        <span @class(['px-2 py-0.5 text-xs rounded-full font-medium',
-                            'bg-yellow-100 text-yellow-700' => $booking->status === 'pending',
-                            'bg-indigo-100 text-indigo-700' => $booking->status === 'confirmed',
-                            'bg-green-100 text-green-700'   => $booking->status === 'ongoing',
-                            'bg-gray-100 text-gray-600'     => $booking->status === 'completed',
-                            'bg-red-100 text-red-600'       => $booking->status === 'cancelled',
-                        ])>{{ ucfirst($booking->status) }}</span>
+                        <span class="{{ $booking->statusBadgeClass() }} px-2 py-0.5 text-xs rounded-full font-medium">
+                            {{ $booking->statusLabel() }}
+                        </span>
                     </div>
                     <div class="flex justify-between"><span class="text-gray-500">Mulai</span><span>{{ \Carbon\Carbon::parse($booking->start_date)->format('d M Y H:i') }}</span></div>
                     <div class="flex justify-between"><span class="text-gray-500">Selesai</span><span>{{ \Carbon\Carbon::parse($booking->end_date)->format('d M Y H:i') }}</span></div>
                     <div class="flex justify-between"><span class="text-gray-500">Durasi</span><span>{{ $booking->duration_days }} hari</span></div>
                     <div class="flex justify-between"><span class="text-gray-500">Total</span><span class="font-semibold text-indigo-600">Rp {{ number_format($booking->total_price, 0, ',', '.') }}</span></div>
+                    @if($payment)
+                    <div class="flex justify-between">
+                        <span class="text-gray-500">Pembayaran</span>
+                        <span @class(['px-2 py-0.5 text-xs rounded-full font-medium',
+                            'bg-green-100 text-green-700'  => $payment->isPaid(),
+                            'bg-yellow-100 text-yellow-700'=> $payment->isPending(),
+                            'bg-red-100 text-red-600'      => !$payment->isPaid() && !$payment->isPending(),
+                        ])>
+                            {{ $payment->isPaid() ? 'Lunas' : ($payment->isPending() ? 'Menunggu' : ucfirst($payment->status)) }}
+                        </span>
+                    </div>
+                    @endif
                 </div>
             </div>
 
@@ -69,15 +95,25 @@
                         <div class="flex justify-between"><span class="text-gray-500">Telepon</span><span>{{ $booking->driver['phone'] }}</span></div>
                         <div class="flex justify-between"><span class="text-gray-500">SIM</span><span>{{ $booking->driver['license_number'] }}</span></div>
                         @if($booking->assigned_at)
-                        <div class="flex justify-between"><span class="text-gray-500">Di-assign</span><span class="text-xs text-gray-400">{{ \Carbon\Carbon::parse($booking->assigned_at)->format('d M Y H:i') }}</span></div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-500">Di-assign</span>
+                            <span class="text-xs text-gray-400">{{ \Carbon\Carbon::parse($booking->assigned_at)->format('d M Y H:i') }}</span>
+                        </div>
                         @endif
                     </div>
 
-                @elseif(in_array($booking->status, ['pending', 'confirmed']) && $availableDrivers->isNotEmpty())
-                    {{-- Form assign driver --}}
+                @elseif($booking->status === 'pending' && $availableDrivers->isNotEmpty())
+                    {{-- Form assign driver — hanya muncul kalau pending dan ada driver tersedia --}}
                     <form method="POST" action="{{ route('admin.bookings.assign-driver', $booking->_id) }}" class="space-y-3">
                         @csrf
-                        <p class="text-xs text-gray-400">Hanya driver aktif yang tidak sedang punya pesanan berjalan yang ditampilkan.</p>
+                        <p class="text-xs text-gray-400">
+                            Hanya driver aktif yang tidak punya jadwal bentrok di
+                            <span class="font-medium">
+                                {{ \Carbon\Carbon::parse($booking->start_date)->format('d M Y') }} —
+                                {{ \Carbon\Carbon::parse($booking->end_date)->format('d M Y') }}
+                            </span>
+                            yang ditampilkan.
+                        </p>
                         <select name="driver_id" required
                             class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-400 focus:outline-none">
                             <option value="">— Pilih driver —</option>
@@ -88,6 +124,10 @@
                                 @if($driver->driver_profile['license_number'] ?? false)
                                     · SIM: {{ $driver->driver_profile['license_number'] }}
                                 @endif
+                                {{-- Tampilkan jadwal aktif driver jika ada --}}
+                                @if($driver->active_schedules->isNotEmpty())
+                                    ({{ $driver->active_schedules->count() }} jadwal lain)
+                                @endif
                             </option>
                             @endforeach
                         </select>
@@ -97,9 +137,19 @@
                         </button>
                     </form>
 
-                @elseif(in_array($booking->status, ['pending', 'confirmed']) && $availableDrivers->isEmpty())
+                @elseif($booking->status === 'pending' && $availableDrivers->isEmpty())
                     <div class="bg-yellow-50 border border-yellow-200 text-yellow-700 rounded-lg px-3 py-2 text-sm">
-                        ⚠ Tidak ada driver tersedia saat ini. Semua driver sedang aktif atau tidak aktif.
+                        ⚠ Tidak ada driver tersedia di rentang tanggal
+                        <span class="font-medium">
+                            {{ \Carbon\Carbon::parse($booking->start_date)->format('d M') }} —
+                            {{ \Carbon\Carbon::parse($booking->end_date)->format('d M Y') }}
+                        </span>.
+                        Semua driver sudah punya jadwal yang bentrok atau tidak aktif.
+                    </div>
+
+                @elseif($booking->status === 'pending' && !$payment?->isPaid())
+                    <div class="bg-gray-50 border border-gray-200 text-gray-500 rounded-lg px-3 py-2 text-sm">
+                        Menunggu pembayaran dari pengguna sebelum bisa di-assign.
                     </div>
 
                 @else
