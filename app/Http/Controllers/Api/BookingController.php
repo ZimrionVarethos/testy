@@ -228,10 +228,17 @@ class BookingController extends Controller
 
     private function authorizeBookingAccess($user, Booking $booking): void
     {
+        $userId      = (string) $user->_id;
+        $bookingUser = (string) $booking->user_id;   // ← paksa string keduanya
+    
         if ($user->role === 'admin') return;
-        if ($user->role === 'driver' && $booking->driver_id === (string) $user->_id) return;
-        if ($user->role === 'pengguna' && $booking->user_id === (string) $user->_id) return;
-
+    
+        if ($user->role === 'driver'
+            && (string) $booking->driver_id === $userId) return;
+    
+        if ($user->role === 'pengguna'
+            && $bookingUser === $userId) return;
+    
         abort(403, 'Anda tidak memiliki akses ke booking ini.');
     }
 
