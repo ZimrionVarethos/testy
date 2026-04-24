@@ -26,12 +26,7 @@ use App\Http\Controllers\Pengguna\ChatController     as PenggunaChatController;
 use App\Http\Controllers\Driver\ChatController       as DriverChatController;
 use App\Http\Controllers\Pengguna\RatingController;
 
-// ════════════════════════════════════════════════════════════
-// WEBHOOK — di luar semua middleware, TANPA auth dan TANPA CSRF
-// (Dikecualikan juga di VerifyCsrfToken::$except = ['payments/webhook'])
-// ════════════════════════════════════════════════════════════
-Route::post('/api/v1/payments/notification', [PenggunaPaymentController::class, 'webhook'])
-    ->name('payments.webhook');
+
 
 // ════════════════════════════════════════════════════════════
 // WELCOME
