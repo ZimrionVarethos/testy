@@ -10,26 +10,43 @@ class BookingController extends Controller
     {
         $userId = (string) Auth::id();
     
-        // ← Cancel on-the-fly booking yang sudah lewat deadline
+        // Auto-cancel pending yang belum bayar dan sudah lewat deadline
+        // Hanya cancel kalau belum bayar — kalau sudah bayar, biarkan tetap pending
+        // menunggu admin assign driver (tidak ada batas waktu untuk ini)
         Booking::where('status', 'pending')
             ->where('user.user_id', $userId)
             ->get()
             ->each(function ($booking) {
-                if ($booking->confirmationDeadline()->isPast()) {
+                $payment = Payment::activeForBooking((string) $booking->_id);
+                $sudahBayar = $payment && $payment->isPaid();
+    
+                if (!$sudahBayar && $booking->confirmationDeadline()->isPast()) {
                     $booking->update([
                         'status'        => 'cancelled',
                         'cancelled_at'  => now(),
-                        'cancel_reason' => 'Dibatalkan otomatis: melewati batas waktu konfirmasi.',
+                        'cancel_reason' => 'Dibatalkan otomatis: melewati batas waktu pembayaran.',
                     ]);
                 }
             });
     
         $bookings = Booking::where('user.user_id', $userId)
             ->orderBy('created_at', 'desc')
-            ->paginate(10);
+            ->paginate(15);
     
-        return view('pengguna.bookings.index', compact('bookings'));
+        // Preload payment — satu query untuk semua booking di halaman ini
+        $bookingIds = $bookings->pluck('_id')
+            ->map(fn($id) => (string) $id)
+            ->toArray();
+    
+        $payments = Payment::whereIn('booking_id', $bookingIds)
+            ->whereIn('status', [Payment::STATUS_PAID, Payment::STATUS_PENDING])
+            ->get()
+            ->keyBy('booking_id');
+    
+        return view('pengguna.bookings.index', compact('bookings', 'payments'));
     }
+
+
     
     public function show(string $id)
     {
