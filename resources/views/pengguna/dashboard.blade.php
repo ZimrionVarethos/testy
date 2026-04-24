@@ -37,7 +37,11 @@
         </div>
         <div class="divide-y divide-gray-50">
             @forelse($activeBookings ?? [] as $booking)
-            <div class="px-5 py-4">
+            @php
+                $payment    = ($activePayments ?? collect())[(string) $booking->_id] ?? null;
+                $sudahBayar = $payment && $payment->isPaid();
+            @endphp
+            <a href="{{ route('bookings.show', $booking->_id) }}" class="block px-5 py-4 hover:bg-gray-50 transition">
                 <div class="flex items-start justify-between">
                     <div>
                         <p class="text-sm font-semibold text-gray-800">{{ $booking->booking_code }}</p>
@@ -47,32 +51,47 @@
                             →
                             {{ \Carbon\Carbon::parse($booking->end_date)->format('d M Y') }}
                         </p>
+
+                        {{-- Sub-label bawah --}}
+                        @if($booking->status === 'pending')
+                            @if($sudahBayar)
+                            <p class="text-xs text-blue-500 mt-1">✓ Sudah dibayar — menunggu admin</p>
+                            @else
+                            <p class="text-xs text-amber-500 mt-1">⏱ Belum dibayar</p>
+                            @endif
+                        @elseif($booking->status === 'confirmed' && !empty($booking->driver['name']))
+                            <p class="text-xs text-indigo-500 mt-1">
+                                Driver: {{ $booking->driver['name'] }}
+                            </p>
+                        @endif
                     </div>
+
+                    {{-- Badge --}}
+                    @if($booking->status === 'pending')
+                        @if($sudahBayar)
+                        <span class="px-2 py-1 text-xs rounded-full font-medium shrink-0 bg-blue-100 text-blue-700">
+                            Menunggu Admin
+                        </span>
+                        @else
+                        <span class="px-2 py-1 text-xs rounded-full font-medium shrink-0 bg-yellow-100 text-yellow-700">
+                            Belum Dibayar
+                        </span>
+                        @endif
+                    @else
                     <span @class([
                         'px-2 py-1 text-xs rounded-full font-medium shrink-0',
-                        'bg-yellow-100 text-yellow-700' => $booking->status === 'pending',
                         'bg-indigo-100 text-indigo-700' => $booking->status === 'confirmed',
                         'bg-green-100 text-green-700'   => $booking->status === 'ongoing',
                     ])>
                         @switch($booking->status)
-                            @case('pending')   Menunggu Konfirmasi @break
-                            @case('confirmed') Dikonfirmasi        @break
-                            @case('ongoing')   Sedang Berjalan     @break
+                            @case('confirmed') Dikonfirmasi    @break
+                            @case('ongoing')   Sedang Berjalan @break
                             @default {{ ucfirst($booking->status) }}
                         @endswitch
                     </span>
+                    @endif
                 </div>
-
-                @if(!empty($booking->driver['driver_id']))
-                <div class="mt-2 flex items-center gap-2 text-xs text-gray-500">
-                    <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-                    </svg>
-                    Driver: {{ $booking->driver['name'] }}
-                </div>
-                @endif
-            </div>
+            </a>
             @empty
             <div class="px-5 py-8 text-center">
                 <p class="text-sm text-gray-400">Belum ada pesanan aktif.</p>

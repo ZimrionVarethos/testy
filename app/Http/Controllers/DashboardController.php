@@ -165,6 +165,16 @@ class DashboardController extends Controller
             ->limit(5)
             ->get();
 
+        // Preload payment untuk active bookings — satu query, bukan N query
+        $bookingIds = $activeBookings->pluck('_id')
+            ->map(fn($id) => (string) $id)
+            ->toArray();
+
+        $activePayments = Payment::whereIn('booking_id', $bookingIds)
+            ->whereIn('status', [Payment::STATUS_PAID, Payment::STATUS_PENDING])
+            ->get()
+            ->keyBy('booking_id');
+
         $stats = [
             'total'     => Booking::where('user.user_id', $userId)->count(),
             'ongoing'   => Booking::where('user.user_id', $userId)->ongoing()->count(),
@@ -177,6 +187,6 @@ class DashboardController extends Controller
             ->limit(5)
             ->get();
 
-        return view('dashboard', compact('activeBookings', 'stats', 'notifications'));
+        return view('dashboard', compact('activeBookings', 'activePayments', 'stats', 'notifications'));
     }
 }
