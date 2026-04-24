@@ -5,41 +5,55 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\StoreBookingRequest;
 use App\Models\Booking;
-use App\Models\Vehicle;
+use App\Models\Payment;
+use App\Services\BookingService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 
 class BookingController extends Controller
 {
+    public function __construct(private BookingService $bookingService) {}
+
+    // ══════════════════════════════════════════════════════════════
+    //  LIST
+    // ══════════════════════════════════════════════════════════════
+
     /**
-     * Daftar booking.
+     * GET /api/v1/bookings
      *
      * - Admin   : semua booking, bisa filter status
-     * - Customer: booking milik sendiri
-     * - Driver  : booking yang di-assign ke dia
+     * - Pengguna: booking milik sendiri  (query: user.user_id)
+     * - Driver  : booking yang di-assign  (query: driver.driver_id)
      *
-     * Query params:
-     *   status   : pending | accepted | confirmed | ongoing | completed | cancelled
-     *   per_page : integer (default 10)
+     * Query params: status, per_page
      */
     public function index(Request $request): JsonResponse
     {
         $user  = $request->user();
         $query = Booking::query();
 
+        // ── Filter berdasarkan role ──────────────────────────────
         if ($user->role === 'admin') {
-            // Admin lihat semua
+            // admin lihat semua — tidak ada filter tambahan
         } elseif ($user->role === 'driver') {
-            $query->where('driver_id', (string) $user->_id);
+            // 🔧 FIX: pakai nested field driver.driver_id
+            $query->where('driver.driver_id', (string) $user->_id);
         } else {
-            // Customer
-            $query->where('user_id', (string) $user->_id);
+            // 🔧 FIX: pakai nested field user.user_id
+            $query->where('user.user_id', (string) $user->_id);
         }
 
         if ($request->filled('status')) {
             $query->where('status', $request->status);
+        }
+
+        // Auto-cancel & auto-complete sebelum return data
+        if ($user->role === 'pengguna') {
+            $this->bookingService->autoCancelExpiredForUser((string) $user->_id);
+            $this->bookingService->autoCompleteExpiredForUser((string) $user->_id);
+        } elseif ($user->role === 'driver') {
+            $this->bookingService->autoCompleteExpiredForDriver((string) $user->_id);
         }
 
         $perPage  = min((int) $request->get('per_page', 10), 50);
@@ -57,14 +71,14 @@ class BookingController extends Controller
         ]);
     }
 
-    /**
-     * Detail booking.
-     */
+    // ══════════════════════════════════════════════════════════════
+    //  SHOW
+    // ══════════════════════════════════════════════════════════════
+
     public function show(Request $request, string $id): JsonResponse
     {
         $booking = Booking::findOrFail($id);
-
-        $this->authorizeBookingAccess($request->user(), $booking);
+        $this->authorizeAccess($request->user(), $booking);
 
         return response()->json([
             'success' => true,
@@ -72,178 +86,186 @@ class BookingController extends Controller
         ]);
     }
 
+    // ══════════════════════════════════════════════════════════════
+    //  CREATE (Pengguna)
+    // ══════════════════════════════════════════════════════════════
+
     /**
-     * Buat booking baru (Customer).
+     * POST /api/v1/bookings
+     * Menggunakan BookingService — logic sama persis dengan web.
      */
     public function store(StoreBookingRequest $request): JsonResponse
     {
-        $user    = $request->user();
-        $vehicle = Vehicle::findOrFail($request->vehicle_id);
+        try {
+            $data = array_merge($request->validated(), [
+                'pickup' => [
+                    'address' => $request->pickup_address,
+                    'lat'     => $request->pickup_lat ?? 0,
+                    'lng'     => $request->pickup_lng ?? 0,
+                ],
+            ]);
 
-        if ($vehicle->status !== 'available') {
+            $booking = $this->bookingService->createBooking($data, $request->user());
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Booking berhasil dibuat. Silakan selesaikan pembayaran.',
+                'data'    => $this->bookingResource($booking),
+            ], 201);
+
+        } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Kendaraan tidak tersedia saat ini.',
+                'message' => $e->getMessage(),
             ], 422);
         }
-
-        $startDate    = Carbon::parse($request->start_date);
-        $endDate      = Carbon::parse($request->end_date);
-        $durationDays = max(1, $startDate->diffInDays($endDate));
-        $totalPrice   = $durationDays * $vehicle->price_per_day;
-
-        $booking = Booking::create([
-            'booking_code'  => 'BRN-' . strtoupper(Str::random(8)),
-            'user_id'       => (string) $user->_id,
-            'vehicle_id'    => (string) $vehicle->_id,
-            'start_date'    => $startDate->toDateTimeString(),
-            'end_date'      => $endDate->toDateTimeString(),
-            'duration_days' => $durationDays,
-            'total_price'   => $totalPrice,
-            'status'        => 'pending',
-            'pickup'        => [
-                'address' => $request->pickup_address,
-                'lat'     => $request->pickup_lat,
-                'lng'     => $request->pickup_lng,
-            ],
-            'dropoff'       => $request->filled('dropoff_address') ? [
-                'address' => $request->dropoff_address,
-                'lat'     => $request->dropoff_lat,
-                'lng'     => $request->dropoff_lng,
-            ] : null,
-            'notes'         => $request->notes,
-            // Embed snapshot data
-            'user'          => [
-                'name'  => $user->name,
-                'email' => $user->email,
-                'phone' => $user->phone,
-            ],
-            'vehicle'       => [
-                'name'          => $vehicle->name,
-                'plate_number'  => $vehicle->plate_number,
-                'price_per_day' => $vehicle->price_per_day,
-            ],
-        ]);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Booking berhasil dibuat. Menunggu konfirmasi driver.',
-            'data'    => $this->bookingResource($booking),
-        ], 201);
     }
 
-    /**
-     * Batalkan booking (Customer / Admin).
-     */
+    // ══════════════════════════════════════════════════════════════
+    //  CANCEL (Pengguna / Admin)
+    // ══════════════════════════════════════════════════════════════
+
     public function cancel(Request $request, string $id): JsonResponse
     {
         $booking = Booking::findOrFail($id);
-        $user    = $request->user();
+        $this->authorizeAccess($request->user(), $booking);
 
-        $this->authorizeBookingAccess($user, $booking);
+        try {
+            $reason  = $request->input('reason', 'Dibatalkan oleh pengguna.');
+            $booking = $this->bookingService->cancelBooking($booking, $reason);
 
-        if (in_array($booking->status, ['ongoing', 'completed', 'cancelled'])) {
             return response()->json([
-                'success' => false,
-                'message' => 'Booking tidak dapat dibatalkan pada status ini.',
-            ], 422);
+                'success' => true,
+                'message' => 'Booking berhasil dibatalkan.',
+                'data'    => $this->bookingResource($booking),
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
         }
-
-        $booking->update([
-            'status'       => 'cancelled',
-            'cancelled_at' => now()->toDateTimeString(),
-        ]);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Booking berhasil dibatalkan.',
-            'data'    => $this->bookingResource($booking->fresh()),
-        ]);
     }
 
-    /**
-     * Driver menerima booking (Driver).
-     */
+    // ══════════════════════════════════════════════════════════════
+    //  DRIVER: ACCEPT (ambil dari pool — flow mobile)
+    // ══════════════════════════════════════════════════════════════
+
     public function accept(Request $request, string $id): JsonResponse
     {
-        $booking = Booking::findOrFail($id);
-        $driver  = $request->user();
+        $driver = $request->user();
 
-        if ($booking->status !== 'pending') {
+        if ($driver->role !== 'driver') {
+            return response()->json(['success' => false, 'message' => 'Hanya driver yang bisa menerima booking.'], 403);
+        }
+
+        try {
+            $booking = $this->bookingService->driverAcceptBooking($id, $driver);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Booking diterima. Menunggu konfirmasi admin.',
+                'data'    => $this->bookingResource($booking),
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
+        }
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    //  DRIVER: MARK PICKUP (confirmed → ongoing)
+    // ══════════════════════════════════════════════════════════════
+
+    public function pickup(Request $request, string $id): JsonResponse
+    {
+        $driver  = $request->user();
+        $booking = Booking::findOrFail($id);
+
+        if (Carbon::parse($booking->start_date)->subMinutes(30)->gt(Carbon::now())) {
             return response()->json([
                 'success' => false,
-                'message' => 'Booking sudah tidak berstatus pending.',
+                'message' => 'Tombol pickup hanya bisa diklik mulai 30 menit sebelum waktu penjemputan.',
             ], 422);
         }
 
-        $booking->update([
-            'status'    => 'accepted',
-            'driver_id' => (string) $driver->_id,
-            'driver'    => [
-                'name'           => $driver->name,
-                'phone'          => $driver->phone,
-                'license_number' => $driver->driver_profile['license_number'] ?? '-',
-            ],
-            'accepted_at' => now()->toDateTimeString(),
-        ]);
+        try {
+            $booking = $this->bookingService->driverMarkPickup($booking, $driver);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Booking diterima. Menunggu konfirmasi admin.',
-            'data'    => $this->bookingResource($booking->fresh()),
-        ]);
+            return response()->json([
+                'success' => true,
+                'message' => 'Status diperbarui menjadi Sedang Berjalan.',
+                'data'    => $this->bookingResource($booking),
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
+        }
     }
 
-    /**
-     * Admin mengkonfirmasi booking.
-     */
+    // ══════════════════════════════════════════════════════════════
+    //  ADMIN: CONFIRM (accepted → confirmed — flow mobile)
+    // ══════════════════════════════════════════════════════════════
+
     public function confirm(Request $request, string $id): JsonResponse
     {
-        $booking = Booking::findOrFail($id);
-
-        if ($booking->status !== 'accepted') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Booking harus berstatus accepted untuk dikonfirmasi.',
-            ], 422);
+        if ($request->user()->role !== 'admin') {
+            return response()->json(['success' => false, 'message' => 'Akses ditolak.'], 403);
         }
 
-        // Update status kendaraan
-        Vehicle::where('_id', $booking->vehicle_id)
-               ->update(['status' => 'rented']);
+        try {
+            $booking = $this->bookingService->adminConfirmBooking($id);
 
-        $booking->update([
-            'status'       => 'confirmed',
-            'confirmed_at' => now()->toDateTimeString(),
-        ]);
+            return response()->json([
+                'success' => true,
+                'message' => 'Booking berhasil dikonfirmasi.',
+                'data'    => $this->bookingResource($booking),
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
+        }
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    //  Payment status untuk booking tertentu
+    // ══════════════════════════════════════════════════════════════
+
+    public function paymentStatus(Request $request, string $id): JsonResponse
+    {
+        $booking = Booking::findOrFail($id);
+        $this->authorizeAccess($request->user(), $booking);
+
+        $payment = Payment::activeForBooking($id);
 
         return response()->json([
             'success' => true,
-            'message' => 'Booking berhasil dikonfirmasi.',
-            'data'    => $this->bookingResource($booking->fresh()),
+            'data'    => $payment ? [
+                'id'           => (string) $payment->_id,
+                'status'       => $payment->status,
+                'amount'       => $payment->amount,
+                'method'       => $payment->method,
+                'snap_token'   => $payment->midtrans['snap_token'] ?? null,
+                'expired_at'   => $payment->expired_at,
+                'paid_at'      => $payment->paid_at,
+            ] : null,
         ]);
     }
 
-    // ── Helpers ──────────────────────────────────────────────────────────
+    // ══════════════════════════════════════════════════════════════
+    //  HELPERS
+    // ══════════════════════════════════════════════════════════════
 
-    private function authorizeBookingAccess($user, Booking $booking): void
+    /**
+     * 🔧 FIX: gunakan nested field yang konsisten dengan web
+     */
+    private function authorizeAccess(mixed $user, Booking $booking): void
     {
-        // DEBUG — hapus setelah fix
-        \Log::info('AUTH CHECK', [
-            'user_role'    => $user->role,
-            'user_id'      => (string) $user->_id,
-            'user_id_type' => gettype($user->_id),
-            'booking_uid'  => $booking->user_id,
-            'booking_type' => gettype($booking->user_id),
-            'match'        => $booking->user_id === (string) $user->_id,
-        ]);
-    
         if ($user->role === 'admin') return;
-        if ($user->role === 'driver' && $booking->driver_id === (string) $user->_id) return;
-        if ($user->role === 'pengguna' && $booking->user_id === (string) $user->_id) return;
-    
+
+        // 🔧 FIX: cek driver.driver_id bukan driver_id
+        if ($user->role === 'driver' && ($booking->driver['driver_id'] ?? null) === (string) $user->_id) return;
+
+        // 🔧 FIX: cek user.user_id bukan user_id
+        if ($user->role === 'pengguna' && ($booking->user['user_id'] ?? null) === (string) $user->_id) return;
+
         abort(403, 'Anda tidak memiliki akses ke booking ini.');
     }
+
     private function bookingResource(Booking $b): array
     {
         return [
@@ -257,12 +279,17 @@ class BookingController extends Controller
             'notes'         => $b->notes,
             'pickup'        => $b->pickup,
             'dropoff'       => $b->dropoff,
+            // Embedded snapshots — sudah include user_id dan driver_id di dalamnya
             'user'          => $b->user,
             'vehicle'       => $b->vehicle,
             'driver'        => $b->driver,
+            // Timestamps
             'accepted_at'   => $b->accepted_at,
             'confirmed_at'  => $b->confirmed_at,
-            'cancelled_at'  => $b->cancelled_at,
+            'started_at'    => $b->started_at ?? null,
+            'completed_at'  => $b->completed_at ?? null,
+            'cancelled_at'  => $b->cancelled_at ?? null,
+            'cancel_reason' => $b->cancel_reason ?? null,
             'created_at'    => $b->created_at?->toIso8601String(),
         ];
     }

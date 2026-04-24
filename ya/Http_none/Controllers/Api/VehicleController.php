@@ -13,20 +13,37 @@ use Illuminate\Support\Facades\Storage;
 class VehicleController extends Controller
 {
     /**
-     * GET /api/v1/vehicles
-     * Query params: status, type, min_price, max_price, per_page
+     * Daftar kendaraan (dengan filter & pagination).
+     *
+     * Query params:
+     *   status   : available | rented | maintenance
+     *   type     : MPV | SUV | Van | Sedan | Minibus
+     *   min_price: integer
+     *   max_price: integer
+     *   per_page : integer (default 12)
      */
     public function index(Request $request): JsonResponse
     {
         $query = Vehicle::query();
 
-        if ($request->filled('status'))    $query->where('status', $request->status);
-        if ($request->filled('type'))      $query->where('type', $request->type);
-        if ($request->filled('min_price')) $query->where('price_per_day', '>=', (int) $request->min_price);
-        if ($request->filled('max_price')) $query->where('price_per_day', '<=', (int) $request->max_price);
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
 
-        $perPage  = min((int) $request->get('per_page', 12), 50);
-        $vehicles = $query->orderBy('created_at', 'desc')->paginate($perPage);
+        if ($request->filled('type')) {
+            $query->where('type', $request->type);
+        }
+
+        if ($request->filled('min_price')) {
+            $query->where('price_per_day', '>=', (int) $request->min_price);
+        }
+
+        if ($request->filled('max_price')) {
+            $query->where('price_per_day', '<=', (int) $request->max_price);
+        }
+
+        $perPage   = min((int) $request->get('per_page', 12), 50);
+        $vehicles  = $query->orderBy('created_at', 'desc')->paginate($perPage);
 
         return response()->json([
             'success' => true,
@@ -41,7 +58,7 @@ class VehicleController extends Controller
     }
 
     /**
-     * GET /api/v1/vehicles/{id}
+     * Detail kendaraan.
      */
     public function show(string $id): JsonResponse
     {
@@ -54,17 +71,19 @@ class VehicleController extends Controller
     }
 
     /**
-     * POST /api/v1/vehicles (Admin)
+     * Tambah kendaraan baru (Admin).
      */
     public function store(StoreVehicleRequest $request): JsonResponse
     {
         $data = $request->validated();
 
+        // Handle features
         if ($request->filled('features_raw')) {
-            $data['features'] = array_filter(array_map('trim', explode(',', $request->features_raw)));
+            $data['features'] = array_map('trim', explode(',', $request->features_raw));
             unset($data['features_raw']);
         }
 
+        // Handle foto
         $imagePaths = [];
         if ($request->hasFile('images')) {
             foreach ($request->file('images') as $img) {
@@ -75,11 +94,9 @@ class VehicleController extends Controller
                 $imagePaths[] = $name;
             }
         }
-
-        $data['images']         = $imagePaths;
-        $data['status']         = 'available';
-        $data['rating_avg']     = 0;
-        $data['total_bookings'] = 0;
+        $data['images']     = $imagePaths;
+        $data['status']     = 'available';
+        $data['rating_avg'] = 0;
 
         $vehicle = Vehicle::create($data);
 
@@ -91,7 +108,7 @@ class VehicleController extends Controller
     }
 
     /**
-     * PUT /api/v1/vehicles/{id} (Admin)
+     * Update kendaraan (Admin).
      */
     public function update(UpdateVehicleRequest $request, string $id): JsonResponse
     {
@@ -99,11 +116,13 @@ class VehicleController extends Controller
         $data    = $request->validated();
 
         if ($request->filled('features_raw')) {
-            $data['features'] = array_filter(array_map('trim', explode(',', $request->features_raw)));
+            $data['features'] = array_map('trim', explode(',', $request->features_raw));
             unset($data['features_raw']);
         }
 
+        // Handle foto baru
         if ($request->hasFile('images')) {
+            // Hapus foto lama
             foreach ($vehicle->images ?? [] as $oldPath) {
                 Storage::delete('public/' . $oldPath);
             }
@@ -130,19 +149,13 @@ class VehicleController extends Controller
     }
 
     /**
-     * DELETE /api/v1/vehicles/{id} (Admin)
+     * Hapus kendaraan (Admin).
      */
     public function destroy(string $id): JsonResponse
     {
         $vehicle = Vehicle::findOrFail($id);
 
-        if ($vehicle->status === 'rented') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Tidak bisa hapus kendaraan yang sedang disewa.',
-            ], 422);
-        }
-
+        // Hapus foto
         foreach ($vehicle->images ?? [] as $path) {
             Storage::delete('public/' . $path);
         }
@@ -155,7 +168,7 @@ class VehicleController extends Controller
         ]);
     }
 
-    // ── Helper ────────────────────────────────────────────────────
+    // ── Helper ───────────────────────────────────────────────────────────
 
     private function vehicleResource(Vehicle $v): array
     {
@@ -172,7 +185,6 @@ class VehicleController extends Controller
             'status'        => $v->status,
             'features'      => $v->features ?? [],
             'rating_avg'    => $v->rating_avg ?? 0,
-            'total_bookings'=> $v->total_bookings ?? 0,
             'images'        => collect($v->images ?? [])->map(
                 fn($path) => url('storage/' . $path)
             )->values()->all(),

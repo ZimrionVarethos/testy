@@ -11,6 +11,7 @@ class NotificationController extends Controller
 {
     /**
      * GET /api/v1/notifications
+     * List notifikasi milik user yang sedang login.
      */
     public function index(): JsonResponse
     {
@@ -27,25 +28,24 @@ class NotificationController extends Controller
                 'type'       => $n->type,
                 'is_read'    => (bool) $n->is_read,
                 'related_id' => $n->related_id,
-                'url'        => $n->url ?? null,
                 'created_at' => $n->created_at?->toIso8601String(),
             ]),
             'meta' => [
                 'current_page' => $notifications->currentPage(),
                 'last_page'    => $notifications->lastPage(),
                 'total'        => $notifications->total(),
-                'unread_count' => Notification::where('user_id', (string) Auth::id())
-                    ->where('is_read', false)->count(),
             ],
         ]);
     }
 
     /**
      * POST /api/v1/notifications/{id}/read
+     * Tandai satu notifikasi sudah dibaca.
      */
     public function markRead(string $id): JsonResponse
     {
-        $notif = Notification::where('user_id', (string) Auth::id())->findOrFail($id);
+        $notif = Notification::where('user_id', (string) Auth::id())
+                             ->findOrFail($id);
         $notif->update(['is_read' => true]);
 
         return response()->json(['success' => true, 'message' => 'Notifikasi ditandai dibaca.']);
@@ -53,6 +53,7 @@ class NotificationController extends Controller
 
     /**
      * POST /api/v1/notifications/read-all
+     * Tandai semua notifikasi user sudah dibaca.
      */
     public function readAll(): JsonResponse
     {

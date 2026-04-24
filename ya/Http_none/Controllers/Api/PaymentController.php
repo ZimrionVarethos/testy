@@ -4,32 +4,20 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
-use App\Models\Notification;
 use App\Models\Payment;
-use App\Models\User;
-use App\Services\BookingService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
 class PaymentController extends Controller
 {
-    public function __construct(private BookingService $bookingService) {}
-
     /**
-     * GET /api/v1/payments — daftar pembayaran milik user / semua (admin)
+     * Daftar pembayaran — Admin only.
      */
     public function index(Request $request): JsonResponse
     {
-        $user  = $request->user();
-        $query = Payment::orderBy('created_at', 'desc');
-
-        // Pengguna hanya lihat milik sendiri
-        if ($user->role === 'pengguna') {
-            $query->where('user_id', (string) $user->_id);
-        }
-
-        $payments = $query->paginate((int) $request->get('per_page', 15));
+        $payments = Payment::orderBy('created_at', 'desc')
+            ->paginate((int) $request->get('per_page', 15));
 
         return response()->json([
             'success' => true,
@@ -43,8 +31,8 @@ class PaymentController extends Controller
     }
 
     /**
-     * POST /api/v1/payments/notification — Midtrans webhook
-     * Route ini HARUS dikecualikan dari auth middleware.
+     * Midtrans Webhook — dipanggil Midtrans server setelah transaksi.
+     * Route: POST /api/v1/payments/notification  (publik, tanpa auth)
      */
     public function notification(Request $request): JsonResponse
     {
@@ -64,21 +52,25 @@ class PaymentController extends Controller
         $paymentType       = $notification->payment_type;
         $transactionId     = $notification->transaction_id;
 
-        Log::info('Midtrans webhook', compact('orderId', 'transactionStatus', 'fraudStatus'));
+        Log::info('Midtrans webhook', compact('orderId', 'transactionStatus', 'fraudStatus', 'paymentType'));
 
+        // Cari payment by midtrans.order_id
         $payment = Payment::where('midtrans.order_id', $orderId)->first();
 
-        if (! $payment) {
+        if (!$payment) {
             Log::warning('Midtrans webhook: payment not found', ['order_id' => $orderId]);
             return response()->json(['message' => 'Payment not found'], 404);
         }
 
+        // Skip jika sudah paid
         if ($payment->isPaid()) {
             return response()->json(['message' => 'Already processed']);
         }
 
+        // Tentukan status baru
         $newStatus = $this->resolvePaymentStatus($transactionStatus, $fraudStatus);
 
+        // Update Payment
         $payment->update([
             'status'   => $newStatus,
             'method'   => $newStatus === Payment::STATUS_PAID ? $paymentType : $payment->method,
@@ -91,18 +83,50 @@ class PaymentController extends Controller
             ]),
         ]);
 
-        // Setelah lunas → notifikasi admin via BookingService (shared logic)
+        // Flow A: payment lunas → booking pending jadi confirmed (siap diproses admin)
         if ($newStatus === Payment::STATUS_PAID) {
-            $booking = Booking::find($payment->booking_id);
-            if ($booking && $booking->status === Booking::STATUS_PENDING) {
-                $this->bookingService->notifyAdminAfterPayment($booking);
-            }
+            $this->confirmBookingAfterPayment($payment->booking_id);
         }
 
         return response()->json(['message' => 'OK']);
     }
 
-    // ── Private helpers ────────────────────────────────────────
+    // ── Private helpers ──────────────────────────────────────
+
+    /**
+     * Flow A: setelah lunas, booking pending → confirmed.
+     * Admin tinggal assign driver, tidak perlu approve manual lagi.
+     */
+    private function confirmBookingAfterPayment(string $bookingId): void
+    {
+        $booking = Booking::find($bookingId);
+
+        if (!$booking) {
+            Log::warning('confirmBookingAfterPayment: booking not found', ['id' => $bookingId]);
+            return;
+        }
+
+        // Jangan auto-confirm — biarkan tetap pending
+        // Admin yang akan confirm sekaligus assign driver
+        // Cukup tandai payment_status dan notif admin
+        if ($booking->status === Booking::STATUS_PENDING) {
+            // tidak perlu update booking sama sekali, status tetap pending
+        
+            $admins = \App\Models\User::where('role', 'admin')
+                ->pluck('_id')
+                ->map(fn($id) => (string) $id)
+                ->toArray();
+        
+            \App\Models\Notification::sendToMany(
+                $admins,
+                'Pesanan Baru Perlu Diproses',
+                "Pesanan {$booking->booking_code} sudah dibayar. Silakan assign driver.",
+                'booking',
+                (string) $booking->_id,
+                route('admin.bookings.show', $booking->_id),
+            );
+        }
+    }
 
     private function resolvePaymentStatus(string $transactionStatus, ?string $fraudStatus): string
     {
@@ -129,10 +153,8 @@ class PaymentController extends Controller
             'amount'       => $p->amount,
             'method'       => $p->method,
             'status'       => $p->status,
-            'snap_token'   => $p->midtrans['snap_token'] ?? null,
-            'expired_at'   => $p->expired_at,
             'paid_at'      => $p->paid_at,
-            'created_at'   => $p->created_at?->toIso8601String(),
+            'created_at'   => $p->created_at,
         ];
     }
 }

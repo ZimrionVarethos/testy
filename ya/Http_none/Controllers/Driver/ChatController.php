@@ -6,22 +6,31 @@ use App\Http\Controllers\Controller;
 use App\Models\Booking;
 use App\Models\ChatMessage;
 use App\Models\Rating;
-use App\Services\BookingService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Carbon\Carbon;
 
 class ChatController extends Controller
 {
-    public function __construct(private BookingService $bookingService) {}
-
     public function index(Request $request)
     {
         $driverId = (string) Auth::id();
         $filter   = $request->query('filter', 'active');
 
-        // 🔧 Delegasi ke BookingService — logic sama dengan Pengguna/ChatController dan Api/BookingController
-        $this->bookingService->autoCompleteExpiredForDriver($driverId);
+        // ── On-the-fly status update ──
+        Booking::where('driver.driver_id', $driverId)
+            ->whereIn('status', ['confirmed', 'ongoing'])
+            ->get()
+            ->each(function ($b) {
+                if (Carbon::parse($b->end_date)->setTimezone('Asia/Jakarta')->isPast()) {
+                    $b->update([
+                        'status'       => 'completed',
+                        'completed_at' => now('Asia/Jakarta'),
+                    ]);
+                }
+            });
 
+        // ── Query setelah update ──
         $query = Booking::where('driver.driver_id', $driverId);
 
         if ($filter === 'active') {

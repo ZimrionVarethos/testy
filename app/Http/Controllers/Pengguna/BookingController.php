@@ -1,34 +1,23 @@
-<?php namespace App\Http\Controllers\Pengguna;
+<?php
+
+namespace App\Http\Controllers\Pengguna;
+
 use App\Http\Controllers\Controller;
-use App\Models\Booking; use Illuminate\Support\Facades\Auth;
+use App\Models\Booking;
 use App\Models\Payment;
+use App\Services\BookingService;
+use Illuminate\Support\Facades\Auth;
 
 class BookingController extends Controller
 {
-// PenggunaBookingController.php
-    
+    public function __construct(private BookingService $bookingService) {}
+
     public function index()
     {
         $userId = (string) Auth::id();
 
-        // Auto-cancel pending yang belum bayar dan sudah lewat deadline
-        // Hanya cancel kalau belum bayar — kalau sudah bayar, biarkan tetap pending
-        // menunggu admin assign driver (tidak ada batas waktu untuk ini)
-        Booking::where('status', 'pending')
-            ->where('user.user_id', $userId)
-            ->get()
-            ->each(function ($booking) {
-                $payment = Payment::activeForBooking((string) $booking->_id);
-                $sudahBayar = $payment && $payment->isPaid();
-
-                if (!$sudahBayar && $booking->confirmationDeadline()->isPast()) {
-                    $booking->update([
-                        'status'        => 'cancelled',
-                        'cancelled_at'  => now(),
-                        'cancel_reason' => 'Dibatalkan otomatis: melewati batas waktu pembayaran.',
-                    ]);
-                }
-            });
+        // 🔧 Delegasi ke BookingService — logic sama dengan yang dipakai Api/BookingController
+        $this->bookingService->autoCancelExpiredForUser($userId);
 
         $bookings = Booking::where('user.user_id', $userId)
             ->orderBy('created_at', 'desc')
@@ -47,44 +36,48 @@ class BookingController extends Controller
         return view('pengguna.bookings.index', compact('bookings', 'payments'));
     }
 
-
-    
     public function show(string $id)
     {
         $booking = Booking::findOrFail($id);
-    
+
         if (($booking->user['user_id'] ?? null) !== (string) Auth::id()) abort(403);
-    
-        // ← Cancel on-the-fly jika deadline terlewat
+
+        // Auto-cancel on-the-fly jika deadline terlewat
         if ($booking->status === 'pending' && $booking->confirmationDeadline()->isPast()) {
-            $booking->update([
-                'status'        => 'cancelled',
-                'cancelled_at'  => now(),
-                'cancel_reason' => 'Dibatalkan otomatis: melewati batas waktu konfirmasi.',
-            ]);
-            $booking->refresh();
+            $payment    = Payment::activeForBooking((string) $booking->_id);
+            $sudahBayar = $payment && $payment->isPaid();
+
+            if (! $sudahBayar) {
+                $booking->update([
+                    'status'        => 'cancelled',
+                    'cancelled_at'  => now(),
+                    'cancel_reason' => 'Dibatalkan otomatis: melewati batas waktu pembayaran.',
+                ]);
+                $booking->refresh();
+            }
         }
-    
+
         // Expire payment on-the-fly
-        $activePayment = \App\Models\Payment::activeForBooking((string) $booking->_id);
+        $activePayment = Payment::activeForBooking((string) $booking->_id);
         if ($activePayment && $activePayment->isPending() && $activePayment->isExpired()) {
-            $activePayment->update(['status' => \App\Models\Payment::STATUS_EXPIRED]);
+            $activePayment->update(['status' => Payment::STATUS_EXPIRED]);
             $activePayment = null;
         }
-    
+
         return view('pengguna.bookings.show', compact('booking'));
     }
-    
-    
 
     public function destroy(string $id)
     {
         $booking = Booking::findOrFail($id);
-        if ($booking->user['user_id'] !== (string) Auth::id()) abort(403);
-        if (in_array($booking->status, ['ongoing', 'completed'])) {
-            return back()->withErrors(['error' => 'Pesanan tidak bisa dibatalkan.']);
+
+        if (($booking->user['user_id'] ?? null) !== (string) Auth::id()) abort(403);
+
+        try {
+            $this->bookingService->cancelBooking($booking, 'Dibatalkan oleh pengguna.');
+            return redirect()->route('bookings.index')->with('success', 'Pesanan dibatalkan.');
+        } catch (\Exception $e) {
+            return back()->withErrors(['error' => $e->getMessage()]);
         }
-        $booking->update(['status' => 'cancelled', 'cancelled_at' => now(), 'cancel_reason' => 'Dibatalkan oleh pengguna.']);
-        return redirect()->route('bookings.index')->with('success', 'Pesanan dibatalkan.');
     }
 }

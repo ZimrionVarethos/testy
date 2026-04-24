@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Booking;
 use App\Models\User;
+use App\Models\Booking;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Auth;
 class DriverController extends Controller
 {
     /**
-     * GET /api/v1/drivers — daftar semua driver (Admin only)
+     * Daftar semua driver.
      */
     public function index(Request $request): JsonResponse
     {
@@ -32,14 +32,12 @@ class DriverController extends Controller
     }
 
     /**
-     * GET /api/v1/drivers/{id} — detail driver beserta riwayat booking
+     * Detail driver beserta riwayat booking.
      */
     public function show(string $id): JsonResponse
     {
-        $driver = User::where('role', 'driver')->findOrFail($id);
-
-        // 🔧 FIX: pakai nested field driver.driver_id (konsisten dengan web Admin/DriverController)
-        $bookings = Booking::where('driver.driver_id', (string) $driver->_id)
+        $driver   = User::where('role', 'driver')->findOrFail($id);
+        $bookings = Booking::where('driver_id', (string) $driver->_id)
             ->orderBy('created_at', 'desc')
             ->limit(10)
             ->get();
@@ -62,7 +60,7 @@ class DriverController extends Controller
     }
 
     /**
-     * POST /api/v1/drivers/{id}/toggle — aktifkan / nonaktifkan (Admin)
+     * Aktifkan / nonaktifkan driver (Admin).
      */
     public function toggle(string $id): JsonResponse
     {
@@ -75,49 +73,6 @@ class DriverController extends Controller
             'data'    => $this->driverResource($driver->fresh()),
         ]);
     }
-
-    /**
-     * POST /api/v1/driver/location — update lokasi GPS driver
-     * Hanya simpan jika driver punya booking aktif.
-     */
-    public function updateLocation(Request $request): JsonResponse
-    {
-        $request->validate([
-            'lat' => 'required|numeric|between:-90,90',
-            'lon' => 'required|numeric|between:-180,180',
-        ]);
-
-        $driver = Auth::user();
-
-        if (! $driver || $driver->role !== 'driver') {
-            return response()->json(['message' => 'Unauthorized'], 403);
-        }
-
-        // 🔧 FIX: pakai driver.driver_id (konsisten dengan web MapsController)
-        $hasActiveBooking = Booking::where('driver.driver_id', (string) $driver->_id)
-            ->whereIn('status', ['confirmed', 'ongoing'])
-            ->exists();
-
-        if (! $hasActiveBooking) {
-            return response()->json([
-                'message' => 'Tidak ada pesanan aktif, lokasi tidak disimpan.',
-                'tracked' => false,
-            ]);
-        }
-
-        $driver->update([
-            'last_lat'                 => (float) $request->lat,
-            'last_lon'                 => (float) $request->lon,
-            'last_location_updated_at' => now(),
-        ]);
-
-        return response()->json([
-            'message' => 'Lokasi diperbarui.',
-            'tracked' => true,
-        ]);
-    }
-
-    // ── Helper ────────────────────────────────────────────────────
 
     private function driverResource(User $d): array
     {
@@ -136,10 +91,44 @@ class DriverController extends Controller
                 'rating_avg'     => $dp['rating_avg'] ?? 0,
                 'total_trips'    => $dp['total_trips'] ?? 0,
             ],
-            'last_lat'                 => $d->last_lat ?? null,
-            'last_lon'                 => $d->last_lon ?? null,
-            'last_location_updated_at' => $d->last_location_updated_at ?? null,
-            'created_at'               => $d->created_at?->toIso8601String(),
+            'created_at' => $d->created_at?->toIso8601String(),
         ];
+    }
+
+    public function updateLocation(Request $request)
+    {
+        $request->validate([
+            'lat' => 'required|numeric|between:-90,90',
+            'lon' => 'required|numeric|between:-180,180',
+        ]);
+
+        $driver = Auth::user();
+
+        if (!$driver || $driver->role !== 'driver') {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $hasActiveBooking = Booking::where('driver.driver_id', (string) $driver->_id)
+            ->whereIn('status', ['confirmed', 'ongoing'])
+            ->exists();
+
+        // Silent 200 — bukan error, driver belum bertugas
+        if (!$hasActiveBooking) {
+            return response()->json([
+                'message' => 'Tidak ada pesanan aktif, lokasi tidak disimpan.',
+                'tracked' => false,
+            ]);
+        }
+
+        $driver->update([
+            'last_lat'                 => (float) $request->lat,
+            'last_lon'                 => (float) $request->lon,
+            'last_location_updated_at' => now(),
+        ]);
+
+        return response()->json([
+            'message' => 'Lokasi diperbarui.',
+            'tracked' => true,
+        ]);
     }
 }

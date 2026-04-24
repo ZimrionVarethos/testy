@@ -6,15 +6,19 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\LoginRequest;
 use App\Http\Requests\Api\RegisterRequest;
 use App\Http\Requests\Api\UpdateProfileRequest;
-use App\Models\PersonalAccessToken;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
+use Illuminate\Validation\ValidationException;
+use App\Models\PersonalAccessToken;
 
 class AuthController extends Controller
 {
+    /**
+     * Register pengguna baru.
+     */
     public function register(RegisterRequest $request): JsonResponse
     {
         $user = User::create([
@@ -38,6 +42,9 @@ class AuthController extends Controller
         ], 201);
     }
 
+    /**
+     * Login dan dapatkan token.
+     */
     public function login(LoginRequest $request): JsonResponse
     {
         $user = User::where('email', $request->email)->first();
@@ -56,7 +63,7 @@ class AuthController extends Controller
             ], 403);
         }
 
-        // Hapus token lama (single-session per device)
+        // Hapus token lama (opsional: single-session)
         PersonalAccessToken::where('tokenable_id', (string) $user->getKey())
                            ->where('tokenable_type', User::class)
                            ->delete();
@@ -73,6 +80,9 @@ class AuthController extends Controller
         ]);
     }
 
+    /**
+     * Logout.
+     */
     public function logout(Request $request): JsonResponse
     {
         $request->user()->currentAccessToken()->delete();
@@ -83,6 +93,9 @@ class AuthController extends Controller
         ]);
     }
 
+    /**
+     * Profil pengguna saat ini.
+     */
     public function me(Request $request): JsonResponse
     {
         return response()->json([
@@ -91,9 +104,13 @@ class AuthController extends Controller
         ]);
     }
 
+    /**
+     * Update profil.
+     */
     public function updateProfile(UpdateProfileRequest $request): JsonResponse
     {
         $user = $request->user();
+
         $data = $request->only(['name', 'phone']);
 
         if ($request->filled('password')) {
@@ -109,9 +126,13 @@ class AuthController extends Controller
         ]);
     }
 
+    /**
+     * Forgot password.
+     */
     public function forgotPassword(Request $request): JsonResponse
     {
         $request->validate(['email' => 'required|email']);
+
         $status = Password::sendResetLink($request->only('email'));
 
         return response()->json([
@@ -121,6 +142,8 @@ class AuthController extends Controller
                 : 'Email tidak ditemukan.',
         ], $status === Password::RESET_LINK_SENT ? 200 : 404);
     }
+
+    // ── Helper ───────────────────────────────────────────────────────────
 
     private function userResource(User $user): array
     {
