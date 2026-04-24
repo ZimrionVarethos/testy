@@ -106,20 +106,25 @@ class PaymentController extends Controller
             return;
         }
 
-        // Hanya update jika masih pending — jangan override status yang lebih jauh
-        if ($booking->status === 'pending') {
-            $booking->update([
-                'status'         => 'confirmed',
-                'confirmed_at'   => now(),
-                'payment_status' => 'paid',
-            ]);
-
-            Log::info('Booking auto-confirmed setelah payment lunas', [
-                'booking_code' => $booking->booking_code,
-            ]);
-        } else {
-            // Sudah confirmed / ongoing — cukup tandai payment_status
-            $booking->update(['payment_status' => 'paid']);
+        // Jangan auto-confirm — biarkan tetap pending
+        // Admin yang akan confirm sekaligus assign driver
+        // Cukup tandai payment_status dan notif admin
+        if ($booking->status === Booking::STATUS_PENDING) {
+            // tidak perlu update booking sama sekali, status tetap pending
+        
+            $admins = \App\Models\User::where('role', 'admin')
+                ->pluck('_id')
+                ->map(fn($id) => (string) $id)
+                ->toArray();
+        
+            \App\Models\Notification::sendToMany(
+                $admins,
+                'Pesanan Baru Perlu Diproses',
+                "Pesanan {$booking->booking_code} sudah dibayar. Silakan assign driver.",
+                'booking',
+                (string) $booking->_id,
+                route('admin.bookings.show', $booking->_id),
+            );
         }
     }
 
