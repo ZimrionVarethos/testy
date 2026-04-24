@@ -1,6 +1,7 @@
 <?php namespace App\Http\Controllers\Pengguna;
 use App\Http\Controllers\Controller;
 use App\Models\Booking; use Illuminate\Support\Facades\Auth;
+use App\Models\Payment;
 
 class BookingController extends Controller
 {
@@ -9,7 +10,7 @@ class BookingController extends Controller
     public function index()
     {
         $userId = (string) Auth::id();
-    
+
         // Auto-cancel pending yang belum bayar dan sudah lewat deadline
         // Hanya cancel kalau belum bayar — kalau sudah bayar, biarkan tetap pending
         // menunggu admin assign driver (tidak ada batas waktu untuk ini)
@@ -19,7 +20,7 @@ class BookingController extends Controller
             ->each(function ($booking) {
                 $payment = Payment::activeForBooking((string) $booking->_id);
                 $sudahBayar = $payment && $payment->isPaid();
-    
+
                 if (!$sudahBayar && $booking->confirmationDeadline()->isPast()) {
                     $booking->update([
                         'status'        => 'cancelled',
@@ -28,21 +29,21 @@ class BookingController extends Controller
                     ]);
                 }
             });
-    
+
         $bookings = Booking::where('user.user_id', $userId)
             ->orderBy('created_at', 'desc')
             ->paginate(15);
-    
+
         // Preload payment — satu query untuk semua booking di halaman ini
         $bookingIds = $bookings->pluck('_id')
             ->map(fn($id) => (string) $id)
             ->toArray();
-    
+
         $payments = Payment::whereIn('booking_id', $bookingIds)
             ->whereIn('status', [Payment::STATUS_PAID, Payment::STATUS_PENDING])
             ->get()
             ->keyBy('booking_id');
-    
+
         return view('pengguna.bookings.index', compact('bookings', 'payments'));
     }
 
