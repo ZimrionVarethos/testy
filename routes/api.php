@@ -103,6 +103,12 @@ Route::prefix('v1')->group(function () {
             Route::get('{id}',         [UserController::class, 'show']);
             Route::post('{id}/toggle', [UserController::class, 'toggle']);
         });
+
+        Route::prefix('notifications')->group(function () {
+        Route::get('/',              [NotificationController::class, 'index']);
+        Route::post('read-all',      [NotificationController::class, 'readAll']);
+        Route::post('{id}/read',     [NotificationController::class, 'markRead']);
+        });
     });
 
     // ── Debug (hapus di production) ──────────────────────────────────────
@@ -146,9 +152,5 @@ Route::prefix('v1')->group(function () {
     });
 
     // Notifications
-    Route::prefix('notifications')->group(function () {
-        Route::get('/',              [NotificationController::class, 'index']);
-        Route::post('read-all',      [NotificationController::class, 'readAll']);
-        Route::post('{id}/read',     [NotificationController::class, 'markRead']);
-    });
+
 });
