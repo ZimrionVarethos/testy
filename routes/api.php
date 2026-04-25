@@ -9,42 +9,50 @@ use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\NotificationController;
-
-/*
-|--------------------------------------------------------------------------
-| API Routes — Bening Rental
-|--------------------------------------------------------------------------
-*/
+use App\Http\Controllers\Api\ChatController;
+use App\Http\Controllers\Api\TicketController;
+use App\Http\Controllers\Api\FcmController;
 
 Route::prefix('v1')->group(function () {
 
-    // ── Auth (Public) ────────────────────────────────────────────────────
+    // ════════════════════════════════════════════════════════════
+    // PUBLIC — tidak perlu auth
+    // ════════════════════════════════════════════════════════════
+
     Route::prefix('auth')->group(function () {
         Route::post('register',        [AuthController::class, 'register']);
-        Route::post('login',           [AuthController::class, 'login']);
+        Route::post('login',           [AuthController::class, 'login']);       // admin diblokir di dalam method
         Route::post('forgot-password', [AuthController::class, 'forgotPassword']);
     });
 
-    // ── Midtrans Webhook (Public — diverifikasi via signature key) ───────
-    // PENTING: route ini harus dikecualikan dari CSRF di App\Http\Middleware\VerifyCsrfToken
-    // atau pakai api middleware (sudah stateless di Laravel 11)
+    // Midtrans webhook — public, diverifikasi via signature key di dalam method
     Route::post('payments/notification', [PaymentController::class, 'notification'])
          ->name('api.payments.notification');
 
-    // ── Protected Routes ─────────────────────────────────────────────────
+    // ════════════════════════════════════════════════════════════
+    // PROTECTED — semua route di bawah butuh token Sanctum
+    // ════════════════════════════════════════════════════════════
     Route::middleware('auth:sanctum')->group(function () {
 
-        // Auth
+        // ── Auth ─────────────────────────────────────────────────
         Route::prefix('auth')->group(function () {
-            Route::post('logout', [AuthController::class, 'logout']);
-            Route::get('me',      [AuthController::class, 'me']);
-            Route::put('profile', [AuthController::class, 'updateProfile']);
+            Route::post('logout',  [AuthController::class, 'logout']);
+            Route::get('me',       [AuthController::class, 'me']);
+            Route::put('profile',  [AuthController::class, 'updateProfile']);
         });
 
-        // Vehicles (Customer: read-only)
+        // ── FCM Token (push notification) ────────────────────────
+        // Panggil POST setelah login dan saat token refresh
+        // Panggil DELETE saat logout
+        Route::prefix('fcm')->group(function () {
+            Route::post('token',   [FcmController::class, 'storeToken']);
+            Route::delete('token', [FcmController::class, 'deleteToken']);
+        });
+
+        // ── Kendaraan ────────────────────────────────────────────
         Route::prefix('vehicles')->group(function () {
-            Route::get('/',       [VehicleController::class, 'index']);
-            Route::get('{id}',    [VehicleController::class, 'show']);
+            Route::get('/',    [VehicleController::class, 'index']);
+            Route::get('{id}', [VehicleController::class, 'show']);
 
             Route::middleware('role:admin')->group(function () {
                 Route::post('/',      [VehicleController::class, 'store']);
@@ -53,105 +61,81 @@ Route::prefix('v1')->group(function () {
             });
         });
 
-        // Bookings
+        // ── Booking ──────────────────────────────────────────────
         Route::prefix('bookings')->group(function () {
-            Route::get('/',              [BookingController::class, 'index']);
-            Route::post('/',             [BookingController::class, 'store']);
-            Route::get('{id}',           [BookingController::class, 'show']);
-            Route::post('{id}/cancel',   [BookingController::class, 'cancel']);
+            Route::get('/',    [BookingController::class, 'index']);   // pengguna: milik sendiri | driver: yang di-assign
+            Route::post('/',   [BookingController::class, 'store']);   // pengguna buat booking baru
+            Route::get('{id}', [BookingController::class, 'show']);    // detail booking
 
-            Route::middleware('role:admin')->group(function () {
-                Route::post('{id}/confirm', [BookingController::class, 'confirm']);
-            });
+            // Pengguna / Admin
+            Route::post('{id}/cancel', [BookingController::class, 'cancel']);
 
-            Route::middleware('role:driver')->group(function () {
-                Route::post('{id}/accept', [BookingController::class, 'accept']);
-            });
+            // Status payment untuk booking tertentu (dipakai mobile setelah Snap)
+            Route::get('{id}/payment-status', [BookingController::class, 'paymentStatus']);
+
+            // Driver: konfirmasi penjemputan → confirmed → ongoing
+            // MENGGANTIKAN: accept() dan confirm() yang dihapus
+            Route::middleware('role:driver')
+                 ->post('{id}/pickup', [BookingController::class, 'pickup']);
+
+            // Chat per booking
+            Route::get('{id}/messages',  [ChatController::class, 'index']);
+            Route::post('{id}/messages', [ChatController::class, 'store']);
         });
 
-        // Drivers
-        // routes/api.php — di dalam middleware auth:sanctum, bagian drivers
+        // ── Driver ───────────────────────────────────────────────
         Route::prefix('drivers')->group(function () {
-            Route::get('/',       [DriverController::class, 'index']);
-            Route::get('{id}',    [DriverController::class, 'show']);
+            Route::get('/',    [DriverController::class, 'index']);
+            Route::get('{id}', [DriverController::class, 'show']);
 
-            // TAMBAHKAN INI — update lokasi GPS driver
             Route::middleware('role:driver')
                  ->post('location', [DriverController::class, 'updateLocation']);
 
-            Route::middleware('role:admin')->group(function () {
-                Route::post('{id}/toggle', [DriverController::class, 'toggle']);
-            });
+            Route::middleware('role:admin')
+                 ->post('{id}/toggle', [DriverController::class, 'toggle']);
         });
 
-        // Payments — Admin: list semua; User: list milik sendiri
-        Route::prefix('payments')->group(function () {
-            Route::middleware('role:admin')->group(function () {
-                Route::get('/', [PaymentController::class, 'index']);
-            });
-        });
+        // ── Payment ──────────────────────────────────────────────
+        Route::middleware('role:admin')
+             ->get('payments', [PaymentController::class, 'index']);
 
-        // Dashboard (Admin only)
+        // ── Dashboard & Laporan (Admin only) ─────────────────────
         Route::middleware('role:admin')->group(function () {
             Route::get('dashboard', [DashboardController::class, 'index']);
             Route::get('reports',   [DashboardController::class, 'reports']);
         });
 
-        // Users (Admin only)
+        // ── Users (Admin only) ───────────────────────────────────
         Route::middleware('role:admin')->prefix('users')->group(function () {
             Route::get('/',            [UserController::class, 'index']);
             Route::get('{id}',         [UserController::class, 'show']);
             Route::post('{id}/toggle', [UserController::class, 'toggle']);
         });
 
-        // Notifications
+        // ── Notifikasi ───────────────────────────────────────────
         Route::prefix('notifications')->group(function () {
-            Route::get('/',              [NotificationController::class, 'index']);
-            Route::post('read-all',      [NotificationController::class, 'readAll']);
-            Route::post('{id}/read',     [NotificationController::class, 'markRead']);
+            Route::get('/',          [NotificationController::class, 'index']);
+            Route::post('read-all',  [NotificationController::class, 'readAll']);
+            Route::post('{id}/read', [NotificationController::class, 'markRead']);
         });
 
+        // ── Tiket Bantuan ────────────────────────────────────────
+        Route::prefix('tickets')->group(function () {
+            Route::get('/',           [TicketController::class, 'index']);
+            Route::post('/',          [TicketController::class, 'store']);
+            Route::get('{id}',        [TicketController::class, 'show']);
+            Route::post('{id}/reply', [TicketController::class, 'reply']);
+        });
     });
 
-    // ── Debug (hapus di production) ──────────────────────────────────────
-    Route::get('/debug', function () {
+    // ════════════════════════════════════════════════════════════
+    // DEBUG — hapus di production
+    // ════════════════════════════════════════════════════════════
+    Route::get('debug', function () {
         return [
             'mongodb_extension' => extension_loaded('mongodb'),
             'db_connection'     => env('DB_CONNECTION'),
             'db_uri_set'        => !empty(env('DB_URI')),
         ];
     });
-
-    Route::get('debug-sanctum-full', function () {
-        return [
-            'token_model'        => config('sanctum.personal_access_token_model'),
-            'db_default'         => config('database.default'),
-            'mongodb_connection' => config('database.connections.mongodb.driver'),
-        ];
-    });
-
-    Route::get('debug-token-test', function () {
-        $user = App\Models\User::first();
-        if (!$user) return ['error' => 'no user'];
-
-        try {
-            $token = $user->createToken('test');
-            return [
-                'success'     => true,
-                'token_class' => get_class($token->accessToken),
-                'token_id'    => $token->accessToken->getKey(),
-            ];
-        } catch (\Throwable $e) {
-            return [
-                'error' => $e->getMessage(),
-                'file'  => $e->getFile(),
-                'line'  => $e->getLine(),
-                'trace' => collect($e->getTrace())->take(5)
-                               ->map(fn($t) => ($t['file'] ?? '') . ' :' . $t['line'])
-                               ->toArray(),
-            ];
-        }
-    });
-
-
 });

@@ -37,6 +37,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'last_lat',
         'last_lon',
         'last_location_updated_at',
+        'fcm_token',   // ← tambahkan ini
     ];
 
     protected $hidden = ['password', 'remember_token'];
