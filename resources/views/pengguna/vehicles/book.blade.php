@@ -1,159 +1,107 @@
 {{-- resources/views/pengguna/vehicles/book.blade.php --}}
 <x-app-layout>
-    <x-slot name="header">Formulir Pemesanan</x-slot>
+    <x-slot name="header">Konfirmasi Pemesanan</x-slot>
     <div class="py-6 max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
-        <a href="{{ route('vehicles.index') }}" class="text-sm text-indigo-500 hover:underline">← Kembali</a>
+
+        <a href="{{ route('vehicles.index', ['start_date' => $startDate, 'end_date' => $endDate]) }}"
+           class="text-sm text-indigo-500 hover:underline">← Pilih kendaraan lain</a>
 
         @if($errors->any())
-        <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">{{ $errors->first('error') }}</div>
-        @endif
-
-        @if(session('success'))
-        <div class="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-sm">{{ session('success') }}</div>
-        @endif
-
-        @if(session('error'))
-        <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">{{ session('error') }}</div>
-        @endif
-
-        {{-- ── Preview Gambar Kendaraan ── --}}
-        @php
-            $img = $vehicle->images[0] ?? null;
-            $fx  = 50; $fy = 50;
-            if ($img) {
-                preg_match('/_(\d+)-(\d+)/', pathinfo($img, PATHINFO_FILENAME), $m);
-                $fx = $m[1] ?? 50;
-                $fy = $m[2] ?? 50;
-            }
-        @endphp
-
-        @if($img)
-        <div class="rounded-xl overflow-hidden border border-gray-200 bg-gray-900" style="height: 300px;">
-            <img src="{{ Storage::url($img) }}"
-                 alt="{{ $vehicle->name }}"
-                 class="w-full h-full object-cover"
-                 style="object-position: {{ $fx }}% {{ $fy }}%">
+        <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+            {{ $errors->first() }}
         </div>
         @endif
 
-        {{-- Info Kendaraan --}}
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 flex items-center gap-4">
-            @if(!$img)
-            <div class="h-14 w-14 rounded-xl bg-indigo-50 flex items-center justify-center flex-shrink-0">
-                <svg class="h-8 w-8 text-indigo-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 9l-7-7-7 7M5 9v10a1 1 0 001 1h3m10-11v10a1 1 0 01-1 1h-3"/>
-                </svg>
+        {{-- Ringkasan kendaraan --}}
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 flex gap-4 items-start">
+            <div class="h-16 w-24 rounded-lg overflow-hidden bg-gray-100 shrink-0">
+                @if(!empty($vehicle->images[0]))
+                    <img src="{{ Storage::url($vehicle->images[0]) }}"
+                         class="w-full h-full object-cover" alt="{{ $vehicle->name }}">
+                @else
+                    <div class="h-full flex items-center justify-center bg-indigo-50">
+                        <svg class="h-8 w-8 text-indigo-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                  d="M19 9l-7-7-7 7M5 9v10a1 1 0 001 1h3m10-11v10a1 1 0 01-1 1h-3"/>
+                        </svg>
+                    </div>
+                @endif
             </div>
-            @endif
             <div>
                 <h3 class="font-semibold text-gray-800">{{ $vehicle->name }}</h3>
-                <p class="text-sm text-gray-500">{{ $vehicle->type }} · {{ $vehicle->capacity }} orang · {{ $vehicle->plate_number }}</p>
-                <p class="text-indigo-600 font-bold mt-0.5">Rp {{ number_format($vehicle->price_per_day, 0, ',', '.') }}/hari</p>
+                <p class="text-xs text-gray-400">{{ $vehicle->type }} · {{ $vehicle->capacity }} orang · {{ $vehicle->year }}</p>
+                <p class="text-sm font-bold text-indigo-600 mt-1">
+                    Rp {{ number_format($vehicle->price_per_day, 0, ',', '.') }}/hari
+                </p>
             </div>
         </div>
 
-        {{-- Form --}}
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-            <form id="booking-form"
-                  method="POST"
-                  action="{{ route('vehicles.store-booking', $vehicle->_id) }}"
-                  class="space-y-4">
-                @csrf
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Tanggal Mulai</label>
-                        <input type="datetime-local" name="start_date" value="{{ old('start_date') }}"
-                            min="{{ now()->addHours(2)->format('Y-m-d\TH:i') }}"
-                            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500" required>
-                        @error('start_date')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Tanggal Selesai</label>
-                        <input type="datetime-local" name="end_date" value="{{ old('end_date') }}"
-                            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500" required>
-                        @error('end_date')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
-                    </div>
-                </div>
+        {{-- Ringkasan tanggal & harga --}}
+        <div class="bg-indigo-50 border border-indigo-100 rounded-xl p-4 space-y-2 text-sm">
+            <div class="flex justify-between">
+                <span class="text-gray-500">Tanggal Mulai</span>
+                <span class="font-medium">{{ \Carbon\Carbon::parse($startDate)->format('d M Y H:i') }}</span>
+            </div>
+            <div class="flex justify-between">
+                <span class="text-gray-500">Tanggal Selesai</span>
+                <span class="font-medium">{{ \Carbon\Carbon::parse($endDate)->format('d M Y H:i') }}</span>
+            </div>
+            <div class="flex justify-between">
+                <span class="text-gray-500">Durasi</span>
+                <span class="font-medium">{{ $durationDays }} hari</span>
+            </div>
+            <div class="border-t border-indigo-100 pt-2 flex justify-between font-semibold">
+                <span class="text-gray-700">Total</span>
+                <span class="text-indigo-600 text-base">
+                    Rp {{ number_format($totalPrice, 0, ',', '.') }}
+                </span>
+            </div>
+        </div>
 
-                {{-- Estimasi harga (JS) --}}
-                <div id="price-estimate" class="hidden bg-indigo-50 border border-indigo-100 rounded-lg px-4 py-3 text-sm">
-                    <span class="text-indigo-600 font-medium">Estimasi: </span>
-                    <span id="price-text" class="text-indigo-800 font-bold"></span>
-                </div>
+        {{-- Form detail pemesanan --}}
+        <form method="POST" action="{{ route('vehicles.store-booking', $vehicle->_id) }}" class="space-y-4">
+            @csrf
+
+            {{-- Tanggal dikirim sebagai hidden field — tidak bisa diubah di sini --}}
+            <input type="hidden" name="start_date" value="{{ $startDate }}">
+            <input type="hidden" name="end_date"   value="{{ $endDate }}">
+
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 space-y-4">
+                <h4 class="font-semibold text-gray-700">Detail Penjemputan</h4>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Alamat Penjemputan</label>
-                    <input type="text" name="pickup_address" value="{{ old('pickup_address') }}"
-                        placeholder="Jl. Sudirman No. 10, Jakarta"
-                        class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500" required>
-                    @error('pickup_address')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
+                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                        Alamat Penjemputan <span class="text-red-500">*</span>
+                    </label>
+                    <input type="text" name="pickup_address"
+                           value="{{ old('pickup_address') }}"
+                           placeholder="Masukkan alamat lengkap penjemputan"
+                           required
+                           class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-indigo-400 focus:outline-none @error('pickup_address') border-red-300 @enderror">
+                    @error('pickup_address')
+                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                    @enderror
                 </div>
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Catatan (opsional)</label>
-                    <textarea name="notes" rows="3" placeholder="Catatan khusus untuk driver..."
-                        class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500 resize-none">{{ old('notes') }}</textarea>
+                    <textarea name="notes" rows="3"
+                              placeholder="Instruksi tambahan untuk driver..."
+                              class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-indigo-400 focus:outline-none resize-none">{{ old('notes') }}</textarea>
                 </div>
+            </div>
 
-                {{-- Debug info (hapus setelah payment flow berjalan) --}}
-                <div id="debug-box" class="hidden bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-3 rounded-lg text-xs font-mono space-y-1">
-                    <p class="font-semibold">DEBUG — Form Submit</p>
-                    <p id="debug-action"></p>
-                    <p id="debug-status">Mengirim...</p>
-                </div>
+            {{-- Info pembayaran --}}
+            <div class="bg-amber-50 border border-amber-100 rounded-xl px-4 py-3 text-xs text-amber-700 space-y-1">
+                <p class="font-semibold">⏱ Batas waktu pembayaran: 30 menit</p>
+                <p>Setelah pesanan dibuat, selesaikan pembayaran dalam 30 menit. Pesanan akan dibatalkan otomatis jika melewati batas waktu.</p>
+            </div>
 
-                <button type="submit"
-                        id="submit-btn"
-                        class="w-full py-2.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition font-medium">
-                    Buat Pesanan & Bayar
-                </button>
-            </form>
-        </div>
-
-        {{-- Debug: tampilkan redirect target jika ada session --}}
-        @if(session('debug_redirect'))
-        <div class="bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3 rounded-lg text-xs font-mono">
-            DEBUG redirect target: {{ session('debug_redirect') }}
-        </div>
-        @endif
+            <button type="submit"
+                    class="w-full py-3 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 active:scale-95 transition">
+                Buat Pesanan & Bayar
+            </button>
+        </form>
 
     </div>
-
-    <script>
-    const pricePerDay = {{ $vehicle->price_per_day }};
-    const startInput  = document.querySelector('[name=start_date]');
-    const endInput    = document.querySelector('[name=end_date]');
-    const estimate    = document.getElementById('price-estimate');
-    const priceText   = document.getElementById('price-text');
-    const form        = document.getElementById('booking-form');
-    const debugBox    = document.getElementById('debug-box');
-    const debugAction = document.getElementById('debug-action');
-    const debugStatus = document.getElementById('debug-status');
-    const submitBtn   = document.getElementById('submit-btn');
-
-    function updateEstimate() {
-        if (!startInput.value || !endInput.value) return;
-        const diff = (new Date(endInput.value) - new Date(startInput.value)) / (1000 * 60 * 60 * 24);
-        const days = Math.max(1, Math.ceil(diff));
-        const total = days * pricePerDay;
-        priceText.textContent = `${days} hari × Rp ${pricePerDay.toLocaleString('id-ID')} = Rp ${total.toLocaleString('id-ID')}`;
-        estimate.classList.remove('hidden');
-    }
-
-    startInput.addEventListener('change', updateEstimate);
-    endInput.addEventListener('change', updateEstimate);
-
-    form.addEventListener('submit', function(e) {
-        // Tampilkan debug box
-        debugBox.classList.remove('hidden');
-        debugAction.textContent = 'Action: ' + form.action;
-        debugStatus.textContent = 'Status: Form submitted, menunggu redirect...';
-
-        // Disable tombol supaya tidak double submit
-        submitBtn.disabled = true;
-        submitBtn.textContent = 'Memproses...';
-
-        // Biarkan form submit normal (jangan e.preventDefault())
-    });
-    </script>
 </x-app-layout>

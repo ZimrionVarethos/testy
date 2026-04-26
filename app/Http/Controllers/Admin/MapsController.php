@@ -14,9 +14,14 @@ class MapsController extends Controller
     {
         $vehicles = Vehicle::all();
 
-        // ── Mirror persis pola DashboardController::adminDashboard() ──
+        // ── Hanya tampilkan booking yang SEDANG BERLANGSUNG ──────────
+        // Syarat: status ongoing/confirmed DAN start_date sudah tiba DAN end_date belum lewat
+        // Booking confirmed yang start_date-nya belum tiba tidak ditampilkan di peta
+        $now = Carbon::now();
+
         $activeBookings = Booking::whereIn('status', ['confirmed', 'ongoing'])
-            ->where('end_date', '>', Carbon::now())   // ← tambahkan ini
+            ->where('start_date', '<=', $now)   // ← start_date sudah tiba
+            ->where('end_date', '>', $now)       // ← end_date belum lewat
             ->get()
             ->keyBy(fn($b) => (string) ($b->vehicle['vehicle_id'] ?? ''));
 
@@ -35,7 +40,7 @@ class MapsController extends Controller
             $locationUpdatedAt = null;
             $isStale           = false;
 
-            // ── Gunakan User::find() seperti dashboard, bukan whereIn+keyBy ──
+            // Hanya ambil koordinat kalau booking aktif (start_date sudah tiba)
             if ($booking && !empty($booking->driver['driver_id'])) {
                 $driver            = User::find($booking->driver['driver_id']);
                 $lat               = $driver?->last_lat ?? null;
@@ -56,11 +61,9 @@ class MapsController extends Controller
                 'lat'                    => $lat,
                 'lon'                    => $lon,
                 'has_active_booking'     => $booking !== null,
-                // Format sama persis dengan dashboard
                 'location_updated_at'    => $locationUpdatedAt
                     ? Carbon::parse($locationUpdatedAt)->format('H:i, d M')
                     : null,
-                // Extra: human-readable untuk popup stale
                 'location_updated_human' => $locationUpdatedAt
                     ? Carbon::parse($locationUpdatedAt)->diffForHumans()
                     : null,
@@ -84,10 +87,13 @@ class MapsController extends Controller
     public function show(string $id)
     {
         $vehicle = Vehicle::findOrFail($id);
+        $now     = Carbon::now();
 
+        // Sama — hanya booking yang sedang berlangsung
         $activeBooking = Booking::whereIn('status', ['confirmed', 'ongoing'])
             ->where('vehicle.vehicle_id', $id)
-            ->where('end_date', '>', Carbon::now())   // ← tambahkan ini
+            ->where('start_date', '<=', $now)   // ← start_date sudah tiba
+            ->where('end_date', '>', $now)       // ← end_date belum lewat
             ->latest('created_at')
             ->first();
 
@@ -97,7 +103,6 @@ class MapsController extends Controller
         $isStale           = false;
 
         if ($activeBooking && !empty($activeBooking->driver['driver_id'])) {
-            // ── Konsisten: User::find() langsung ──
             $driver            = User::find($activeBooking->driver['driver_id']);
             $lat               = $driver?->last_lat ?? null;
             $lon               = $driver?->last_lon ?? null;
