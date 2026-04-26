@@ -73,6 +73,9 @@ Route::prefix('v1')->group(function () {
             // Status payment untuk booking tertentu (dipakai mobile setelah Snap)
             Route::get('{id}/payment-status', [BookingController::class, 'paymentStatus']);
 
+            // Generate snap token untuk mobile payment
+            Route::post('{id}/snap', [PaymentController::class, 'createSnap']);
+
             // Driver: konfirmasi penjemputan → confirmed → ongoing
             // MENGGANTIKAN: accept() dan confirm() yang dihapus
             Route::middleware('role:driver')

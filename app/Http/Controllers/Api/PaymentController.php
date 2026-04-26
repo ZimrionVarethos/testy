@@ -42,6 +42,131 @@ class PaymentController extends Controller
         ]);
     }
 
+
+    public function createSnap(Request $request, string $bookingId): JsonResponse
+    {
+        \Midtrans\Config::$serverKey    = config('midtrans.server_key');
+        \Midtrans\Config::$isProduction = config('midtrans.is_production');
+        \Midtrans\Config::$isSanitized  = true;
+        \Midtrans\Config::$is3ds        = true;
+ 
+        $user    = $request->user();
+        $booking = Booking::findOrFail($bookingId);
+ 
+        // Pastikan booking milik user ini
+        if (($booking->user['user_id'] ?? $booking->user_id) !== (string) $user->_id) {
+            return response()->json(['success' => false, 'message' => 'Akses ditolak.'], 403);
+        }
+ 
+        if ($booking->status !== Booking::STATUS_PENDING) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Pesanan ini tidak bisa dibayar.',
+            ], 422);
+        }
+ 
+        // Cek payment yang sudah ada
+        $existing = Payment::activeForBooking($bookingId);
+ 
+        if ($existing && $existing->isPaid()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Pesanan ini sudah lunas.',
+            ], 422);
+        }
+ 
+        // Reuse snap token yang masih valid
+        if ($existing && $existing->isPending()
+            && !$existing->isExpired()
+            && !empty($existing->midtrans['snap_token'])) {
+            return response()->json([
+                'success' => true,
+                'data'    => [
+                    'snap_token' => $existing->midtrans['snap_token'],
+                    'expired_at' => $existing->expired_at?->toIso8601String(),
+                ],
+            ]);
+        }
+ 
+        // Hitung deadline
+        $expiredAt   = \Carbon\Carbon::parse($booking->created_at)->addMinutes(30);
+        $minutesLeft = max(1, (int) now()->diffInMinutes($expiredAt, false));
+ 
+        if ($expiredAt->isPast()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Batas waktu pembayaran sudah terlewat.',
+            ], 422);
+        }
+ 
+        // Tandai payment lama expired kalau ada
+        if ($existing && $existing->isPending() && $existing->isExpired()) {
+            $existing->update(['status' => Payment::STATUS_EXPIRED]);
+        }
+ 
+        $orderId = 'PAY-' . $bookingId . '-' . time();
+ 
+        $params = [
+            'transaction_details' => [
+                'order_id'     => $orderId,
+                'gross_amount' => (int) $booking->total_price,
+            ],
+            'customer_details' => [
+                'first_name' => $user->name,
+                'email'      => $user->email,
+                'phone'      => $user->phone ?? '',
+            ],
+            'item_details' => [[
+                'id'       => $bookingId,
+                'price'    => (int) $booking->total_price,
+                'quantity' => 1,
+                'name'     => 'Sewa ' . ($booking->vehicle['name'] ?? 'Kendaraan')
+                               . ' (' . $booking->booking_code . ')',
+            ]],
+            'expiry' => [
+                'start_time' => now()->format('Y-m-d H:i:s O'),
+                'unit'       => 'minutes',
+                'duration'   => $minutesLeft,
+            ],
+        ];
+ 
+        try {
+            $snapToken = \Midtrans\Snap::getSnapToken($params);
+        } catch (\Throwable $e) {
+            Log::error('Midtrans Snap token error (mobile)', ['error' => $e->getMessage()]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal menghubungi Midtrans.',
+            ], 500);
+        }
+ 
+        $payment = new Payment();
+        $payment->fill([
+            'booking_id'   => $bookingId,
+            'booking_code' => $booking->booking_code,
+            'user_id'      => (string) $user->_id,
+            'amount'       => (int) $booking->total_price,
+            'method'       => 'snap',
+            'status'       => Payment::STATUS_PENDING,
+            'expired_at'   => $expiredAt,
+            'midtrans'     => [
+                'snap_token' => $snapToken,
+                'order_id'   => $orderId,
+            ],
+        ]);
+        $payment->save();
+ 
+        return response()->json([
+            'success' => true,
+            'data'    => [
+                'snap_token' => $snapToken,
+                'expired_at' => $expiredAt->toIso8601String(),
+            ],
+        ]);
+    }
+
+
+
     /**
      * POST /api/v1/payments/notification — Midtrans webhook
      * Route ini HARUS dikecualikan dari auth middleware.
