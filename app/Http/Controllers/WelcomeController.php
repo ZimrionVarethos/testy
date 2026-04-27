@@ -44,7 +44,7 @@ class WelcomeController extends Controller
             'happy_customers' => User::where('role', 'pengguna')->count(),
         ];
 
-        $vehicles = Vehicle::where('status', 'available')->limit(6)->get();
+        $vehicles = Vehicle::where('status', '!=', 'maintenance')->limit(6)->get();
 
         // Ambil rating real — 4+ bintang, punya komentar, limit 10 terbaru
         // Lalu enrich dengan nama user dan info booking

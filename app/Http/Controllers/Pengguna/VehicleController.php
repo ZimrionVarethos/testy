@@ -67,8 +67,9 @@ class VehicleController extends Controller
             ->unique()
             ->toArray();
 
-        // Filter kendaraan: tersedia + tidak ada booking yang bentrok
-        $query = Vehicle::where('status', 'available')
+        // Filter kendaraan: exclude maintenance + yang punya booking overlap di rentang ini
+        // Kendaraan 'rented' sekarang tetap bisa dipesan kalau tidak ada overlap di rentang yang diminta
+        $query = Vehicle::where('status', '!=', 'maintenance')
             ->whereNotIn('_id', $bookedVehicleIds);
 
         if ($type) $query->where('type', $type);
@@ -97,9 +98,11 @@ class VehicleController extends Controller
     {
         $vehicle = Vehicle::findOrFail($id);
 
-        if (!$vehicle->isAvailable()) {
+        // Jangan cek status vehicle karena kendaraan 'rented' sekarang
+        // bisa saja kosong di tanggal yang diminta
+        if ($vehicle->status === 'maintenance') {
             return redirect()->route('vehicles.index')
-                ->withErrors(['error' => 'Kendaraan tidak tersedia.']);
+                ->withErrors(['error' => 'Kendaraan sedang dalam perawatan.']);
         }
 
         $startDate = $request->query('start_date');

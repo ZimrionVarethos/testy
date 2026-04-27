@@ -717,6 +717,175 @@
         }
         .btn-outline-ink:hover { background: var(--ink); color: var(--white); }
 
+        /* ══════════════════════════════════════
+           FLEET — Tambahan CSS untuk redesign
+           Paste setelah block CSS fleet yang sudah ada
+        ══════════════════════════════════════ */
+
+        /* ── Intro block (header + datepicker) ── */
+        .fleet-intro {
+            display: block;
+            grid-template-columns: 1fr 1.6fr;
+            gap: 4rem;
+            align-items: center;
+            margin-bottom: 4rem;
+        }
+        .fleet-eyebrow {
+            font-family: 'Syne', sans-serif;
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: var(--ink-40);
+            margin-bottom: 0.8rem;
+        }
+        .fleet-sub {
+            font-size: 0.95rem;
+            color: var(--ink-40);
+            line-height: 1.7;
+            margin-top: 1rem;
+            max-width: 320px;
+        }
+
+        /* ── Datepicker form ── */
+        .fleet-datepicker {
+            background: var(--paper, #f9f9f7);
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            padding: 2rem 2.2rem;
+        }
+        .date-form {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr auto;
+            gap: 1rem;
+            align-items: end;
+        }
+        .date-field {
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+        .date-field label {
+            font-family: 'Syne', sans-serif;
+            font-size: 0.68rem;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--ink-40);
+        }
+        .date-field input {
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.88rem;
+            color: var(--ink);
+            background: var(--white);
+            border: 1.5px solid var(--line);
+            border-radius: 5px;
+            padding: 0.65rem 0.9rem;
+            outline: none;
+            transition: border-color 0.2s;
+            width: 100%;
+        }
+        .date-field input:focus { border-color: var(--ink); }
+        .date-sep {
+            font-family: 'Syne', sans-serif;
+            font-size: 1rem;
+            color: var(--ink-40);
+            padding-bottom: 0.65rem;
+            align-self: end;
+        }
+        .btn-check-avail {
+            font-family: 'Syne', sans-serif;
+            font-size: 0.78rem;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            padding: 0.68rem 1.5rem;
+            background: var(--ink);
+            color: var(--white);
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: opacity 0.2s;
+            white-space: nowrap;
+            text-decoration: none;
+        }
+        .btn-check-avail:hover { opacity: 0.75; color: var(--white); }
+        .date-hint {
+            font-size: 0.76rem;
+            color: var(--ink-40);
+            margin-top: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+        .date-hint i { font-size: 0.7rem; }
+
+        /* ── Divider ── */
+        .fleet-divider {
+            display: flex;
+            align-items: center;
+            gap: 1.2rem;
+            margin-bottom: 2.5rem;
+        }
+        .fleet-divider::before,
+        .fleet-divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--line);
+        }
+        .fleet-divider span {
+            font-family: 'Syne', sans-serif;
+            font-size: 0.68rem;
+            font-weight: 700;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            color: var(--ink-40);
+            white-space: nowrap;
+        }
+
+        /* ── fleet-head sekarang hanya filter, tanpa justify space-between ── */
+        .fleet-head {
+            margin-bottom: 2rem;
+        }
+
+        /* ── badge unavail ── */
+        .badge-unavail {
+            font-family: 'Syne', sans-serif;
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: var(--ink-40);
+            letter-spacing: 0.04em;
+        }
+
+        /* ── Responsive ── */
+        @media (max-width: 1024px) {
+            .fleet-intro {
+                grid-template-columns: 1fr;
+                gap: 2.5rem;
+            }
+            .fleet-sub { max-width: 100%; }
+            .date-form {
+                grid-template-columns: 1fr 1fr;
+                grid-template-rows: auto auto;
+            }
+            .date-sep { display: none; }
+            .btn-check-avail {
+                grid-column: 1 / -1;
+                justify-content: center;
+            }
+        }
+        @media (max-width: 640px) {
+            .fleet-datepicker { padding: 1.4rem 1.2rem; }
+            .date-form {
+                grid-template-columns: 1fr;
+            }
+            .fleet-divider { margin-bottom: 1.5rem; }
+            #fleet { padding: 5rem 5%; }
+        }
+
 
         /* ══════════════════════════════════════
          WHY US — Dark section with app mockup
@@ -1550,10 +1719,56 @@
         </div>
     </section>
 
-    {{-- ════════ FLEET ════════ --}}
+{{-- ════════ FLEET ════════ --}}
     <section id="fleet">
+
+        {{-- Header + Date Picker ──────────────────────────────── --}}
+        <div class="fleet-intro reveal">
+            <div class="fleet-intro-text">
+                <p class="fleet-eyebrow">Armada Kami</p>
+                <h2 class="sec-h2">Cek Ketersediaan<br>Kendaraan Anda</h2>
+                <p class="fleet-sub">Masukkan tanggal kebutuhan untuk melihat kendaraan yang tersedia secara real-time.</p>
+            </div>
+
+            <div class="fleet-datepicker reveal reveal-delay-1">
+                <form method="GET" action="{{ route('vehicles.index') }}" class="date-form">
+                    <div class="date-field">
+                        <label>Tanggal Mulai</label>
+                        <input type="datetime-local" name="start_date"
+                               min="{{ now()->format('Y-m-d\TH:i') }}"
+                               required>
+                    </div>
+                    <div class="date-sep">→</div>
+                    <div class="date-field">
+                        <label>Tanggal Selesai</label>
+                        <input type="datetime-local" name="end_date"
+                               min="{{ now()->addDay()->format('Y-m-d\TH:i') }}"
+                               required>
+                    </div>
+                    @auth
+                        <button type="submit" class="btn-check-avail">
+                            Cek Ketersediaan <i class="fas fa-arrow-right"></i>
+                        </button>
+                    @else
+                        <a href="{{ route('login') }}" class="btn-check-avail">
+                            Login untuk Memesan <i class="fas fa-arrow-right"></i>
+                        </a>
+                    @endauth
+                </form>
+                <p class="date-hint">
+                    <i class="fas fa-shield-alt"></i>
+                    Kendaraan hanya ditampilkan jika benar-benar kosong di tanggal pilihan Anda
+                </p>
+            </div>
+        </div>
+
+        {{-- Divider ──────────────────────────────────────────── --}}
+        <div class="fleet-divider">
+            <span>Sekilas Armada Kami</span>
+        </div>
+
+        {{-- Filter tipe ──────────────────────────────────────── --}}
         <div class="fleet-head">
-            <div><h2 class="sec-h2 reveal reveal-delay-1">Best Service</h2></div>
             <div class="fleet-filters reveal">
                 <button class="filter-btn active" data-filter="all">Semua</button>
                 <button class="filter-btn" data-filter="sedan">Sedan</button>
@@ -1562,17 +1777,23 @@
                 <button class="filter-btn" data-filter="van">Van</button>
             </div>
         </div>
+
+        {{-- Grid kendaraan ───────────────────────────────────── --}}
         <div class="fleet-grid" id="fleet-grid">
             @forelse($vehicles as $vehicle)
             <div class="car-card reveal" data-type="{{ strtolower($vehicle->type ?? 'sedan') }}">
                 <div class="car-img">
                     @if(!empty($vehicle->images) && count($vehicle->images) > 0)
-                        <img src="{{ $vehicle->images[0] }}" alt="{{ $vehicle->name }}" loading="lazy">
+                        <img src="{{ Storage::url($vehicle->images[0]) }}" alt="{{ $vehicle->name }}" loading="lazy">
                     @else
-                        <img src="https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&q=80&w=600" alt="{{ $vehicle->name }}" loading="lazy">
+                        <img src="https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&q=80&w=600"
+                             alt="{{ $vehicle->name }}" loading="lazy">
                     @endif
                     <span class="car-badge badge-{{ $vehicle->status ?? 'available' }}">
-                        {{ $vehicle->status === 'available' ? 'Tersedia' : ($vehicle->status === 'rented' ? 'Disewa' : 'Servis') }}
+                        @if(($vehicle->status ?? 'available') === 'maintenance') Servis
+                        @elseif(($vehicle->status ?? 'available') === 'rented') Sedang Disewa
+                        @else Tersedia
+                        @endif
                     </span>
                 </div>
                 <div class="car-body">
@@ -1590,15 +1811,15 @@
                             <strong>Rp {{ number_format($vehicle->price_per_day, 0, ',', '.') }}</strong>
                             <span>/ hari</span>
                         </div>
-                        @auth
-                            @if(($vehicle->status ?? 'available') === 'available')
-                                <a href="{{ route('vehicles.show', $vehicle->_id) }}" class="btn-book">Pesan</a>
-                            @else
-                                <span style="font-size:0.75rem;color:var(--ink-40);">Tidak Tersedia</span>
-                            @endif
+                        @if(($vehicle->status ?? 'available') === 'maintenance')
+                            <span class="badge-unavail">Dalam Servis</span>
                         @else
-                            <a href="{{ route('login') }}" class="btn-book">Pesan</a>
-                        @endauth
+                            @auth
+                                <a href="{{ route('vehicles.index') }}" class="btn-book">Pesan</a>
+                            @else
+                                <a href="{{ route('login') }}" class="btn-book">Pesan</a>
+                            @endauth
+                        @endif
                     </div>
                 </div>
             </div>
@@ -1617,7 +1838,9 @@
             <div class="car-card reveal" data-type="{{ strtolower($car['type']) }}">
                 <div class="car-img">
                     <img src="{{ $car['img'] }}" alt="{{ $car['brand'] }} {{ $car['model'] }}" loading="lazy">
-                    <span class="car-badge badge-{{ $car['status'] }}">{{ $car['status'] === 'available' ? 'Tersedia' : 'Disewa' }}</span>
+                    <span class="car-badge badge-{{ $car['status'] }}">
+                        {{ $car['status'] === 'available' ? 'Tersedia' : 'Sedang Disewa' }}
+                    </span>
                 </div>
                 <div class="car-body">
                     <div class="car-type">{{ $car['type'] }}</div>
@@ -1628,7 +1851,10 @@
                         <div class="spec"><i class="fas fa-snowflake"></i> AC</div>
                     </div>
                     <div class="car-footer">
-                        <div class="car-price"><strong>Rp {{ number_format($car['price'], 0, ',', '.') }}</strong><span>/ hari</span></div>
+                        <div class="car-price">
+                            <strong>Rp {{ number_format($car['price'], 0, ',', '.') }}</strong>
+                            <span>/ hari</span>
+                        </div>
                         <a href="{{ route('login') }}" class="btn-book">Pesan</a>
                     </div>
                 </div>
@@ -1636,11 +1862,16 @@
             @endforeach
             @endforelse
         </div>
+
         <div class="fleet-cta reveal">
             @auth
-                <a href="{{ route('vehicles.index') }}" class="btn-outline-ink">Lihat Semua Kendaraan <i class="fas fa-arrow-right"></i></a>
+                <a href="{{ route('vehicles.index') }}" class="btn-outline-ink">
+                    Lihat Semua Kendaraan <i class="fas fa-arrow-right"></i>
+                </a>
             @else
-                <a href="{{ route('register') }}" class="btn-outline-ink">Daftar & Lihat Semua Armada <i class="fas fa-arrow-right"></i></a>
+                <a href="{{ route('register') }}" class="btn-outline-ink">
+                    Daftar & Lihat Semua Armada <i class="fas fa-arrow-right"></i>
+                </a>
             @endauth
         </div>
     </section>
