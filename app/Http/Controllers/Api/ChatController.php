@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
-use App\Models\Message;
+use App\Models\ChatMessage; // ← ganti dari Message
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -21,10 +21,12 @@ class ChatController extends Controller
 
         $this->authorizeChat($user, $booking);
 
-        $messages = Message::where('booking_id', $id)
-            ->orderBy('created_at', 'asc')
-            ->get()
+        // Pakai method forBooking() yang sudah ada di model ChatMessage
+        $messages = ChatMessage::forBooking($id)
             ->map(fn($m) => $this->messageResource($m));
+
+        // Tandai pesan lawan bicara sebagai sudah dibaca
+        ChatMessage::markReadForBooking($id, $user->role === 'driver' ? 'driver' : 'pengguna');
 
         return response()->json([
             'success' => true,
@@ -47,14 +49,13 @@ class ChatController extends Controller
 
         $this->authorizeChat($user, $booking);
 
-        // Tentukan sender_role berdasarkan role user
         $senderRole = match($user->role) {
             'driver'   => 'driver',
             'pengguna' => 'pengguna',
             default    => 'pengguna',
         };
 
-        $message = Message::create([
+        $message = ChatMessage::create([
             'booking_id'  => $id,
             'sender_id'   => (string) $user->_id,
             'sender_name' => $user->name,
@@ -85,7 +86,7 @@ class ChatController extends Controller
         abort(403, 'Anda tidak memiliki akses ke chat ini.');
     }
 
-    private function messageResource(Message $m): array
+    private function messageResource(ChatMessage $m): array
     {
         return [
             'id'          => (string) $m->_id,
