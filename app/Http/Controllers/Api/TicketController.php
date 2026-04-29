@@ -87,7 +87,7 @@ class TicketController extends Controller
             'status'       => 'open',
             // ← field replies, bukan messages
             'replies'      => [[
-                'sender_role' => 'user',
+                'sender_role' => 'pengguna',
                 'sender_name' => $user->name,
                 'sender_id'   => (string) $user->_id,
                 'message'     => $request->message,
@@ -125,8 +125,8 @@ class TicketController extends Controller
             ], 422);
         }
 
-        // Pakai method addReply() yang sudah ada di model
-        $ticket->addReply('user', $user->name, $request->message);
+        // sender_role harus 'pengguna' supaya web bisa bedain user vs admin
+        $ticket->addReply('pengguna', $user->name, $request->message);
 
         return response()->json([
             'success' => true,
