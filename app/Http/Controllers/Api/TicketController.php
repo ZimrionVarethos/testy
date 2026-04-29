@@ -12,7 +12,6 @@ class TicketController extends Controller
 {
     /**
      * GET /api/v1/tickets
-     * Daftar tiket milik user
      */
     public function index(Request $request): JsonResponse
     {
@@ -34,7 +33,6 @@ class TicketController extends Controller
 
     /**
      * GET /api/v1/tickets/{id}
-     * Detail tiket beserta reply
      */
     public function show(Request $request, string $id): JsonResponse
     {
@@ -52,7 +50,6 @@ class TicketController extends Controller
 
     /**
      * POST /api/v1/tickets
-     * Buka tiket baru
      */
     public function store(Request $request): JsonResponse
     {
@@ -65,12 +62,10 @@ class TicketController extends Controller
         $booking = Booking::findOrFail($request->booking_id);
         $user    = $request->user();
 
-        // Pastikan booking milik user ini
         if (($booking->user['user_id'] ?? null) !== (string) $user->_id) {
             abort(403, 'Booking ini bukan milik Anda.');
         }
 
-        // Cek tiket aktif untuk booking ini
         $existing = Ticket::where('booking_id', $request->booking_id)
             ->whereIn('status', ['open', 'in_progress'])
             ->first();
@@ -90,24 +85,25 @@ class TicketController extends Controller
             'user_name'    => $user->name,
             'subject'      => $request->subject,
             'status'       => 'open',
-            'messages'     => [[
-                'sender'     => 'user',
-                'sender_id'  => (string) $user->_id,
-                'message'    => $request->message,
-                'created_at' => now()->toIso8601String(),
+            // ← field replies, bukan messages
+            'replies'      => [[
+                'sender_role' => 'user',
+                'sender_name' => $user->name,
+                'sender_id'   => (string) $user->_id,
+                'message'     => $request->message,
+                'created_at'  => now()->toIso8601String(),
             ]],
         ]);
 
         return response()->json([
             'success' => true,
             'message' => 'Tiket berhasil dibuka. Admin akan segera merespons.',
-            'data'    => $this->ticketResource($ticket),
+            'data'    => $this->ticketResource($ticket, withReplies: true),
         ], 201);
     }
 
     /**
      * POST /api/v1/tickets/{id}/reply
-     * User balas tiket
      */
     public function reply(Request $request, string $id): JsonResponse
     {
@@ -129,18 +125,8 @@ class TicketController extends Controller
             ], 422);
         }
 
-        $messages   = $ticket->messages ?? [];
-        $messages[] = [
-            'sender'     => 'user',
-            'sender_id'  => (string) $user->_id,
-            'message'    => $request->message,
-            'created_at' => now()->toIso8601String(),
-        ];
-
-        $ticket->update([
-            'messages' => $messages,
-            'status'   => 'open', // reopen kalau sempat in_progress
-        ]);
+        // Pakai method addReply() yang sudah ada di model
+        $ticket->addReply('user', $user->name, $request->message);
 
         return response()->json([
             'success' => true,
@@ -149,7 +135,7 @@ class TicketController extends Controller
         ]);
     }
 
-    // ── Helper ────────────────────────────────────────────────────
+    // ── Helper ────────────────────────────────────────────────────────
 
     private function ticketResource(Ticket $t, bool $withReplies = false): array
     {
@@ -159,12 +145,20 @@ class TicketController extends Controller
             'booking_code' => $t->booking_code,
             'subject'      => $t->subject,
             'status'       => $t->status,
+            'status_label' => $t->statusLabel(),
             'created_at'   => $t->created_at?->toIso8601String(),
             'updated_at'   => $t->updated_at?->toIso8601String(),
         ];
 
         if ($withReplies) {
-            $data['messages'] = $t->messages ?? [];
+            // Map replies ke format messages yang diharapkan Android
+            $data['messages'] = collect($t->replies ?? [])->map(fn($r) => [
+                'sender'      => $r['sender_role'] ?? 'user',
+                'sender_id'   => $r['sender_id']   ?? null,
+                'sender_name' => $r['sender_name']  ?? null,
+                'message'     => $r['message'],
+                'created_at'  => $r['created_at'],
+            ])->values()->toArray();
         }
 
         return $data;
