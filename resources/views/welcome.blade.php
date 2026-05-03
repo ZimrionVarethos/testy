@@ -1784,7 +1784,8 @@
             <div class="car-card reveal" data-type="{{ strtolower($vehicle->type ?? 'sedan') }}">
                 <div class="car-img">
                     @if(!empty($vehicle->images) && count($vehicle->images) > 0)
-                        <img src="{{ Storage::url($vehicle->images[0]) }}" alt="{{ $vehicle->name }}" loading="lazy">
+                        @php $vImg = $vehicle->images[0]; @endphp
+                        <img src="{{ str_starts_with($vImg, 'http') ? $vImg : Storage::url($vImg) }}" alt="{{ $vehicle->name }}" loading="lazy">
                     @else
                         <img src="https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&q=80&w=600"
                              alt="{{ $vehicle->name }}" loading="lazy">

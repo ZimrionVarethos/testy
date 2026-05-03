@@ -122,7 +122,7 @@
     {{-- GREETING --}}
     <div>
         <h2 style="font-family:'Epilogue',sans-serif;font-size:22px;font-weight:800;color:var(--text-1);letter-spacing:-0.5px">
-            Selamat datang, {{ Auth::user()->name }} 👋
+            Selamat datang, {{ Auth::user()->name }}
         </h2>
         <p style="font-size:13px;color:var(--text-2);margin-top:3px">
             {{ now()->locale('id')->isoFormat('dddd, D MMMM YYYY') }} · Ringkasan aktivitas hari ini

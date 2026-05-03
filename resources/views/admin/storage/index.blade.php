@@ -1,23 +1,20 @@
 <x-app-layout>
     <x-slot name="header">Storage Monitor</x-slot>
 
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-
     <style>
     :root {
-        --bg:       #0D1117;
-        --surface:  #161B22;
-        --border:   #21262D;
-        --border2:  #30363D;
-        --text:     #E6EDF3;
-        --muted:    #7D8590;
-        --accent:   #58A6FF;
-        --green:    #3FB950;
-        --yellow:   #D29922;
-        --red:      #F85149;
-        --orange:   #E3814B;
-        --mono:     'IBM Plex Mono', monospace;
-        --sans:     'IBM Plex Sans', sans-serif;
+        --bg:       #F7F7F5;
+        --surface:  #FFFFFF;
+        --border:   rgba(17,24,39,0.08);
+        --border2:  rgba(17,24,39,0.14);
+        --text:     rgb(17,24,39);
+        --muted:    rgba(17,24,39,0.45);
+        --accent:   #2563eb;
+        --green:    #16a34a;
+        --yellow:   #d97706;
+        --red:      #dc2626;
+        --mono:     'DM Mono', monospace;
+        --sans:     'DM Sans', sans-serif;
     }
 
     .st-root *, .st-root *::before, .st-root *::after { box-sizing: border-box; }
@@ -34,13 +31,13 @@
     .st-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 28px; gap: 16px; flex-wrap: wrap; }
     .st-header-left h1 { font-size: 22px; font-weight: 700; color: var(--text); margin: 0; font-family: var(--mono); letter-spacing: -.3px; }
     .st-header-left p  { font-size: 13px; color: var(--muted); margin: 4px 0 0; }
-    .st-refresh { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: var(--accent); text-decoration: none; border: 1px solid #1F4E8C; background: #0D2137; padding: 7px 14px; border-radius: 8px; font-family: var(--mono); transition: background .15s; }
-    .st-refresh:hover { background: #112D4E; }
+    .st-refresh { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: var(--accent); text-decoration: none; border: 1px solid #bfdbfe; background: #eff6ff; padding: 7px 14px; border-radius: 8px; font-family: var(--mono); transition: background .15s; }
+    .st-refresh:hover { background: #dbeafe; }
 
     /* ── Flash ── */
     .st-flash { padding: 10px 16px; border-radius: 8px; font-size: 13px; font-weight: 500; margin-bottom: 20px; }
-    .st-flash.success { background: #0D2E1A; border: 1px solid #1A4731; color: var(--green); }
-    .st-flash.error   { background: #2E0D0D; border: 1px solid #471A1A; color: var(--red); }
+    .st-flash.success { background: #f0fdf4; border: 1px solid #a7f3d0; color: #14532d; }
+    .st-flash.error   { background: #fef2f2; border: 1px solid #fecaca; color: #7f1d1d; }
 
     /* ── Storage Overview ── */
     .st-overview { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 24px; margin-bottom: 24px; }
@@ -69,7 +66,7 @@
     table.st-table thead th { padding: 11px 16px; text-align: left; font-size: 10px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; font-family: var(--mono); white-space: nowrap; }
     table.st-table tbody tr { border-bottom: 1px solid var(--border); transition: background .1s; }
     table.st-table tbody tr:last-child { border-bottom: none; }
-    table.st-table tbody tr:hover { background: rgba(88,166,255,.04); }
+    table.st-table tbody tr:hover { background: #f9fafb; }
     table.st-table td { padding: 12px 16px; vertical-align: middle; }
     .td-name { font-family: var(--mono); font-weight: 600; color: var(--accent); font-size: 13px; }
     .td-num  { font-family: var(--mono); color: var(--text); font-size: 13px; }
@@ -81,10 +78,10 @@
     .st-inline-fill  { height: 100%; border-radius: 99px; }
 
     /* Action buttons */
-    .btn-view { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 600; color: var(--accent); text-decoration: none; padding: 4px 10px; border: 1px solid #1F4E8C; border-radius: 6px; font-family: var(--mono); transition: background .1s; }
-    .btn-view:hover { background: #0D2137; }
-    .btn-del  { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 600; color: var(--red); background: none; border: 1px solid #471A1A; border-radius: 6px; padding: 4px 10px; cursor: pointer; font-family: var(--mono); transition: background .1s; }
-    .btn-del:hover { background: #2E0D0D; }
+    .btn-view { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 600; color: var(--accent); text-decoration: none; padding: 4px 10px; border: 1px solid #bfdbfe; border-radius: 6px; font-family: var(--mono); transition: background .1s; }
+    .btn-view:hover { background: #eff6ff; }
+    .btn-del  { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 600; color: var(--red); background: none; border: 1px solid #fecaca; border-radius: 6px; padding: 4px 10px; cursor: pointer; font-family: var(--mono); transition: background .1s; }
+    .btn-del:hover { background: #fef2f2; }
     .btn-del:disabled { opacity: .3; cursor: not-allowed; }
     .td-actions { display: flex; align-items: center; gap: 6px; }
 
@@ -100,8 +97,8 @@
     .st-modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
     .btn-cancel { font-size: 13px; font-weight: 600; color: var(--muted); background: var(--bg); border: 1px solid var(--border2); padding: 8px 16px; border-radius: 8px; cursor: pointer; font-family: var(--mono); transition: color .1s; }
     .btn-cancel:hover { color: var(--text); }
-    .btn-confirm-del { font-size: 13px; font-weight: 600; color: #fff; background: #6E0D0D; border: 1px solid var(--red); padding: 8px 16px; border-radius: 8px; cursor: pointer; font-family: var(--mono); transition: background .1s; }
-    .btn-confirm-del:hover { background: #8B1010; }
+    .btn-confirm-del { font-size: 13px; font-weight: 600; color: #fff; background: var(--red); border: 1px solid var(--red); padding: 8px 16px; border-radius: 8px; cursor: pointer; font-family: var(--mono); transition: background .1s; }
+    .btn-confirm-del:hover { background: #b91c1c; }
 
     /* ── Responsive ── */
     @media(max-width:768px){
@@ -114,7 +111,7 @@
 
     @php
     // Warna bar berdasarkan persentase
-    $barColor = $usedPercent < 60 ? '#3FB950' : ($usedPercent < 85 ? '#D29922' : '#F85149');
+    $barColor = $usedPercent < 60 ? '#16a34a' : ($usedPercent < 85 ? '#d97706' : '#dc2626');
 
     // Total storage seluruh koleksi untuk proporsi inline bar
     $totalCollStorage = array_sum(array_column($collections, 'storage'))
@@ -138,10 +135,10 @@
 
         {{-- Flash --}}
         @if(session('success'))
-        <div class="st-flash success">✓ {{ session('success') }}</div>
+        <div class="st-flash success">{{ session('success') }}</div>
         @endif
         @if(session('error'))
-        <div class="st-flash error">✗ {{ session('error') }}</div>
+        <div class="st-flash error">{{ session('error') }}</div>
         @endif
 
         {{-- Storage Overview --}}
@@ -167,15 +164,15 @@
             <div class="st-ov-stats">
                 <div class="st-ov-stat">
                     <div class="st-ov-stat-lbl">Data Size</div>
-                    <div class="st-ov-stat-val" style="color:#58A6FF">{{ $fmt($dataSize) }}</div>
+                    <div class="st-ov-stat-val" style="color:#2563eb">{{ $fmt($dataSize) }}</div>
                 </div>
                 <div class="st-ov-stat">
                     <div class="st-ov-stat-lbl">Storage Size</div>
-                    <div class="st-ov-stat-val" style="color:#3FB950">{{ $fmt($storageSize) }}</div>
+                    <div class="st-ov-stat-val" style="color:#16a34a">{{ $fmt($storageSize) }}</div>
                 </div>
                 <div class="st-ov-stat">
                     <div class="st-ov-stat-lbl">Index Size</div>
-                    <div class="st-ov-stat-val" style="color:#D29922">{{ $fmt($indexSize) }}</div>
+                    <div class="st-ov-stat-val" style="color:#d97706">{{ $fmt($indexSize) }}</div>
                 </div>
                 <div class="st-ov-stat">
                     <div class="st-ov-stat-lbl">Koleksi</div>
@@ -204,7 +201,7 @@
                         $collTotal  = $c['storage'] + $c['index_size'];
                         $proportion = round(($collTotal / $totalCollStorage) * 100, 1);
                         $isProtected = in_array($c['name'], $protected);
-                        $fillColor  = $proportion > 40 ? '#F85149' : ($proportion > 20 ? '#D29922' : '#58A6FF');
+                        $fillColor  = $proportion > 40 ? '#dc2626' : ($proportion > 20 ? '#d97706' : '#2563eb');
                     @endphp
                     <tr>
                         <td class="td-name">{{ $c['name'] }}</td>
@@ -246,7 +243,7 @@
     {{-- Confirm Modal --}}
     <div class="st-modal-overlay" id="dropModal" style="display:none" onclick="closeModal(event)">
         <div class="st-modal">
-            <h3>⚠ Hapus Koleksi</h3>
+            <h3>Hapus Koleksi</h3>
             <p>Tindakan ini akan menghapus <strong id="modalCount" style="color:var(--text)"></strong> dokumen secara permanen dan tidak bisa dibatalkan.</p>
             <code class="st-modal-code" id="modalCode"></code>
             <div class="st-modal-actions">

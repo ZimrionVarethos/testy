@@ -6,7 +6,7 @@
     {{-- Greeting + Status Ketersediaan --}}
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 flex items-center justify-between">
         <div>
-            <h3 class="text-lg font-semibold text-gray-800">Halo, {{ Auth::user()->name }}! 👋</h3>
+            <h3 class="text-lg font-semibold text-gray-800">Halo, {{ Auth::user()->name }}!</h3>
             <p class="text-sm text-gray-500 mt-0.5">
                 Status:
                 @if(Auth::user()->driver_profile['is_available'] ?? false)

@@ -16,7 +16,8 @@
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 flex gap-4 items-start">
             <div class="h-16 w-24 rounded-lg overflow-hidden bg-gray-100 shrink-0">
                 @if(!empty($vehicle->images[0]))
-                    <img src="{{ Storage::url($vehicle->images[0]) }}"
+                    @php $bImg = $vehicle->images[0]; @endphp
+                    <img src="{{ str_starts_with($bImg, 'http') ? $bImg : Storage::url($bImg) }}"
                          class="w-full h-full object-cover" alt="{{ $vehicle->name }}">
                 @else
                     <div class="h-full flex items-center justify-center bg-indigo-50">

@@ -39,4 +39,13 @@ return [
         'project_id' => env('FIREBASE_PROJECT_ID'),
     ],
 
+   'cloudinary' => [
+        'cloud_name' => env('CLOUDINARY_CLOUD_NAME'),
+        'api_key'    => env('CLOUDINARY_API_KEY'),
+        'api_secret' => env('CLOUDINARY_API_SECRET'),
+        // Root folder di Cloudinary — semua aset masuk ke subfolder ini
+        // Contoh: "rental" → file tersimpan di rental/vehicles/..., rental/landing/...
+        'folder'     => env('CLOUDINARY_FOLDER', 'rental'),
+    ],
+
 ];

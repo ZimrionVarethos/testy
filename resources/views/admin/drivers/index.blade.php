@@ -5,9 +5,9 @@
     <style>
         :root {
             --brand-primary:      #111827;
-            --brand-accent:       #6366f1;
-            --brand-accent-hover: #4f46e5;
-            --brand-accent-light: #eef2ff;
+            --brand-accent:       #2563eb;
+            --brand-accent-hover: #1d4ed8;
+            --brand-accent-light: #eff6ff;
             --surface:            #ffffff;
             --surface-2:          #f9fafb;
             --border:             #e5e7eb;
@@ -91,7 +91,7 @@
             font-weight: 700;
             font-size: 0.875rem;
             flex-shrink: 0;
-            border: 1.5px solid #c7d2fe;
+            border: 1.5px solid #bfdbfe;
         }
 
         .driver-name {
@@ -173,7 +173,7 @@
             padding: 0.35rem 0.75rem;
             background: var(--brand-accent-light);
             color: var(--brand-accent);
-            border: 1px solid #c7d2fe;
+            border: 1px solid #bfdbfe;
             border-radius: 0.4rem;
             font-size: 0.75rem;
             font-weight: 500;
@@ -181,7 +181,7 @@
             transition: background 0.15s ease, border-color 0.15s ease;
         }
         .btn-detail:hover {
-            background: #e0e7ff;
+            background: #dbeafe;
             border-color: var(--brand-accent);
         }
         .btn-toggle-deactivate {

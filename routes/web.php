@@ -25,6 +25,7 @@ use App\Http\Controllers\ChatController;
 use App\Http\Controllers\Pengguna\ChatController     as PenggunaChatController;
 use App\Http\Controllers\Driver\ChatController       as DriverChatController;
 use App\Http\Controllers\Pengguna\RatingController;
+use App\Http\Controllers\Admin\AssetController;
 
 
 
@@ -129,6 +130,30 @@ Route::middleware(['auth', 'verified', 'role:admin'])
     Route::get('/storage/{collection}',         [StorageController::class, 'show'])             ->name('storage.show');
     Route::delete('/storage/{collection}',      [StorageController::class, 'destroyCollection'])->name('storage.destroyCollection');
     Route::delete('/storage/{collection}/{id}', [StorageController::class, 'destroyDocument'])  ->name('storage.destroyDocument');
+
+
+    // ── Asset Manager (halaman baru) ──────────────────────────────────────────────
+    Route::prefix('assets')->name('assets.')->group(function () {
+    
+        // Halaman utama Asset Manager
+        Route::get('/',            [AssetController::class, 'index'])          ->name('index');
+    
+        // Upload
+        Route::post('/',           [AssetController::class, 'store'])          ->name('store');
+    
+        // Hapus satu
+        Route::delete('/{id}',     [AssetController::class, 'destroy'])        ->name('destroy');
+    
+        // Hapus banyak (bulk)
+        Route::delete('/bulk',     [AssetController::class, 'destroyBulk'])    ->name('destroy-bulk');
+    
+        // JSON untuk Asset Picker (dipanggil via JS)
+        Route::get('/picker',      [AssetController::class, 'pickerData'])     ->name('picker');
+    
+        // Refresh usage Cloudinary (AJAX)
+        Route::get('/usage',       [AssetController::class, 'usageRefresh'])   ->name('usage-refresh');
+    });
+    
 });
 
 // ════════════════════════════════════════════════════════════

@@ -86,10 +86,13 @@
                 <div class="h-36 bg-gray-100 overflow-hidden">
                     @if(!empty($v->images[0]))
                         @php
-                            preg_match('/_(\d+)-(\d+)/', pathinfo($v->images[0], PATHINFO_FILENAME), $m);
+                            $vImg = $v->images[0];
+                            $vBasename = pathinfo(parse_url($vImg, PHP_URL_PATH) ?? $vImg, PATHINFO_FILENAME);
+                            preg_match('/_(\d+)-(\d+)/', $vBasename, $m);
                             $fx = $m[1] ?? 50; $fy = $m[2] ?? 50;
+                            $vSrc = str_starts_with($vImg, 'http') ? $vImg : Storage::url($vImg);
                         @endphp
-                        <img src="{{ Storage::url($v->images[0]) }}"
+                        <img src="{{ $vSrc }}"
                              alt="{{ $v->name }}"
                              class="w-full h-full object-cover"
                              style="object-position: {{ $fx }}% {{ $fy }}%">

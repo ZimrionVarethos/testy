@@ -5,9 +5,9 @@
     <style>
         :root {
             --brand-primary:      #111827;
-            --brand-accent:       #6366f1;
-            --brand-accent-hover: #4f46e5;
-            --brand-accent-light: #eef2ff;
+            --brand-accent:       #2563eb;
+            --brand-accent-hover: #1d4ed8;
+            --brand-accent-light: #eff6ff;
             --surface:            #ffffff;
             --surface-2:          #f9fafb;
             --border:             #e5e7eb;
@@ -72,7 +72,7 @@
             font-weight: 800;
             font-size: 1.375rem;
             flex-shrink: 0;
-            border: 2px solid #c7d2fe;
+            border: 2px solid #bfdbfe;
         }
         .driver-name-lg {
             font-size: 1.125rem;
@@ -137,11 +137,11 @@
             border-radius: 0.45rem;
             background: var(--brand-accent-light);
             color: var(--brand-accent);
-            border: 1px solid #c7d2fe;
+            border: 1px solid #bfdbfe;
             text-decoration: none;
             transition: background 0.15s ease;
         }
-        .btn-back:hover { background: #e0e7ff; }
+        .btn-back:hover { background: #dbeafe; }
         .btn-back svg { width: 13px; height: 13px; }
 
         /* ── Info grid ── */

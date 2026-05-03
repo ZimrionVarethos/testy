@@ -1,28 +1,26 @@
 <x-app-layout>
     <x-slot name="header">Storage · {{ $collection }}</x-slot>
 
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-
     <style>
     :root {
-        --bg:      #0D1117; --surface: #161B22; --border: #21262D; --border2: #30363D;
-        --text:    #E6EDF3; --muted:   #7D8590; --accent: #58A6FF;
-        --green:   #3FB950; --yellow:  #D29922; --red:    #F85149;
-        --mono:    'IBM Plex Mono', monospace; --sans: 'IBM Plex Sans', sans-serif;
+        --bg:      #F7F7F5; --surface: #FFFFFF; --border: rgba(17,24,39,0.08); --border2: rgba(17,24,39,0.14);
+        --text:    rgb(17,24,39); --muted: rgba(17,24,39,0.45); --accent: #2563eb;
+        --green:   #16a34a; --yellow:  #d97706; --red:    #dc2626;
+        --mono:    'DM Mono', monospace; --sans: 'DM Sans', sans-serif;
     }
     .st-root *, .st-root *::before, .st-root *::after { box-sizing: border-box; }
     .st-root { font-family: var(--sans); background: var(--bg); min-height: calc(100vh - 64px); padding: 28px 0; color: var(--text); }
     .st-wrap { max-width: 1200px; margin: 0 auto; padding: 0 28px; }
 
     .st-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 24px; gap: 12px; flex-wrap: wrap; }
-    .st-back { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: var(--accent); text-decoration: none; border: 1px solid #1F4E8C; background: #0D2137; padding: 7px 14px; border-radius: 8px; font-family: var(--mono); transition: background .15s; }
-    .st-back:hover { background: #112D4E; }
+    .st-back { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: var(--accent); text-decoration: none; border: 1px solid #bfdbfe; background: #eff6ff; padding: 7px 14px; border-radius: 8px; font-family: var(--mono); transition: background .15s; }
+    .st-back:hover { background: #dbeafe; }
     .st-title { font-size: 20px; font-weight: 700; color: var(--text); font-family: var(--mono); margin: 0; }
     .st-subtitle { font-size: 13px; color: var(--muted); margin: 4px 0 0; font-family: var(--mono); }
 
     /* Flash */
     .st-flash { padding: 10px 16px; border-radius: 8px; font-size: 13px; font-weight: 500; margin-bottom: 20px; }
-    .st-flash.success { background: #0D2E1A; border: 1px solid #1A4731; color: var(--green); }
+    .st-flash.success { background: #f0fdf4; border: 1px solid #a7f3d0; color: #14532d; }
 
     /* Info bar */
     .st-infobar { display: flex; align-items: center; gap: 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px 18px; margin-bottom: 20px; flex-wrap: wrap; }
@@ -39,25 +37,25 @@
     .st-doc-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
     .st-toggle { font-size: 11px; color: var(--muted); font-family: var(--mono); cursor: pointer; padding: 3px 8px; border: 1px solid var(--border2); border-radius: 5px; background: none; transition: color .1s; }
     .st-toggle:hover { color: var(--text); }
-    .btn-del-doc { font-size: 11px; font-weight: 600; color: var(--red); background: none; border: 1px solid #471A1A; border-radius: 6px; padding: 4px 10px; cursor: pointer; font-family: var(--mono); transition: background .1s; }
-    .btn-del-doc:hover { background: #2E0D0D; }
+    .btn-del-doc { font-size: 11px; font-weight: 600; color: var(--red); background: none; border: 1px solid #fecaca; border-radius: 6px; padding: 4px 10px; cursor: pointer; font-family: var(--mono); transition: background .1s; }
+    .btn-del-doc:hover { background: #fef2f2; }
 
     /* JSON viewer */
     .st-doc-body { display: none; padding: 0 16px 16px; }
     .st-doc-body.open { display: block; }
     .st-json { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 14px; font-size: 12px; font-family: var(--mono); color: var(--text); overflow-x: auto; white-space: pre; line-height: 1.7; max-height: 400px; overflow-y: auto; }
     /* JSON syntax colors */
-    .jk { color: #79C0FF; }  /* key */
-    .js { color: #A5D6FF; }  /* string value */
-    .jn { color: #F0883E; }  /* number */
-    .jb { color: #D2A8FF; }  /* bool/null */
+    .jk { color: #2563eb; }
+    .js { color: #059669; }
+    .jn { color: #d97706; }
+    .jb { color: #7c3aed; }
 
     /* Pagination */
     .st-pagination { display: flex; align-items: center; justify-content: space-between; margin-top: 20px; flex-wrap: wrap; gap: 10px; }
     .st-page-info { font-size: 12px; color: var(--muted); font-family: var(--mono); }
     .st-page-btns { display: flex; gap: 6px; }
-    .st-page-btn { font-size: 12px; font-weight: 600; color: var(--accent); text-decoration: none; border: 1px solid #1F4E8C; background: var(--surface); padding: 6px 14px; border-radius: 7px; font-family: var(--mono); transition: background .15s; }
-    .st-page-btn:hover { background: #0D2137; }
+    .st-page-btn { font-size: 12px; font-weight: 600; color: var(--accent); text-decoration: none; border: 1px solid #bfdbfe; background: var(--surface); padding: 6px 14px; border-radius: 7px; font-family: var(--mono); transition: background .15s; }
+    .st-page-btn:hover { background: #eff6ff; }
     .st-page-btn.disabled { color: var(--muted); border-color: var(--border); pointer-events: none; }
     .st-page-current { font-size: 12px; color: var(--text); font-family: var(--mono); padding: 6px 14px; background: var(--border); border-radius: 7px; }
 
@@ -70,8 +68,8 @@
     .st-modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
     .btn-cancel { font-size: 13px; font-weight: 600; color: var(--muted); background: var(--bg); border: 1px solid var(--border2); padding: 8px 16px; border-radius: 8px; cursor: pointer; font-family: var(--mono); }
     .btn-cancel:hover { color: var(--text); }
-    .btn-confirm-del { font-size: 13px; font-weight: 600; color: #fff; background: #6E0D0D; border: 1px solid var(--red); padding: 8px 16px; border-radius: 8px; cursor: pointer; font-family: var(--mono); }
-    .btn-confirm-del:hover { background: #8B1010; }
+    .btn-confirm-del { font-size: 13px; font-weight: 600; color: #fff; background: var(--red); border: 1px solid var(--red); padding: 8px 16px; border-radius: 8px; cursor: pointer; font-family: var(--mono); }
+    .btn-confirm-del:hover { background: #b91c1c; }
     </style>
 
     @php
@@ -105,7 +103,7 @@
 
         {{-- Flash --}}
         @if(session('success'))
-        <div class="st-flash success">✓ {{ session('success') }}</div>
+        <div class="st-flash success">{{ session('success') }}</div>
         @endif
 
         {{-- Info bar --}}

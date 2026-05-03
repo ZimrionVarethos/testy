@@ -4,11 +4,10 @@
 
     <style>
         :root {
-            /* Diselaraskan dengan sidebar bg-gray-900 + indigo-500 */
-            --brand-primary:      #111827; /* gray-900 — sama dengan sidebar */
-            --brand-accent:       #6366f1; /* indigo-500 */
-            --brand-accent-hover: #4f46e5; /* indigo-600 */
-            --brand-accent-light: #eef2ff; /* indigo-50 */
+            --brand-primary:      #111827;
+            --brand-accent:       #2563eb;
+            --brand-accent-hover: #1d4ed8;
+            --brand-accent-light: #eff6ff;
             --surface:            #ffffff;
             --surface-2:          #f9fafb; /* gray-50 */
             --border:             #e5e7eb; /* gray-200 */
@@ -248,7 +247,7 @@
         .price-value {
             font-size: 1rem;
             font-weight: 700;
-            color: #a5b4fc; /* indigo-300 — kontras di atas dark */
+            color: #93c5fd;
             margin-left: auto;
         }
         .price-unit {
@@ -405,7 +404,7 @@
 
                         @if($firstImage)
                             <img
-                                src="{{ url('storage/' . $firstImage) }}"
+                                src="{{ str_starts_with($firstImage, 'http') ? $firstImage : url('storage/' . $firstImage) }}"
                                 alt="{{ $v->name }}"
                                 style="object-position: {{ $focalX }}% {{ $focalY }}%;"
                                 loading="lazy"

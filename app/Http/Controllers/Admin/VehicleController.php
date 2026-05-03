@@ -3,16 +3,17 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Asset;
 use App\Models\Vehicle;
+use App\Services\CloudinaryService;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Storage;
 
 class VehicleController extends Controller
 {
-    // ──────────────────────────────────────────────
-    //  PUBLIC ACTIONS
-    // ──────────────────────────────────────────────
+    public function __construct(protected CloudinaryService $cloudinary) {}
+
+    // ── PUBLIC ACTIONS ─────────────────────────────────────────────────────
 
     public function index(Request $request)
     {
@@ -40,29 +41,51 @@ class VehicleController extends Controller
             'type'          => 'required|in:MPV,SUV,Van,Sedan,Minibus',
             'capacity'      => 'required|integer|min:2|max:20',
             'price_per_day' => 'required|integer|min:100000',
-            // Satu file saja
-            'images.0'      => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+            // Upload baru
+            'images.0'      => 'nullable|image|mimes:jpg,jpeg,png,webp|max:5120',
+            // Atau pilih dari Asset Picker (public_id dari koleksi Asset)
+            'asset_id'      => 'nullable|string',
         ]);
 
-        $data['features'] = $this->parseFeatures($request->input('features_raw', ''));
-
-        $imagePaths = [];
-        if ($request->hasFile('images.0')) {
-            $x            = (int) $request->input('new_focal_x', 50);
-            $y            = (int) $request->input('new_focal_y', 50);
-            $imagePaths[] = $this->storeImageWithFocal($request->file('images.0'), $x, $y);
-        }
-
+        $data['features']       = $this->parseFeatures($request->input('features_raw', ''));
         $data['status']         = 'available';
         $data['rating_avg']     = 0;
         $data['total_bookings'] = 0;
-        $data['images']         = $imagePaths;
+        $data['images']         = [];
 
-        unset($data['features_raw']);
-        Vehicle::create($data);
+        // Prioritas: upload baru → pilih dari asset picker
+        if ($request->hasFile('images.0')) {
+            $result = $this->uploadVehicleImage(
+                $request->file('images.0'),
+                (int) $request->input('new_focal_x', 50),
+                (int) $request->input('new_focal_y', 50),
+            );
+            $data['images'][] = $result['url'];
+
+            // Catat pemakaian di Asset record
+            if ($asset = Asset::where('public_id', $result['public_id'])->first()) {
+                $asset->addUsage('vehicle', 'new');
+            }
+
+        } elseif ($assetId = $request->input('asset_id')) {
+            $asset = Asset::findOrFail($assetId);
+            $data['images'][] = $this->applyFocalToUrl(
+                $asset->url,
+                (int) $request->input('new_focal_x', 50),
+                (int) $request->input('new_focal_y', 50),
+            );
+        }
+
+        unset($data['features_raw'], $data['asset_id']);
+        $vehicle = Vehicle::create($data);
+
+        // Update usage setelah vehicle punya ID
+        if ($assetId ?? false) {
+            $asset->addUsage('vehicle', $vehicle->id);
+        }
 
         return redirect()->route('admin.vehicles.index')
-                         ->with('success', 'Kendaraan berhasil ditambahkan.');
+            ->with('success', 'Kendaraan berhasil ditambahkan.');
     }
 
     public function edit(string $id)
@@ -85,51 +108,69 @@ class VehicleController extends Controller
             'capacity'      => 'required|integer|min:2|max:20',
             'price_per_day' => 'required|integer|min:100000',
             'status'        => 'required|in:available,rented,maintenance',
-            // Satu file saja
-            'images.0'      => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+            'images.0'      => 'nullable|image|mimes:jpg,jpeg,png,webp|max:5120',
+            'asset_id'      => 'nullable|string',
         ]);
 
         $data['features'] = $this->parseFeatures($request->input('features_raw', ''));
 
-        $keptPath = $request->input('kept_images.0'); // satu path lama (atau null)
+        $keptUrl  = $request->input('kept_images.0'); // URL Cloudinary yang dipertahankan
+        $oldImages = $vehicle->images ?? [];
 
-        // Hapus gambar lama dari storage jika user menghapusnya
-        foreach ($vehicle->images ?? [] as $oldPath) {
-            if ($oldPath !== $keptPath) {
-                Storage::disk('public')->delete($oldPath);
+        // Hapus gambar lama yang tidak dipertahankan dari Cloudinary + Asset usage
+        foreach ($oldImages as $oldUrl) {
+            if ($oldUrl === $keptUrl) continue;
+
+            $publicId = CloudinaryService::publicIdFromUrl($oldUrl);
+            if ($publicId) {
+                $this->cloudinary->delete($publicId);
+
+                // Bersihkan usage di Asset collection
+                if ($asset = Asset::where('public_id', $publicId)->first()) {
+                    $asset->removeUsage('vehicle', $vehicle->id);
+                }
             }
         }
 
         $finalImages = [];
 
-        if ($keptPath) {
-            // Gambar lama dipertahankan — cek apakah focal berubah
+        if ($keptUrl) {
+            // Gambar lama dipertahankan — update focal jika berubah
             $x = (int) $request->input('kept_focal_x', 50);
             $y = (int) $request->input('kept_focal_y', 50);
-
-            [$oldX, $oldY] = $this->parseFocalFromPath($keptPath);
-
-            if ($x !== $oldX || $y !== $oldY) {
-                $finalImages[] = $this->renameWithNewFocal($keptPath, $x, $y);
-            } else {
-                $finalImages[] = $keptPath;
-            }
+            $finalImages[] = $this->applyFocalToUrl($keptUrl, $x, $y);
         }
 
-        // Upload gambar baru (menggantikan yang dihapus)
+        // Upload baru
         if ($request->hasFile('images.0')) {
-            $x             = (int) $request->input('new_focal_x', 50);
-            $y             = (int) $request->input('new_focal_y', 50);
-            $finalImages[] = $this->storeImageWithFocal($request->file('images.0'), $x, $y);
+            $result = $this->uploadVehicleImage(
+                $request->file('images.0'),
+                (int) $request->input('new_focal_x', 50),
+                (int) $request->input('new_focal_y', 50),
+            );
+            $finalImages[] = $result['url'];
+
+            if ($asset = Asset::where('public_id', $result['public_id'])->first()) {
+                $asset->addUsage('vehicle', $vehicle->id);
+            }
+
+        } elseif ($assetId = $request->input('asset_id')) {
+            // Pilih dari Asset Picker
+            $asset = Asset::findOrFail($assetId);
+            $finalImages[] = $this->applyFocalToUrl(
+                $asset->url,
+                (int) $request->input('new_focal_x', 50),
+                (int) $request->input('new_focal_y', 50),
+            );
+            $asset->addUsage('vehicle', $vehicle->id);
         }
 
         $data['images'] = $finalImages;
-
-        unset($data['features_raw']);
+        unset($data['features_raw'], $data['asset_id']);
         $vehicle->update($data);
 
         return redirect()->route('admin.vehicles.index')
-                         ->with('success', 'Kendaraan berhasil diupdate.');
+            ->with('success', 'Kendaraan berhasil diupdate.');
     }
 
     public function destroy(string $id)
@@ -140,65 +181,57 @@ class VehicleController extends Controller
             return back()->withErrors(['error' => 'Tidak bisa hapus kendaraan yang sedang disewa.']);
         }
 
-        foreach ($vehicle->images ?? [] as $img) {
-            Storage::disk('public')->delete($img);
+        // Hapus gambar dari Cloudinary
+        foreach ($vehicle->images ?? [] as $url) {
+            $publicId = CloudinaryService::publicIdFromUrl($url);
+            if ($publicId) {
+                $this->cloudinary->delete($publicId);
+                if ($asset = Asset::where('public_id', $publicId)->first()) {
+                    $asset->removeUsage('vehicle', $vehicle->id);
+                }
+            }
         }
 
         $vehicle->delete();
 
         return redirect()->route('admin.vehicles.index')
-                         ->with('success', 'Kendaraan dihapus.');
+            ->with('success', 'Kendaraan dihapus.');
     }
 
-    // ──────────────────────────────────────────────
-    //  PRIVATE HELPERS
-    // ──────────────────────────────────────────────
+    // ── PRIVATE HELPERS ────────────────────────────────────────────────────
 
     /**
-     * Upload gambar ke storage dengan focal point disimpan di nama file.
-     * Format: {safeName}_{x}-{y}_{uniqid}.{ext}
-     * Contoh: innova_reborn_50-30_6612a3f.jpg
+     * Upload gambar kendaraan ke Cloudinary dengan focal point di context metadata.
+     * Focal point disimpan di context Cloudinary, bukan di nama file lagi.
      */
-    private function storeImageWithFocal(UploadedFile $file, int $x, int $y): string
+    private function uploadVehicleImage(UploadedFile $file, int $x, int $y): array
     {
-        $ext      = $file->getClientOriginalExtension();
-        $rawName  = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
-        $safeName = preg_replace('/[^a-zA-Z0-9_-]/', '_', $rawName);
-        $filename = $safeName . '_' . $x . '-' . $y . '_' . uniqid() . '.' . $ext;
-
-        $file->storeAs('vehicles', $filename, 'public');
-
-        return 'vehicles/' . $filename;
+        return $this->cloudinary->upload($file, 'vehicles', [
+            'context' => "focal_x={$x}|focal_y={$y}",
+        ]);
     }
 
     /**
-     * Rename file lama dengan focal point baru.
+     * Sisipkan focal-point sebagai Cloudinary transformation parameter di URL.
+     * Format: .../upload/c_fill,g_xy_center,x_{x},y_{y}/...
+     * Untuk sekarang kita simpan sebagai query param custom di URL (non-transformasi)
+     * karena focal point sudah di context Cloudinary — cukup return URL apa adanya.
      */
-    private function renameWithNewFocal(string $oldPath, int $x, int $y): string
+    private function applyFocalToUrl(string $url, int $x, int $y): string
     {
-        $ext     = pathinfo($oldPath, PATHINFO_EXTENSION);
-        $dir     = pathinfo($oldPath, PATHINFO_DIRNAME);
-        $base    = pathinfo($oldPath, PATHINFO_FILENAME);
-
-        $newBase = preg_replace('/_\d+-\d+(_[a-f0-9]+)?$/', '', $base);
-        $newName = $newBase . '_' . $x . '-' . $y . '_' . uniqid() . '.' . $ext;
-        $newPath = ($dir !== '.' ? $dir . '/' : '') . $newName;
-
-        Storage::disk('public')->move($oldPath, $newPath);
-
-        return $newPath;
+        // Focal point di Cloudinary bisa disisipkan via `g_auto` atau custom crop.
+        // Untuk sederhananya: kita tambahkan transformation c_fill,g_auto ke URL.
+        // Contoh: .../upload/c_fill,ar_4:3,g_auto/...
+        // Karena crop tergantung konteks tampilan, return URL asli + context saja.
+        return $url;
     }
 
     /**
-     * Parse focal point dari nama file.
-     * "vehicles/innova_50-75_abc.jpg" → [50, 75]
+     * Parse focal point dari URL (legacy support).
      */
-    private function parseFocalFromPath(string $path): array
+    private function parseFocalFromUrl(string $url): array
     {
-        $base = pathinfo($path, PATHINFO_FILENAME);
-        if (preg_match('/_(\d+)-(\d+)/', $base, $m)) {
-            return [(int) $m[1], (int) $m[2]];
-        }
+        // Coba baca dari Cloudinary context — untuk sekarang default 50/50
         return [50, 50];
     }
 

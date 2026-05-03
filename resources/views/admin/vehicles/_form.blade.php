@@ -177,11 +177,12 @@ function imageManager() {
             @php
                 $img = !empty($vehicle->images) ? $vehicle->images[0] : null;
                 if ($img) {
-                    $base = pathinfo($img, PATHINFO_FILENAME);
+                    // Focal point: coba parse dari nama file (legacy lokal), Cloudinary default 50/50
+                    $base = pathinfo(parse_url($img, PHP_URL_PATH) ?? $img, PATHINFO_FILENAME);
                     preg_match('/_(\d+)-(\d+)/', $base, $m);
                     $existingImg = [
                         'path'    => $img,
-                        'preview' => '/storage/' . $img,
+                        'preview' => str_starts_with($img, 'http') ? $img : '/storage/' . $img,
                         'x'       => isset($m[1]) ? (int)$m[1] : 50,
                         'y'       => isset($m[2]) ? (int)$m[2] : 50,
                     ];
