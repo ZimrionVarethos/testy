@@ -27,11 +27,13 @@ class VerifyEmailNotification extends Notification
         );
     }
 
+// app/Notifications/VerifyEmailNotification.php
+
     public function toBrevo($notifiable): void
     {
         $url = $this->verificationUrl($notifiable);
-
-        Http::withHeaders([
+    
+        $response = Http::withHeaders([
             'api-key' => env('BREVO_API_KEY'),
             'Content-Type' => 'application/json',
         ])->post('https://api.brevo.com/v3/smtp/email', [
@@ -48,8 +50,15 @@ class VerifyEmailNotification extends Notification
                     Verify Email
                 </a>
                 <p>Link expires in 60 minutes.</p>
-                <p>If you did not register, ignore this email.</p>
             ",
+        ]);
+    
+        \Log::info('Brevo response', [
+            'status' => $response->status(),
+            'body' => $response->body(),
+            'api_key_set' => !empty(env('BREVO_API_KEY')),
+            'from_email' => env('MAIL_FROM_ADDRESS'),
+            'to_email' => $notifiable->email,
         ]);
     }
 }
