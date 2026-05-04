@@ -14,7 +14,7 @@
             </div>
             <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
                 <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide">Transaksi Lunas</p>
-                <p class="text-2xl font-bold text-indigo-600 mt-1">{{ number_format($summary['count_paid']) }}</p>
+                <p class="text-2xl font-bold text-blue-600 mt-1">{{ number_format($summary['count_paid']) }}</p>
             </div>
             <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
                 <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide">Menunggu Bayar</p>
@@ -27,7 +27,7 @@
             <div>
                 <label class="block text-xs text-gray-500 mb-1">Status</label>
                 <select name="status"
-                        class="rounded-lg border-gray-200 text-sm focus:ring-indigo-500 focus:border-indigo-500">
+                        class="rounded-lg border-gray-200 text-sm focus:ring-blue-500 focus:border-blue-500">
                     <option value="">Semua</option>
                     <option value="pending"   @selected(request('status') === 'pending')>Pending</option>
                     <option value="paid"      @selected(request('status') === 'paid')>Lunas</option>
@@ -40,10 +40,10 @@
                 <label class="block text-xs text-gray-500 mb-1">Cari Kode</label>
                 <input type="text" name="search" value="{{ request('search') }}"
                        placeholder="BRN-..."
-                       class="rounded-lg border-gray-200 text-sm focus:ring-indigo-500 focus:border-indigo-500">
+                       class="rounded-lg border-gray-200 text-sm focus:ring-blue-500 focus:border-blue-500">
             </div>
             <button type="submit"
-                    class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors">
+                    class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors">
                 Filter
             </button>
             @if(request()->hasAny(['status','search']))
@@ -74,7 +74,7 @@
                         <td class="px-5 py-3 text-gray-600">
                             {{ $payment->method ? strtoupper($payment->method) : '-' }}
                         </td>
-                        <td class="px-5 py-3 font-semibold text-indigo-600">
+                        <td class="px-5 py-3 font-semibold text-blue-600">
                             Rp {{ number_format($payment->amount, 0, ',', '.') }}
                         </td>
                         <td class="px-5 py-3">
@@ -89,7 +89,7 @@
                         </td>
                         <td class="px-5 py-3 text-right">
                             <a href="{{ route('admin.payments.show', $payment->_id) }}"
-                               class="text-xs text-indigo-600 hover:underline font-medium">Detail</a>
+                               class="text-xs text-blue-600 hover:underline font-medium">Detail</a>
                         </td>
                     </tr>
                     @empty

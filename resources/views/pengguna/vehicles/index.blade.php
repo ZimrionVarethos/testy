@@ -22,7 +22,7 @@
                            value="{{ $startDate ?? '' }}"
                            min="{{ now()->format('Y-m-d\TH:i') }}"
                            required
-                           class="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-400 focus:outline-none">
+                           class="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none">
                 </div>
                 <div class="flex flex-col gap-1">
                     <label class="text-xs font-medium text-gray-600">Tanggal Selesai</label>
@@ -30,13 +30,13 @@
                            value="{{ $endDate ?? '' }}"
                            min="{{ now()->addDay()->format('Y-m-d\TH:i') }}"
                            required
-                           class="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-400 focus:outline-none">
+                           class="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none">
                 </div>
                 @if($type)
                 <input type="hidden" name="type" value="{{ $type }}">
                 @endif
                 <button type="submit"
-                        class="px-5 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition">
+                        class="px-5 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition">
                     Cari Kendaraan
                 </button>
                 @if($startDate && $endDate)
@@ -57,11 +57,11 @@
         <div class="flex items-center justify-between flex-wrap gap-2">
             <div class="text-sm text-gray-600">
                 Kendaraan tersedia untuk
-                <span class="font-semibold text-indigo-600">
+                <span class="font-semibold text-blue-600">
                     {{ \Carbon\Carbon::parse($startDate)->format('d M Y H:i') }}
                 </span>
                 —
-                <span class="font-semibold text-indigo-600">
+                <span class="font-semibold text-blue-600">
                     {{ \Carbon\Carbon::parse($endDate)->format('d M Y H:i') }}
                 </span>
                 <span class="text-gray-400">({{ $durationDays }} hari)</span>
@@ -73,7 +73,7 @@
         <div class="flex gap-2 flex-wrap">
             @foreach([''=>'Semua','MPV'=>'MPV','SUV'=>'SUV','Van'=>'Van','Sedan'=>'Sedan','Minibus'=>'Minibus'] as $val => $label)
             <a href="{{ route('vehicles.index', ['type' => $val, 'start_date' => $startDate, 'end_date' => $endDate]) }}"
-               class="px-3 py-1.5 rounded-lg text-sm font-medium transition {{ $type == $val ? 'bg-indigo-600 text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50' }}">
+               class="px-3 py-1.5 rounded-lg text-sm font-medium transition {{ $type == $val ? 'bg-blue-600 text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50' }}">
                 {{ $label }}
             </a>
             @endforeach
@@ -97,8 +97,8 @@
                              class="w-full h-full object-cover"
                              style="object-position: {{ $fx }}% {{ $fy }}%">
                     @else
-                        <div class="h-full flex items-center justify-center bg-gradient-to-br from-indigo-50 to-gray-100">
-                            <svg class="h-16 w-16 text-indigo-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div class="h-full flex items-center justify-center bg-gradient-to-br from-blue-50 to-gray-100">
+                            <svg class="h-16 w-16 text-blue-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1"
                                       d="M19 9l-7-7-7 7M5 9v10a1 1 0 001 1h3m10-11v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
                             </svg>
@@ -116,7 +116,7 @@
                     <div class="flex items-center justify-between mt-3">
                         <div>
                             <p class="text-xs text-gray-400">Total {{ $durationDays }} hari</p>
-                            <p class="font-bold text-indigo-600">
+                            <p class="font-bold text-blue-600">
                                 Rp {{ number_format($v->price_per_day * $durationDays, 0, ',', '.') }}
                                 <span class="text-xs font-normal text-gray-400">
                                     (Rp {{ number_format($v->price_per_day, 0, ',', '.') }}/hari)
@@ -125,7 +125,7 @@
                         </div>
                         {{-- Tombol Sewa bawa tanggal ke halaman book --}}
                         <a href="{{ route('vehicles.book', ['id' => $v->_id, 'start_date' => $startDate, 'end_date' => $endDate]) }}"
-                           class="px-4 py-2 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 transition">
+                           class="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition">
                             Pilih
                         </a>
                     </div>
@@ -144,7 +144,7 @@
         @else
         {{-- Belum pilih tanggal — tampilkan ilustrasi --}}
         <div class="text-center py-16">
-            <svg class="h-16 w-16 text-indigo-200 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="h-16 w-16 text-blue-200 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1"
                       d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
             </svg>

@@ -5,32 +5,32 @@
     <div class="col-span-2">
         <label class="block text-sm font-medium text-gray-700 mb-1">Nama Kendaraan</label>
         <input type="text" name="name" value="{{ old('name', $vehicle->name ?? '') }}"
-            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500" required>
+            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500" required>
         @error('name')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
     </div>
     <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">Brand</label>
         <input type="text" name="brand" value="{{ old('brand', $vehicle->brand ?? '') }}"
-            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500" required>
+            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500" required>
     </div>
     <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">Model</label>
         <input type="text" name="model" value="{{ old('model', $vehicle->model ?? '') }}"
-            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500" required>
+            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500" required>
     </div>
     <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">Tahun</label>
         <input type="number" name="year" value="{{ old('year', $vehicle->year ?? date('Y')) }}"
-            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500" required>
+            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500" required>
     </div>
     <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">Plat Nomor</label>
         <input type="text" name="plate_number" value="{{ old('plate_number', $vehicle->plate_number ?? '') }}"
-            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500" required>
+            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500" required>
     </div>
     <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">Tipe</label>
-        <select name="type" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500" required>
+        <select name="type" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500" required>
             @foreach(['MPV','SUV','Van','Sedan','Minibus'] as $t)
             <option value="{{ $t }}" {{ old('type', $vehicle->type ?? '') == $t ? 'selected' : '' }}>{{ $t }}</option>
             @endforeach
@@ -39,12 +39,12 @@
     <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">Kapasitas (orang)</label>
         <input type="number" name="capacity" min="2" max="20" value="{{ old('capacity', $vehicle->capacity ?? '') }}"
-            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500" required>
+            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500" required>
     </div>
     <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">Harga per Hari (Rp)</label>
         <input type="number" name="price_per_day" min="100000" value="{{ old('price_per_day', $vehicle->price_per_day ?? '') }}"
-            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500" required>
+            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500" required>
     </div>
     @if($isEdit)
     <div>
@@ -61,7 +61,7 @@
         <input type="text" name="features_raw"
                value="{{ old('features_raw', implode(', ', $vehicle->features ?? [])) }}"
                placeholder="AC, Musik, GPS, Kamera Mundur"
-               class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500">
+               class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500">
         <p class="text-xs text-gray-400 mt-1">Contoh: AC, Musik, GPS</p>
     </div>
 
@@ -74,7 +74,7 @@
 
         {{-- STATE: belum ada gambar → drop zone --}}
         <div x-show="!image"
-             class="border-2 border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:border-indigo-400 transition bg-gray-50"
+             class="border-2 border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:border-blue-400 transition bg-gray-50"
              style="height: 280px;"
              @click="$refs.fileInput.click()"
              @dragover.prevent
@@ -121,7 +121,7 @@
                 <div class="absolute top-0 left-0 right-0 flex items-center justify-between px-3 py-2 pointer-events-none"
                      style="background: linear-gradient(to bottom, rgba(0,0,0,0.55), transparent)">
                     <span x-show="image && image.isNew"
-                          class="px-2 py-0.5 bg-indigo-500 text-white text-xs rounded-full">Baru</span>
+                          class="px-2 py-0.5 bg-blue-500 text-white text-xs rounded-full">Baru</span>
                     <span class="ml-auto font-mono text-white text-xs opacity-80"
                           x-text="image ? `X: ${image.x}%  Y: ${image.y}%` : ''"></span>
                 </div>

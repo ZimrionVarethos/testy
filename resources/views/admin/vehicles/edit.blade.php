@@ -12,7 +12,7 @@
                 @include('admin.vehicles._form')
                 <div class="mt-6 flex justify-end gap-3">
                     <a href="{{ route('admin.vehicles.index') }}" class="px-4 py-2 text-sm rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 transition">Batal</a>
-                    <button type="submit" class="px-4 py-2 text-sm rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition">Update</button>
+                    <button type="submit" class="px-4 py-2 text-sm rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition">Update</button>
                 </div>
             </form>
         </div>

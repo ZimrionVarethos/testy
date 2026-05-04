@@ -4,7 +4,7 @@
     <div class="py-6 max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
 
         <a href="{{ route('vehicles.index', ['start_date' => $startDate, 'end_date' => $endDate]) }}"
-           class="text-sm text-indigo-500 hover:underline">← Pilih kendaraan lain</a>
+           class="text-sm text-blue-500 hover:underline">← Pilih kendaraan lain</a>
 
         @if($errors->any())
         <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
@@ -20,8 +20,8 @@
                     <img src="{{ str_starts_with($bImg, 'http') ? $bImg : Storage::url($bImg) }}"
                          class="w-full h-full object-cover" alt="{{ $vehicle->name }}">
                 @else
-                    <div class="h-full flex items-center justify-center bg-indigo-50">
-                        <svg class="h-8 w-8 text-indigo-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="h-full flex items-center justify-center bg-blue-50">
+                        <svg class="h-8 w-8 text-blue-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                                   d="M19 9l-7-7-7 7M5 9v10a1 1 0 001 1h3m10-11v10a1 1 0 01-1 1h-3"/>
                         </svg>
@@ -31,14 +31,14 @@
             <div>
                 <h3 class="font-semibold text-gray-800">{{ $vehicle->name }}</h3>
                 <p class="text-xs text-gray-400">{{ $vehicle->type }} · {{ $vehicle->capacity }} orang · {{ $vehicle->year }}</p>
-                <p class="text-sm font-bold text-indigo-600 mt-1">
+                <p class="text-sm font-bold text-blue-600 mt-1">
                     Rp {{ number_format($vehicle->price_per_day, 0, ',', '.') }}/hari
                 </p>
             </div>
         </div>
 
         {{-- Ringkasan tanggal & harga --}}
-        <div class="bg-indigo-50 border border-indigo-100 rounded-xl p-4 space-y-2 text-sm">
+        <div class="bg-blue-50 border border-blue-100 rounded-xl p-4 space-y-2 text-sm">
             <div class="flex justify-between">
                 <span class="text-gray-500">Tanggal Mulai</span>
                 <span class="font-medium">{{ \Carbon\Carbon::parse($startDate)->format('d M Y H:i') }}</span>
@@ -51,9 +51,9 @@
                 <span class="text-gray-500">Durasi</span>
                 <span class="font-medium">{{ $durationDays }} hari</span>
             </div>
-            <div class="border-t border-indigo-100 pt-2 flex justify-between font-semibold">
+            <div class="border-t border-blue-100 pt-2 flex justify-between font-semibold">
                 <span class="text-gray-700">Total</span>
-                <span class="text-indigo-600 text-base">
+                <span class="text-blue-600 text-base">
                     Rp {{ number_format($totalPrice, 0, ',', '.') }}
                 </span>
             </div>
@@ -78,7 +78,7 @@
                            value="{{ old('pickup_address') }}"
                            placeholder="Masukkan alamat lengkap penjemputan"
                            required
-                           class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-indigo-400 focus:outline-none @error('pickup_address') border-red-300 @enderror">
+                           class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none @error('pickup_address') border-red-300 @enderror">
                     @error('pickup_address')
                     <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                     @enderror
@@ -88,7 +88,7 @@
                     <label class="block text-sm font-medium text-gray-700 mb-1">Catatan (opsional)</label>
                     <textarea name="notes" rows="3"
                               placeholder="Instruksi tambahan untuk driver..."
-                              class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-indigo-400 focus:outline-none resize-none">{{ old('notes') }}</textarea>
+                              class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none resize-none">{{ old('notes') }}</textarea>
                 </div>
             </div>
 
@@ -99,7 +99,7 @@
             </div>
 
             <button type="submit"
-                    class="w-full py-3 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 active:scale-95 transition">
+                    class="w-full py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 active:scale-95 transition">
                 Buat Pesanan & Bayar
             </button>
         </form>

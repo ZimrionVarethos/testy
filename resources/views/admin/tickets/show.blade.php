@@ -3,7 +3,7 @@
     <x-slot name="header">Detail Tiket</x-slot>
 
     <div class="py-6 max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
-        <a href="{{ route('admin.tickets.index') }}" class="text-sm text-indigo-500 hover:underline">← Semua Tiket</a>
+        <a href="{{ route('admin.tickets.index') }}" class="text-sm text-blue-500 hover:underline">← Semua Tiket</a>
 
         @if(session('success'))
         <div class="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-sm">
@@ -39,7 +39,7 @@
                 <label class="text-xs text-gray-500 font-medium flex-shrink-0">Ubah Status:</label>
                 <select name="status"
                         class="text-xs rounded-lg border border-gray-200 px-2 py-1.5
-                               focus:outline-none focus:ring-2 focus:ring-indigo-300">
+                               focus:outline-none focus:ring-2 focus:ring-blue-300">
                     <option value="open"        {{ $ticket->status === 'open'        ? 'selected' : '' }}>Terbuka</option>
                     <option value="in_progress" {{ $ticket->status === 'in_progress' ? 'selected' : '' }}>Diproses</option>
                     <option value="resolved"    {{ $ticket->status === 'resolved'    ? 'selected' : '' }}>Diselesaikan</option>
@@ -74,9 +74,9 @@
             <div class="flex flex-col {{ $isAdmin ? 'items-end' : 'items-start' }}">
                 <div class="max-w-[85%] rounded-2xl px-4 py-3
                     {{ $isAdmin
-                        ? 'bg-indigo-600 text-white rounded-tr-sm'
+                        ? 'bg-blue-600 text-white rounded-tr-sm'
                         : 'bg-white border border-gray-200 text-gray-800 rounded-tl-sm shadow-sm' }}">
-                    <p class="text-xs font-semibold mb-1 {{ $isAdmin ? 'text-indigo-200' : 'text-gray-500' }}">
+                    <p class="text-xs font-semibold mb-1 {{ $isAdmin ? 'text-blue-200' : 'text-gray-500' }}">
                         {{ $reply['sender_name'] }} {{ $isAdmin ? '(Admin)' : '(Pengguna)' }}
                     </p>
                     <p class="text-sm leading-relaxed whitespace-pre-line">{{ $reply['message'] }}</p>
@@ -96,7 +96,7 @@
                 @csrf
                 <textarea name="message" rows="4"
                           class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm
-                                 focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400
+                                 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-400
                                  resize-none"
                           placeholder="Tulis balasan untuk pengguna..."
                           maxlength="2000" required></textarea>
@@ -116,8 +116,8 @@
                 </div>
 
                 <button type="submit"
-                        class="px-5 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg
-                               hover:bg-indigo-700 transition">
+                        class="px-5 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg
+                               hover:bg-blue-700 transition">
                     Kirim Balasan
                 </button>
             </form>

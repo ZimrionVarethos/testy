@@ -5,7 +5,7 @@
     <div class="py-6 max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 space-y-5">
 
         <a href="{{ route('admin.payments.index') }}"
-           class="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-indigo-600 transition-colors">
+           class="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-blue-600 transition-colors">
             ← Kembali
         </a>
 
@@ -22,7 +22,7 @@
                 <span class="font-mono text-gray-700 text-xs">{{ $payment->_id }}</span>
 
                 <span class="text-gray-500">Jumlah</span>
-                <span class="font-bold text-indigo-600">Rp {{ number_format($payment->amount, 0, ',', '.') }}</span>
+                <span class="font-bold text-blue-600">Rp {{ number_format($payment->amount, 0, ',', '.') }}</span>
 
                 <span class="text-gray-500">Metode</span>
                 <span class="text-gray-800">{{ $payment->method ? strtoupper($payment->method) : '-' }}</span>
@@ -92,7 +92,7 @@
             </div>
             <div class="px-6 py-3 border-t border-gray-100">
                 <a href="{{ route('admin.bookings.show', $booking->_id) }}"
-                   class="text-sm text-indigo-600 hover:underline font-medium">
+                   class="text-sm text-blue-600 hover:underline font-medium">
                     Lihat Detail Booking →
                 </a>
             </div>

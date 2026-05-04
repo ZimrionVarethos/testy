@@ -22,12 +22,12 @@
             <a href="{{ route('admin.tickets.index', ['status' => $key]) }}"
                class="flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center gap-1.5
                       {{ $status === $key
-                          ? 'bg-indigo-600 text-white'
+                          ? 'bg-blue-600 text-white'
                           : 'text-gray-500 hover:bg-gray-50' }}">
                 {{ $label }}
                 @if($counts[$key] > 0)
                 <span class="rounded-full px-1.5 py-0.5 text-[10px] font-bold
-                    {{ $status === $key ? 'bg-indigo-500 text-white' : 'bg-gray-100 text-gray-500' }}">
+                    {{ $status === $key ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-500' }}">
                     {{ $counts[$key] }}
                 </span>
                 @endif

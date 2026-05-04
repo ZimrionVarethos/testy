@@ -12,7 +12,7 @@
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
             <div class="flex items-start justify-between flex-wrap gap-4">
                 <div class="flex items-center gap-4">
-                    <div class="w-16 h-16 rounded-full bg-violet-100 flex items-center justify-center text-2xl font-bold text-violet-600">
+                    <div class="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center text-2xl font-bold text-blue-600">
                         {{ strtoupper(substr($user->name, 0, 1)) }}
                     </div>
                     <div>
@@ -86,7 +86,7 @@
                     @forelse($bookings as $b)
                     <tr class="hover:bg-gray-50">
                         <td class="px-5 py-3 font-medium">
-                            <a href="{{ route('admin.bookings.show', $b->_id) }}" class="text-indigo-500 hover:underline">{{ $b->booking_code }}</a>
+                            <a href="{{ route('admin.bookings.show', $b->_id) }}" class="text-blue-500 hover:underline">{{ $b->booking_code }}</a>
                         </td>
                         <td class="px-5 py-3 text-gray-600">{{ $b->vehicle['name'] ?? '-' }}</td>
                         <td class="px-5 py-3 text-gray-600">{{ $b->driver['name'] ?? '-' }}</td>
@@ -98,7 +98,7 @@
                             <span @class(['px-2 py-1 text-xs rounded-full font-medium',
                                 'bg-yellow-100 text-yellow-700' => $b->status === 'pending',
                                 'bg-blue-100 text-blue-700'     => $b->status === 'accepted',
-                                'bg-indigo-100 text-indigo-700' => $b->status === 'confirmed',
+                                'bg-blue-100 text-blue-700' => $b->status === 'confirmed',
                                 'bg-green-100 text-green-700'   => $b->status === 'ongoing',
                                 'bg-gray-100 text-gray-600'     => $b->status === 'completed',
                                 'bg-red-100 text-red-600'       => $b->status === 'cancelled',

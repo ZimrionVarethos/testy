@@ -23,7 +23,7 @@
             ] as $val => $label)
             <a href="{{ route('admin.bookings.index', ['status' => $val]) }}"
                class="px-3 py-1.5 rounded-lg text-sm font-medium transition
-                      {{ $status == $val ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200' }}">
+                      {{ $status == $val ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200' }}">
                 {{ $label }}
             </a>
             @endforeach
@@ -62,7 +62,7 @@
                         <td class="px-5 py-3">
                             <span @class(['px-2 py-1 text-xs rounded-full font-medium',
                                 'bg-yellow-100 text-yellow-700' => $b->status === 'pending',
-                                'bg-indigo-100 text-indigo-700' => $b->status === 'confirmed',
+                                'bg-blue-100 text-blue-700'     => $b->status === 'confirmed',
                                 'bg-green-100 text-green-700'   => $b->status === 'ongoing',
                                 'bg-gray-100 text-gray-600'     => $b->status === 'completed',
                                 'bg-red-100 text-red-600'       => $b->status === 'cancelled',
@@ -70,7 +70,7 @@
                         </td>
                         <td class="px-5 py-3 flex items-center gap-2">
                             <a href="{{ route('admin.bookings.show', $b->_id) }}"
-                               class="text-indigo-500 hover:underline text-xs">
+                               class="text-blue-500 hover:underline text-xs">
                                 @if($b->status === 'pending' && empty($b->driver['driver_id']))
                                     Assign Driver
                                 @else

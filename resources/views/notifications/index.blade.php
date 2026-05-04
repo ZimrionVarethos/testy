@@ -41,7 +41,7 @@
                 <a href="{{ route('notifications.index', ['filter' => $key]) }}"
                    class="flex-1 text-center px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center justify-center gap-1.5
                           {{ $filter === $key
-                              ? 'bg-indigo-600 text-white'
+                              ? 'bg-blue-600 text-white'
                               : 'text-gray-500 hover:bg-gray-50' }}">
                     {{ $tab['label'] }}
                     @if($tab['count'] > 0)
@@ -58,8 +58,8 @@
             <div class="flex gap-2 flex-shrink-0">
                 {{-- Toggle select mode --}}
                 <button @click="selectMode = !selectMode; if(!selectMode) selected = []"
-                        :class="selectMode ? 'bg-indigo-50 text-indigo-600 border-indigo-200' : 'bg-white text-gray-500 border-gray-200'"
-                        class="px-3 py-1.5 rounded-lg border text-xs font-medium hover:border-indigo-300 transition flex items-center gap-1.5">
+                        :class="selectMode ? 'bg-blue-50 text-blue-600 border-blue-200' : 'bg-white text-gray-500 border-gray-200'"
+                        class="px-3 py-1.5 rounded-lg border text-xs font-medium hover:border-blue-300 transition flex items-center gap-1.5">
                     <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                     </svg>
@@ -71,7 +71,7 @@
                 <form method="POST" action="{{ route('notifications.read-all') }}">
                     @csrf
                     <button class="px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-xs font-medium
-                                   text-gray-500 hover:border-indigo-300 hover:text-indigo-600 transition flex items-center gap-1.5">
+                                   text-gray-500 hover:border-blue-300 hover:text-blue-600 transition flex items-center gap-1.5">
                         <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
                         </svg>
@@ -102,10 +102,10 @@
              x-transition:enter="transition ease-out duration-150"
              x-transition:enter-start="opacity-0 -translate-y-1"
              x-transition:enter-end="opacity-100 translate-y-0"
-             class="bg-indigo-50 border border-indigo-100 rounded-xl px-4 py-3 flex items-center gap-3"
+             class="bg-blue-50 border border-blue-100 rounded-xl px-4 py-3 flex items-center gap-3"
              style="display:none">
             <button @click="selectAll()"
-                    class="text-xs text-indigo-600 font-medium hover:underline">Pilih Semua</button>
+                    class="text-xs text-blue-600 font-medium hover:underline">Pilih Semua</button>
             <span class="text-gray-300">|</span>
             <button @click="deselectAll()"
                     class="text-xs text-gray-500 hover:underline">Batal Pilih</button>
@@ -163,8 +163,8 @@
         @endphp
 
         <div class="group relative bg-white rounded-xl border transition
-                    {{ $n->is_read ? 'border-gray-100' : 'border-indigo-200 shadow-sm' }}"
-             :class="isSelected('{{ $n->_id }}') ? 'ring-2 ring-indigo-400 border-indigo-300' : ''"
+                    {{ $n->is_read ? 'border-gray-100' : 'border-blue-200 shadow-sm' }}"
+             :class="isSelected('{{ $n->_id }}') ? 'ring-2 ring-blue-400 border-blue-300' : ''"
              data-notif-id="{{ $n->_id }}">
 
             {{-- Checkbox overlay (select mode) --}}
@@ -173,8 +173,8 @@
                  class="absolute inset-0 z-10 rounded-xl cursor-pointer flex items-start justify-end p-3"
                  style="display:none">
                 <div :class="isSelected('{{ $n->_id }}')
-                        ? 'bg-indigo-600 border-indigo-600'
-                        : 'bg-white border-gray-300 group-hover:border-indigo-400'"
+                        ? 'bg-blue-600 border-blue-600'
+                        : 'bg-white border-gray-300 group-hover:border-blue-400'"
                      class="w-5 h-5 rounded-md border-2 flex items-center justify-center transition flex-shrink-0">
                     <svg x-show="isSelected('{{ $n->_id }}')" class="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
@@ -187,7 +187,7 @@
                 {{-- Unread dot --}}
                 <div class="flex-shrink-0 mt-0.5">
                     <div class="w-2 h-2 rounded-full mt-1
-                                {{ $n->is_read ? 'bg-gray-200' : 'bg-indigo-500' }}"></div>
+                                {{ $n->is_read ? 'bg-gray-200' : 'bg-blue-500' }}"></div>
                 </div>
 
                 {{-- Icon --}}
@@ -206,7 +206,7 @@
                        @if(!$n->is_read)
                        onclick="fetch('{{ route('notifications.read', $n->_id) }}',{method:'POST',headers:{'X-CSRF-TOKEN':'{{ csrf_token() }}','Content-Type':'application/json'}})"
                        @endif>
-                        <p class="text-sm font-semibold text-gray-800 group-hover/link:text-indigo-600 transition">
+                        <p class="text-sm font-semibold text-gray-800 group-hover/link:text-blue-600 transition">
                             {{ $n->title }}
                         </p>
                         <p class="text-sm text-gray-500 mt-0.5 leading-relaxed">{{ $n->message }}</p>
@@ -223,8 +223,8 @@
                         @if(!$n->is_read)
                         <form method="POST" action="{{ route('notifications.read', $n->_id) }}">
                             @csrf
-                            <button class="text-xs text-indigo-400 hover:text-indigo-600 font-medium transition">
-                                ✓ Tandai dibaca
+                            <button class="text-xs text-blue-400 hover:text-blue-600 font-medium transition">
+                                Tandai dibaca
                             </button>
                         </form>
                         @else

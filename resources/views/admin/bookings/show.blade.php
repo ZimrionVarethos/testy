@@ -5,7 +5,7 @@
     </x-slot>
 
     <div class="py-6 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
-        <a href="{{ route('admin.bookings.index') }}" class="text-sm text-indigo-500 hover:underline">← Kembali</a>
+        <a href="{{ route('admin.bookings.index') }}" class="text-sm text-blue-500 hover:underline">← Kembali</a>
 
         @if(session('success'))
             <div class="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-sm">
@@ -52,7 +52,7 @@
                     <div class="flex justify-between"><span class="text-gray-500">Mulai</span><span>{{ \Carbon\Carbon::parse($booking->start_date)->format('d M Y H:i') }}</span></div>
                     <div class="flex justify-between"><span class="text-gray-500">Selesai</span><span>{{ \Carbon\Carbon::parse($booking->end_date)->format('d M Y H:i') }}</span></div>
                     <div class="flex justify-between"><span class="text-gray-500">Durasi</span><span>{{ $booking->duration_days }} hari</span></div>
-                    <div class="flex justify-between"><span class="text-gray-500">Total</span><span class="font-semibold text-indigo-600">Rp {{ number_format($booking->total_price, 0, ',', '.') }}</span></div>
+                    <div class="flex justify-between"><span class="text-gray-500">Total</span><span class="font-semibold text-blue-600">Rp {{ number_format($booking->total_price, 0, ',', '.') }}</span></div>
                     @if($payment)
                     <div class="flex justify-between">
                         <span class="text-gray-500">Pembayaran</span>
@@ -115,7 +115,7 @@
                             yang ditampilkan.
                         </p>
                         <select name="driver_id" required
-                            class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-400 focus:outline-none">
+                            class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none">
                             <option value="">— Pilih driver —</option>
                             @foreach($availableDrivers as $driver)
                             <option value="{{ $driver->_id }}">
@@ -132,14 +132,14 @@
                             @endforeach
                         </select>
                         <button type="submit"
-                            class="w-full px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition">
+                            class="w-full px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition">
                             Assign Driver & Konfirmasi Pesanan
                         </button>
                     </form>
 
                 @elseif($booking->status === 'pending' && $availableDrivers->isEmpty())
                     <div class="bg-yellow-50 border border-yellow-200 text-yellow-700 rounded-lg px-3 py-2 text-sm">
-                        ⚠ Tidak ada driver tersedia di rentang tanggal
+                        Tidak ada driver tersedia di rentang tanggal
                         <span class="font-medium">
                             {{ \Carbon\Carbon::parse($booking->start_date)->format('d M') }} —
                             {{ \Carbon\Carbon::parse($booking->end_date)->format('d M Y') }}

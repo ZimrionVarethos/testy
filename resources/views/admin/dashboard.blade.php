@@ -18,7 +18,7 @@
     .db-stat-arrow svg { width:10px; height:10px; color:var(--text-2); }
     .db-stat-tag { display:inline-flex; align-items:center; gap:5px; font-size:10px; font-weight:600; padding:3px 8px; border-radius:6px; margin-bottom:14px; }
     .db-stat-tag svg { width:11px; height:11px; }
-    .tag-indigo { background:#eef2ff; color:#4338ca; }
+    .tag-blue   { background:var(--s-blue-bg); color:var(--s-blue-text); }
     .tag-amber  { background:var(--s-amber-bg); color:var(--s-amber-text); }
     .tag-green  { background:var(--s-green-bg); color:var(--s-green-text); }
     .tag-neutral{ background:rgba(17,24,39,0.06); color:var(--text-2); }
@@ -135,7 +135,7 @@
         <div class="db-stat-grid">
             <div class="db-stat-card" onclick="window.location='{{ route('admin.reports.index') }}'">
                 <span class="db-stat-arrow"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 10L10 2M10 2H5M10 2v5"/></svg></span>
-                <div class="db-stat-tag tag-indigo">
+                <div class="db-stat-tag tag-blue">
                     <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 2H4a2 2 0 00-2 2v9a2 2 0 002 2h8a2 2 0 002-2V4a2 2 0 00-2-2h-2M6 2a1 1 0 011-1h2a1 1 0 011 1v1H6V2z"/></svg>
                     Pesanan
                 </div>

@@ -18,7 +18,7 @@
                     <tr class="hover:bg-gray-50">
                         <td class="px-5 py-3">
                             <div class="flex items-center gap-3">
-                                <div class="h-8 w-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 font-bold text-sm">{{ strtoupper(substr($u->name,0,1)) }}</div>
+                                <div class="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-sm">{{ strtoupper(substr($u->name,0,1)) }}</div>
                                 <div>
                                     <p class="font-medium text-gray-800">{{ $u->name }}</p>
                                     <p class="text-xs text-gray-400">{{ $u->email }}</p>
@@ -32,7 +32,7 @@
                             </span>
                         </td>
                         <td class="px-5 py-3 flex items-center gap-2">
-                            <a href="{{ route('admin.users.show', $u->_id) }}" class="text-indigo-500 hover:underline text-xs">Detail</a>
+                            <a href="{{ route('admin.users.show', $u->_id) }}" class="text-blue-500 hover:underline text-xs">Detail</a>
                             <form method="POST" action="{{ route('admin.users.toggle', $u->_id) }}">
                                 @csrf
                                 <button class="text-xs {{ $u->is_active ? 'text-red-500' : 'text-green-600' }} hover:underline">

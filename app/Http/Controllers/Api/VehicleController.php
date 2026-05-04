@@ -174,7 +174,7 @@ class VehicleController extends Controller
             'rating_avg'    => $v->rating_avg ?? 0,
             'total_bookings'=> $v->total_bookings ?? 0,
             'images'        => collect($v->images ?? [])->map(
-                fn($path) => url('storage/' . $path)
+                fn($path) => str_starts_with($path, 'http') ? $path : url('storage/' . $path)
             )->values()->all(),
             'created_at'    => $v->created_at?->toIso8601String(),
         ];

@@ -38,7 +38,7 @@ class Notification extends Model
     }
 
     // Kirim notif ke banyak user sekaligus (misal broadcast ke semua driver)
-    public static function sendToMany(array $userIds, string $title, string $message, string $type = 'system', ?string $relatedId = null): void
+    public static function sendToMany(array $userIds, string $title, string $message, string $type = 'system', ?string $relatedId = null, ?string $actionUrl = null): void
     {
         $data = array_map(fn($id) => [
             'user_id'    => $id,
@@ -47,6 +47,7 @@ class Notification extends Model
             'type'       => $type,
             'is_read'    => false,
             'related_id' => $relatedId,
+            'action_url' => $actionUrl,
             'created_at' => now(),
             'updated_at' => now(),
         ], $userIds);
