@@ -7,6 +7,7 @@ use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Str;
+use App\Notifications\VerifyEmailNotification;
 
 // Class ini tetap di file yang sama, sebelum class User
 class NewAccessToken
@@ -40,6 +41,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'fcm_token',   // ← tambahkan ini
     ];
 
+
     protected $hidden = ['password', 'remember_token'];
 
     protected $casts = [
@@ -70,5 +72,10 @@ class User extends Authenticatable implements MustVerifyEmail
         ]);
 
         return new NewAccessToken($token, $token->getKey() . '|' . $plainTextToken);
+    }
+
+    public function sendEmailVerificationNotification(): void
+    {
+    $this->notify(new VerifyEmailNotification());
     }
 }
