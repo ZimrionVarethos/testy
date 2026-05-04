@@ -54,20 +54,16 @@ COPY artisan ./
 COPY bootstrap ./bootstrap
 RUN chmod +x artisan || true
 
-# 3) install php deps WITHOUT running scripts
+# 3) install php deps WITHOUT running scripts (prevents artisan scripts failing because app not there yet)
 RUN composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist --no-scripts --no-progress
 
 # 4) copy package files and install node deps (cache)
 COPY package.json package-lock.json ./
 RUN npm ci --silent
 
-# 5) copy the rest of the application
+# 5) copy the rest of the application (now routes, config, app, etc. exist)
 COPY . .
 
-# tambahkan ini setelah COPY . .
-RUN composer require resend/resend-laravel --no-interaction --prefer-dist
-
-RUN php artisan storage:link || true
 RUN php artisan storage:link || true
 
 # 6) run composer autoload dump and run artisan discovery now that whole app exists
