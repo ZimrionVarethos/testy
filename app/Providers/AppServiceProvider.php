@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\URL;
 
 use Laravel\Sanctum\Sanctum;
 use App\Models\PersonalAccessToken;
+use App\Channels\BrevoChannel;
+use Illuminate\Support\Facades\Notification;
 
 
 class AppServiceProvider extends ServiceProvider
@@ -31,5 +33,11 @@ class AppServiceProvider extends ServiceProvider
             );
             URL::forceScheme('https');
         }
+
+            Notification::extend('brevo', function ($app) {
+                return new BrevoChannel();
+            });
     }
+
+    
 }

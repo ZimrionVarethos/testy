@@ -15,7 +15,7 @@ class VerifyEmailNotification extends Notification
 
     public function via($notifiable): array
     {
-        return ['mail'];
+        return ['brevo']; // custom channel, bukan 'mail'
     }
 
     protected function verificationUrl($notifiable): string
@@ -27,7 +27,7 @@ class VerifyEmailNotification extends Notification
         );
     }
 
-    public function toMail($notifiable): void
+    public function toBrevo($notifiable): void
     {
         $url = $this->verificationUrl($notifiable);
 
