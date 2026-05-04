@@ -54,8 +54,9 @@ COPY artisan ./
 COPY bootstrap ./bootstrap
 RUN chmod +x artisan || true
 
-# 3) install php deps WITHOUT running scripts (prevents artisan scripts failing because app not there yet)
-RUN composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist --no-scripts --no-progress
+# 3) install php deps WITHOUT running scripts
+RUN composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist --no-scripts --no-progress \
+    && composer require resend/resend-laravel --no-interaction --prefer-dist
 
 # 4) copy package files and install node deps (cache)
 COPY package.json package-lock.json ./
