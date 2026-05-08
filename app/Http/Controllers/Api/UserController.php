@@ -76,6 +76,26 @@ class UserController extends Controller
         ]);
     }
 
+    // ── ForWeb (dipakai web controller langsung) ─────────────────
+
+    /** Untuk web: daftar semua pengguna (paginasi) */
+    public function indexForWeb(Request $request): \Illuminate\Contracts\Pagination\LengthAwarePaginator
+    {
+        return User::where('role', 'pengguna')
+            ->orderBy('created_at', 'desc')
+            ->paginate((int) $request->get('per_page', 15));
+    }
+
+    /** Untuk web: detail pengguna + riwayat booking */
+    public function showForWeb(string $id): array
+    {
+        $user     = User::where('role', 'pengguna')->findOrFail($id);
+        $bookings = Booking::where('user.user_id', $id)
+            ->orderBy('created_at', 'desc')->limit(10)->get();
+
+        return compact('user', 'bookings');
+    }
+
     // ── Helper ────────────────────────────────────────────────────
 
     private function userResource(User $u): array

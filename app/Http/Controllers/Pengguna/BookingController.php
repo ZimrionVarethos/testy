@@ -3,81 +3,43 @@
 namespace App\Http\Controllers\Pengguna;
 
 use App\Http\Controllers\Controller;
-use App\Models\Booking;
-use App\Models\Payment;
+use App\Http\Controllers\Api\BookingController as ApiBooking;
+use App\Http\Traits\WebApiProxy;
 use App\Services\BookingService;
-use Illuminate\Support\Facades\Auth;
 
 class BookingController extends Controller
 {
+    use WebApiProxy;
+
     public function __construct(private BookingService $bookingService) {}
 
-    public function index()
+    public function index(ApiBooking $api)
     {
-        $userId = (string) Auth::id();
+        $req = $this->makeApiRequest();
+        $this->bookingService->autoCancelExpiredForUser((string) auth()->id());
 
-        // 🔧 Delegasi ke BookingService — logic sama dengan yang dipakai Api/BookingController
-        $this->bookingService->autoCancelExpiredForUser($userId);
-
-        $bookings = Booking::where('user.user_id', $userId)
-            ->orderBy('created_at', 'desc')
-            ->paginate(15);
-
-        // Preload payment — satu query untuk semua booking di halaman ini
-        $bookingIds = $bookings->pluck('_id')
-            ->map(fn($id) => (string) $id)
-            ->toArray();
-
-        $payments = Payment::whereIn('booking_id', $bookingIds)
-            ->whereIn('status', [Payment::STATUS_PAID, Payment::STATUS_PENDING])
-            ->get()
-            ->keyBy('booking_id');
+        ['bookings' => $bookings, 'payments' => $payments] = $api->indexForWeb($req);
 
         return view('pengguna.bookings.index', compact('bookings', 'payments'));
     }
 
-    public function show(string $id)
+    public function show(string $id, ApiBooking $api)
     {
-        $booking = Booking::findOrFail($id);
+        $req = $this->makeApiRequest();
 
-        if (($booking->user['user_id'] ?? null) !== (string) Auth::id()) abort(403);
+        // Auto-cancel via service jika perlu (business logic tetap di service)
+        $this->bookingService->autoCancelExpiredForUser((string) auth()->id());
 
-        // Auto-cancel on-the-fly jika deadline terlewat
-        if ($booking->status === 'pending' && $booking->confirmationDeadline()->isPast()) {
-            $payment    = Payment::activeForBooking((string) $booking->_id);
-            $sudahBayar = $payment && $payment->isPaid();
-
-            if (! $sudahBayar) {
-                $booking->update([
-                    'status'        => 'cancelled',
-                    'cancelled_at'  => now(),
-                    'cancel_reason' => 'Dibatalkan otomatis: melewati batas waktu pembayaran.',
-                ]);
-                $booking->refresh();
-            }
-        }
-
-        // Expire payment on-the-fly
-        $activePayment = Payment::activeForBooking((string) $booking->_id);
-        if ($activePayment && $activePayment->isPending() && $activePayment->isExpired()) {
-            $activePayment->update(['status' => Payment::STATUS_EXPIRED]);
-            $activePayment = null;
-        }
+        ['booking' => $booking, 'payment' => $payment] = $api->showForWeb($req, $id);
 
         return view('pengguna.bookings.show', compact('booking'));
     }
 
-    public function destroy(string $id)
+    public function destroy(string $id, ApiBooking $api)
     {
-        $booking = Booking::findOrFail($id);
+        $req = $this->makeApiRequest([], ['reason' => 'Dibatalkan oleh pengguna.']);
+        $this->proxyApi(fn() => $api->cancel($req, $id));
 
-        if (($booking->user['user_id'] ?? null) !== (string) Auth::id()) abort(403);
-
-        try {
-            $this->bookingService->cancelBooking($booking, 'Dibatalkan oleh pengguna.');
-            return redirect()->route('bookings.index')->with('success', 'Pesanan dibatalkan.');
-        } catch (\Exception $e) {
-            return back()->withErrors(['error' => $e->getMessage()]);
-        }
+        return redirect()->route('bookings.index')->with('success', 'Pesanan dibatalkan.');
     }
 }

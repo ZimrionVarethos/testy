@@ -3,11 +3,10 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Api\LoginRequest;
 use App\Http\Requests\Api\RegisterRequest;
-use App\Http\Requests\Api\UpdateProfileRequest;
 use App\Models\PersonalAccessToken;
 use App\Models\User;
+use App\Services\CloudinaryService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -38,8 +37,13 @@ class AuthController extends Controller
         ], 201);
     }
 
-    public function login(LoginRequest $request): JsonResponse
+    public function login(Request $request): JsonResponse
     {
+        $request->validate([
+            'email'    => 'required|email',
+            'password' => 'required|string|min:6',
+        ]);
+
         $user = User::where('email', $request->email)->first();
 
         if (!$user || !Hash::check($request->password, $user->password)) {
@@ -102,10 +106,19 @@ class AuthController extends Controller
         ]);
     }
 
-    public function updateProfile(UpdateProfileRequest $request): JsonResponse
+    public function updateProfile(Request $request): JsonResponse
     {
         $user = $request->user();
-        $data = $request->only(['name', 'phone']);
+
+        $request->validate([
+            'name'                  => 'sometimes|string|max:100',
+            'email'                 => 'sometimes|email|unique:users,email,' . $user->_id . ',_id',
+            'phone'                 => 'sometimes|string|max:20',
+            'password'              => 'sometimes|string|min:8|confirmed',
+            'password_confirmation' => 'sometimes|string',
+        ]);
+
+        $data = $request->only(['name', 'email', 'phone']);
 
         if ($request->filled('password')) {
             $data['password'] = Hash::make($request->password);
@@ -117,6 +130,33 @@ class AuthController extends Controller
             'success' => true,
             'message' => 'Profil berhasil diperbarui.',
             'data'    => $this->userResource($user->fresh()),
+        ]);
+    }
+
+    public function uploadAvatar(Request $request, CloudinaryService $cloudinary): JsonResponse
+    {
+        $request->validate([
+            'avatar' => ['required', 'image', 'mimes:jpeg,png,jpg,webp', 'max:2048'],
+        ]);
+
+        $user = $request->user();
+
+        if ($user->avatar_public_id) {
+            $cloudinary->delete($user->avatar_public_id);
+        }
+
+        $result = $cloudinary->upload($request->file('avatar'), 'users', [
+            'transformation' => [['width' => 200, 'height' => 200, 'crop' => 'fill', 'gravity' => 'face', 'quality' => 'auto', 'fetch_format' => 'auto']],
+        ]);
+
+        $user->avatar           = $result['url'];
+        $user->avatar_public_id = $result['public_id'];
+        $user->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Foto profil berhasil diperbarui.',
+            'data'    => $this->userResource($user),
         ]);
     }
 
@@ -136,13 +176,14 @@ class AuthController extends Controller
     private function userResource(User $user): array
     {
         return [
-            'id'        => (string) $user->_id,
-            'name'      => $user->name,
-            'email'     => $user->email,
-            'phone'     => $user->phone,
-            'role'      => $user->role,
-            'is_active' => $user->is_active,
-            'created_at'=> $user->created_at?->toIso8601String(),
+            'id'         => (string) $user->_id,
+            'name'       => $user->name,
+            'email'      => $user->email,
+            'phone'      => $user->phone,
+            'role'       => $user->role,
+            'is_active'  => $user->is_active,
+            'avatar'     => $user->avatar,
+            'created_at' => $user->created_at?->toIso8601String(),
         ];
     }
 }

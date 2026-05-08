@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
+use App\Models\PersonalAccessToken;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -28,8 +29,16 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        return redirect()->route('dashboard'); // ← hapus intended()
-        
+        // Buat Sanctum token dan simpan di session agar web controllers bisa proxy ke API
+        $user = Auth::user();
+        PersonalAccessToken::where('tokenable_id', (string) $user->getKey())
+                           ->where('tokenable_type', get_class($user))
+                           ->where('name', 'web-session')
+                           ->delete();
+        $token = $user->createToken('web-session')->plainTextToken;
+        $request->session()->put('api_token', $token);
+
+        return redirect()->route('dashboard');
     }
 
     /**
@@ -37,6 +46,14 @@ class AuthenticatedSessionController extends Controller
      */
     public function destroy(Request $request): RedirectResponse
     {
+        // Hapus Sanctum token sesi web
+        if ($user = Auth::user()) {
+            PersonalAccessToken::where('tokenable_id', (string) $user->getKey())
+                               ->where('tokenable_type', get_class($user))
+                               ->where('name', 'web-session')
+                               ->delete();
+        }
+
         Auth::guard('web')->logout();
 
         $request->session()->invalidate();

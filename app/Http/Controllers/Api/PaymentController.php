@@ -43,6 +43,35 @@ class PaymentController extends Controller
     }
 
 
+    /**
+     * GET /api/v1/payments/{id}
+     */
+    public function show(Request $request, string $id): JsonResponse
+    {
+        $payment = Payment::findOrFail($id);
+        $user    = $request->user();
+
+        if ($user->role !== 'admin' && $payment->user_id !== (string) $user->_id) {
+            return response()->json(['success' => false, 'message' => 'Akses ditolak.'], 403);
+        }
+
+        $booking = Booking::find($payment->booking_id);
+
+        return response()->json([
+            'success' => true,
+            'data'    => array_merge($this->formatPayment($payment), [
+                'booking' => $booking ? [
+                    'id'           => (string) $booking->_id,
+                    'booking_code' => $booking->booking_code,
+                    'status'       => $booking->status,
+                    'start_date'   => $booking->start_date?->toIso8601String(),
+                    'end_date'     => $booking->end_date?->toIso8601String(),
+                    'vehicle_name' => $booking->vehicle['name'] ?? '-',
+                ] : null,
+            ]),
+        ]);
+    }
+
     public function createSnap(Request $request, string $bookingId): JsonResponse
     {
         \Midtrans\Config::$serverKey    = config('midtrans.server_key');
@@ -225,6 +254,72 @@ class PaymentController extends Controller
         }
 
         return response()->json(['message' => 'OK']);
+    }
+
+    // ── ForWeb (dipakai web controller langsung) ────────────────
+
+    /** Untuk web: daftar payment milik user */
+    public function indexForWeb(Request $request): \Illuminate\Contracts\Pagination\LengthAwarePaginator
+    {
+        $user  = $request->user();
+        $query = Payment::orderBy('created_at', 'desc');
+
+        if ($user->role === 'pengguna') {
+            $query->where('user_id', (string) $user->_id);
+        }
+
+        return $query->paginate((int) $request->get('per_page', 10));
+    }
+
+    /** Untuk web: detail payment + booking (akses sudah dicek) */
+    public function showForWeb(Request $request, string $id): array
+    {
+        $payment = Payment::findOrFail($id);
+        $user    = $request->user();
+
+        if ($user->role !== 'admin' && $payment->user_id !== (string) $user->_id) {
+            abort(403);
+        }
+
+        $booking = Booking::find($payment->booking_id);
+        return compact('payment', 'booking');
+    }
+
+    /** Untuk web: ambil booking untuk halaman snap, dengan cek kepemilikan */
+    public function bookingForSnapForWeb(Request $request, string $bookingId): Booking
+    {
+        $booking = Booking::findOrFail($bookingId);
+
+        if (($booking->user['user_id'] ?? null) !== (string) $request->user()->_id) {
+            abort(403);
+        }
+
+        return $booking;
+    }
+
+    /** Untuk web: active payment untuk suatu booking */
+    public function activePaymentForWeb(string $bookingId): ?Payment
+    {
+        return Payment::activeForBooking($bookingId);
+    }
+
+    /** Untuk web: daftar payment admin dengan filter + summary */
+    public function adminIndexForWeb(Request $request): array
+    {
+        $query = Payment::orderBy('created_at', 'desc');
+
+        if ($request->filled('status')) $query->where('status', $request->get('status'));
+        if ($request->filled('search')) $query->where('booking_code', 'like', '%' . $request->get('search') . '%');
+
+        $payments = $query->paginate(15)->withQueryString();
+
+        $summary = [
+            'total_paid'    => Payment::paid()->sum('amount'),
+            'total_pending' => Payment::pending()->count(),
+            'count_paid'    => Payment::paid()->count(),
+        ];
+
+        return compact('payments', 'summary');
     }
 
     // ── Private helpers ────────────────────────────────────────

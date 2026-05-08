@@ -3,63 +3,40 @@
 namespace App\Http\Controllers\Driver;
 
 use App\Http\Controllers\Controller;
-use App\Models\Booking;
-use App\Services\BookingService;
-use Carbon\Carbon;
-use Illuminate\Support\Facades\Auth;
+use App\Http\Controllers\Api\BookingController as ApiBooking;
+use App\Http\Traits\WebApiProxy;
 
 class BookingController extends Controller
 {
-    public function __construct(private BookingService $bookingService) {}
+    use WebApiProxy;
 
-    public function index()
+    public function index(ApiBooking $api)
     {
-        $driverId = (string) Auth::id();
-
-        $bookings = Booking::where('driver.driver_id', $driverId)
-            ->orderBy('start_date', 'desc')
-            ->paginate(10);
+        $req      = $this->makeApiRequest(['per_page' => 10]);
+        $bookings = $api->driverIndexForWeb($req);
 
         return view('driver.bookings.index', compact('bookings'));
     }
 
-    public function show(string $id)
+    public function show(string $id, ApiBooking $api)
     {
-        $booking = Booking::findOrFail($id);
-
-        abort_if(
-            ($booking->driver['driver_id'] ?? null) !== (string) Auth::id(),
-            403,
-            'Anda tidak punya akses ke pesanan ini.'
-        );
-
-        $canPickup = $booking->status === Booking::STATUS_CONFIRMED
-            && Carbon::parse($booking->start_date)->subMinutes(30)->lte(Carbon::now());
+        $req = $this->makeApiRequest();
+        ['booking' => $booking, 'canPickup' => $canPickup] = $api->driverShowForWeb($req, $id);
 
         return view('driver.bookings.show', compact('booking', 'canPickup'));
     }
 
-    public function markPickup(string $id)
+    public function markPickup(string $id, ApiBooking $api)
     {
-        $booking = Booking::findOrFail($id);
-        $driver  = Auth::user();
+        $req    = $this->makeApiRequest();
+        $result = $this->tryProxyApi(fn() => $api->pickup($req, $id));
 
-        if (Carbon::parse($booking->start_date)->subMinutes(30)->gt(Carbon::now())) {
-            return back()->withErrors([
-                'error' => 'Tombol "Sudah Jemput" hanya bisa diklik mulai 30 menit sebelum waktu penjemputan.',
-            ]);
+        if (!($result['success'] ?? false)) {
+            return back()->withErrors(['error' => $result['message'] ?? 'Terjadi kesalahan.']);
         }
 
-        try {
-            // 🔧 Gunakan BookingService — sama persis dengan Api/BookingController::pickup()
-            $this->bookingService->driverMarkPickup($booking, $driver);
-
-            return redirect()
-                ->route('driver.bookings.show', $id)
-                ->with('success', 'Status perjalanan diperbarui menjadi Sedang Berjalan.');
-
-        } catch (\Exception $e) {
-            return back()->withErrors(['error' => $e->getMessage()]);
-        }
+        return redirect()
+            ->route('driver.bookings.show', $id)
+            ->with('success', 'Status perjalanan diperbarui menjadi Sedang Berjalan.');
     }
 }

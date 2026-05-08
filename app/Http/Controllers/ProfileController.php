@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\ProfileUpdateRequest;
-use App\Services\CloudinaryService;
+use App\Http\Controllers\Api\AuthController as ApiAuth;
+use App\Http\Traits\WebApiProxy;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -12,62 +12,29 @@ use Illuminate\View\View;
 
 class ProfileController extends Controller
 {
-    /**
-     * Display the user's profile form.
-     */
+    use WebApiProxy;
+
     public function edit(Request $request): View
     {
-        return view('profile.edit', [
-            'user' => $request->user(),
-        ]);
+        return view('profile.edit', ['user' => $request->user()]);
     }
 
-    /**
-     * Update the user's profile information.
-     */
-    public function update(ProfileUpdateRequest $request): RedirectResponse
+    public function update(Request $request, ApiAuth $api): RedirectResponse
     {
-        $request->user()->fill($request->validated());
-
-        if ($request->user()->isDirty('email')) {
-            $request->user()->email_verified_at = null;
-        }
-
-        $request->user()->save();
+        $req = $this->makeApiRequest([], $request->only(['name', 'email', 'phone']));
+        $this->proxyApi(fn() => $api->updateProfile($req));
 
         return Redirect::route('profile.edit')->with('status', 'profile-updated');
     }
 
-    /**
-     * Upload or replace the user's avatar photo.
-     */
-    public function uploadAvatar(Request $request, CloudinaryService $cloudinary): RedirectResponse
+    public function uploadAvatar(Request $request, ApiAuth $api): RedirectResponse
     {
-        $request->validate([
-            'avatar' => ['required', 'image', 'mimes:jpeg,png,jpg,webp', 'max:2048'],
-        ]);
-
-        $user = $request->user();
-
-        // Hapus avatar lama dari Cloudinary jika ada
-        if ($user->avatar_public_id) {
-            $cloudinary->delete($user->avatar_public_id);
-        }
-
-        $result = $cloudinary->upload($request->file('avatar'), 'users', [
-            'transformation' => [['width' => 200, 'height' => 200, 'crop' => 'fill', 'gravity' => 'face', 'quality' => 'auto', 'fetch_format' => 'auto']],
-        ]);
-
-        $user->avatar           = $result['url'];
-        $user->avatar_public_id = $result['public_id'];
-        $user->save();
+        $req = $this->makeApiRequest([], [], $request->file('avatar') ? ['avatar' => $request->file('avatar')] : []);
+        $this->proxyApi(fn() => app()->call([$api, 'uploadAvatar'], ['request' => $req]));
 
         return Redirect::route('profile.edit')->with('status', 'avatar-updated');
     }
 
-    /**
-     * Delete the user's account.
-     */
     public function destroy(Request $request): RedirectResponse
     {
         $request->validateWithBag('userDeletion', [
@@ -75,11 +42,8 @@ class ProfileController extends Controller
         ]);
 
         $user = $request->user();
-
         Auth::logout();
-
         $user->delete();
-
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 

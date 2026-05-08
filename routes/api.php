@@ -39,6 +39,7 @@ Route::prefix('v1')->group(function () {
             Route::post('logout',  [AuthController::class, 'logout']);
             Route::get('me',       [AuthController::class, 'me']);
             Route::put('profile',  [AuthController::class, 'updateProfile']);
+            Route::post('avatar',  [AuthController::class, 'uploadAvatar']);
         });
 
         // ── FCM Token (push notification) ────────────────────────
@@ -61,6 +62,9 @@ Route::prefix('v1')->group(function () {
             });
         });
 
+        // ── Chat list (semua booking dengan chat aktif) ──────────
+        Route::get('chats', [BookingController::class, 'chatList']);
+
         // ── Booking ──────────────────────────────────────────────
         Route::prefix('bookings')->group(function () {
             Route::get('/',    [BookingController::class, 'index']);   // pengguna: milik sendiri | driver: yang di-assign
@@ -77,13 +81,21 @@ Route::prefix('v1')->group(function () {
             Route::post('{id}/snap', [PaymentController::class, 'createSnap']);
 
             // Driver: konfirmasi penjemputan → confirmed → ongoing
-            // MENGGANTIKAN: accept() dan confirm() yang dihapus
             Route::middleware('role:driver')
                  ->post('{id}/pickup', [BookingController::class, 'pickup']);
 
             // Chat per booking
             Route::get('{id}/messages',  [ChatController::class, 'index']);
             Route::post('{id}/messages', [ChatController::class, 'store']);
+
+            // Rating (pengguna setelah booking completed)
+            Route::post('{id}/rating', [BookingController::class, 'storeRating']);
+
+            // Admin: lihat driver tersedia & assign driver
+            Route::middleware('role:admin')->group(function () {
+                Route::get('{id}/available-drivers', [BookingController::class, 'availableDrivers']);
+                Route::post('{id}/assign-driver',    [BookingController::class, 'assignDriver']);
+            });
         });
 
         // ── Driver ───────────────────────────────────────────────
@@ -99,13 +111,19 @@ Route::prefix('v1')->group(function () {
         });
 
         // ── Payment ──────────────────────────────────────────────
-        Route::middleware('role:admin')
-             ->get('payments', [PaymentController::class, 'index']);
+        Route::prefix('payments')->group(function () {
+            Route::get('{id}', [PaymentController::class, 'show']);
+            Route::middleware('role:admin')->get('/', [PaymentController::class, 'index']);
+        });
 
-        // ── Dashboard & Laporan (Admin only) ─────────────────────
-        Route::middleware('role:admin')->group(function () {
-            Route::get('dashboard', [DashboardController::class, 'index']);
-            Route::get('reports',   [DashboardController::class, 'reports']);
+        // ── Dashboard ────────────────────────────────────────────
+        Route::prefix('dashboard')->group(function () {
+            Route::get('driver',   [DashboardController::class, 'driver']);
+            Route::get('pengguna', [DashboardController::class, 'pengguna']);
+            Route::middleware('role:admin')->group(function () {
+                Route::get('/',       [DashboardController::class, 'index']);
+                Route::get('reports', [DashboardController::class, 'reports']);
+            });
         });
 
         // ── Users (Admin only) ───────────────────────────────────
@@ -117,9 +135,12 @@ Route::prefix('v1')->group(function () {
 
         // ── Notifikasi ───────────────────────────────────────────
         Route::prefix('notifications')->group(function () {
-            Route::get('/',          [NotificationController::class, 'index']);
-            Route::post('read-all',  [NotificationController::class, 'readAll']);
-            Route::post('{id}/read', [NotificationController::class, 'markRead']);
+            Route::get('/',                  [NotificationController::class, 'index']);
+            Route::post('read-all',          [NotificationController::class, 'readAll']);
+            Route::delete('/',               [NotificationController::class, 'destroyAll']);
+            Route::post('delete-selected',   [NotificationController::class, 'destroySelected']);
+            Route::post('{id}/read',         [NotificationController::class, 'markRead']);
+            Route::delete('{id}',            [NotificationController::class, 'destroy']);
         });
 
         // ── Tiket Bantuan ────────────────────────────────────────
@@ -128,6 +149,14 @@ Route::prefix('v1')->group(function () {
             Route::post('/',          [TicketController::class, 'store']);
             Route::get('{id}',        [TicketController::class, 'show']);
             Route::post('{id}/reply', [TicketController::class, 'reply']);
+        });
+
+        // ── Tiket (Admin) ─────────────────────────────────────────
+        Route::middleware('role:admin')->prefix('admin/tickets')->group(function () {
+            Route::get('/',                    [TicketController::class, 'adminIndex']);
+            Route::get('{id}',                 [TicketController::class, 'adminShow']);
+            Route::post('{id}/reply',          [TicketController::class, 'adminReply']);
+            Route::put('{id}/status',          [TicketController::class, 'adminUpdateStatus']);
         });
     });
 

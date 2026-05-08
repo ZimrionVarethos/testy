@@ -3,44 +3,21 @@
 namespace App\Http\Controllers\Driver;
 
 use App\Http\Controllers\Controller;
-use App\Models\Booking;
-use App\Models\ChatMessage;
-use App\Models\Rating;
-use App\Services\BookingService;
+use App\Http\Controllers\Api\BookingController as ApiBooking;
+use App\Http\Traits\WebApiProxy;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 
 class ChatController extends Controller
 {
-    public function __construct(private BookingService $bookingService) {}
+    use WebApiProxy;
 
-    public function index(Request $request)
+    public function index(Request $request, ApiBooking $api)
     {
-        $driverId = (string) Auth::id();
-        $filter   = $request->query('filter', 'active');
+        $filter = $request->query('filter', 'active');
+        $req    = $this->makeApiRequest(['filter' => $filter]);
 
-        // 🔧 Delegasi ke BookingService — logic sama dengan Pengguna/ChatController dan Api/BookingController
-        $this->bookingService->autoCompleteExpiredForDriver($driverId);
-
-        $query = Booking::where('driver.driver_id', $driverId);
-
-        if ($filter === 'active') {
-            $query->whereIn('status', ['confirmed', 'ongoing']);
-        } else {
-            $query->whereIn('status', ['completed', 'cancelled']);
-        }
-
-        $bookings = $query->orderBy('created_at', 'desc')->get();
-
-        $unreadCounts = [];
-        foreach ($bookings as $b) {
-            $unreadCounts[(string) $b->_id] = ChatMessage::unreadCount((string) $b->_id, 'driver');
-        }
-
-        $ratings = [];
-        foreach ($bookings->where('status', 'completed') as $b) {
-            $ratings[(string) $b->_id] = Rating::forBooking((string) $b->_id);
-        }
+        ['bookings' => $bookings, 'unreadCounts' => $unreadCounts, 'ratings' => $ratings]
+            = $api->chatListForWeb($req);
 
         return view('driver.chats.index', compact('bookings', 'filter', 'unreadCounts', 'ratings'));
     }

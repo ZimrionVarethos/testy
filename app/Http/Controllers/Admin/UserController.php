@@ -1,27 +1,39 @@
-<?php namespace App\Http\Controllers\Admin;
+<?php
+
+namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\User; use App\Models\Booking;
+use App\Http\Controllers\Api\UserController as ApiUser;
+use App\Http\Traits\WebApiProxy;
+use Illuminate\Http\Request;
 
 class UserController extends Controller
 {
-    public function index()
+    use WebApiProxy;
+
+    public function index(Request $request, ApiUser $api)
     {
-        $users = User::where('role', 'pengguna')->orderBy('created_at', 'desc')->paginate(15);
+        $req   = $this->makeApiRequest(['per_page' => 15]);
+        $users = $api->indexForWeb($req);
+
         return view('admin.users.index', compact('users'));
     }
 
-    public function show(string $id)
+    public function show(string $id, ApiUser $api)
     {
-        $user     = User::findOrFail($id);
-        $bookings = Booking::where('user.user_id', $id)->orderBy('created_at', 'desc')->limit(10)->get();
+        ['user' => $user, 'bookings' => $bookings] = $api->showForWeb($id);
+
         return view('admin.users.show', compact('user', 'bookings'));
     }
 
-    public function toggle(string $id)
+    public function toggle(string $id, ApiUser $api)
     {
-        $user = User::findOrFail($id);
-        $user->update(['is_active' => !$user->is_active]);
+        $result = $this->tryProxyApi(fn() => $api->toggle($id));
+
+        if (!($result['success'] ?? false)) {
+            return back()->withErrors(['error' => $result['message'] ?? 'Gagal mengubah status pengguna.']);
+        }
+
         return back()->with('success', 'Status pengguna diperbarui.');
     }
 }

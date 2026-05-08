@@ -3,96 +3,77 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Api\BookingController as ApiBooking;
+use App\Http\Traits\WebApiProxy;
 use App\Models\Booking;
 use App\Models\User;
-use App\Services\BookingService;
-use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class BookingController extends Controller
 {
-    public function __construct(private BookingService $bookingService) {}
+    use WebApiProxy;
 
-    public function index(Request $request)
+    public function index(Request $request, ApiBooking $api)
     {
-        $status  = $request->query('status');
-        $search  = $request->query('search');
-        $query   = Booking::orderBy('created_at', 'desc');
+        $status   = $request->query('status');
+        $search   = $request->query('search');
+        $req      = $this->makeApiRequest(compact('status', 'search'));
+        $bookings = $api->adminIndexForWeb($req);
 
-        if ($status) $query->where('status', $status);
-        if ($search) $query->where('booking_code', 'like', "%{$search}%");
-
-        $bookings = $query->paginate(15);
         return view('admin.bookings.index', compact('bookings', 'status', 'search'));
     }
 
-    public function show(string $id)
+    public function show(string $id, ApiBooking $api)
     {
-        $booking          = Booking::findOrFail($id);
+        $req = $this->makeApiRequest();
+        ['booking' => $booking] = $api->showForWeb($req, $id);
+
         $availableDrivers = collect();
 
-        // Tampilkan daftar driver hanya kalau pesanan masih pending dan belum ada driver
         if ($booking->status === Booking::STATUS_PENDING && empty($booking->driver['driver_id'])) {
-            $startDate = Carbon::parse($booking->start_date);
-            $endDate   = Carbon::parse($booking->end_date);
-
-            // Driver yang sibuk di RENTANG TANGGAL ini saja (bukan semua yang punya booking aktif)
-            $busyIds = Booking::busyDriverIdsInRange($startDate, $endDate);
-
-            $availableDrivers = User::where('role', 'driver')
-                ->where('is_active', true)
-                ->get()
-                ->filter(fn($d) => !in_array((string) $d->_id, $busyIds))
-                ->values();
-
-            // Sertakan juga jadwal tiap driver untuk ditampilkan di dropdown/tooltip
-            $availableDrivers = $availableDrivers->map(function ($driver) {
-                $driver->active_schedules = Booking::activeScheduleForDriver((string) $driver->_id);
-                return $driver;
-            });
+            $result = $this->tryProxyApi(fn() => $api->availableDrivers($req, $id));
+            if ($result['success'] ?? false) {
+                $availableDrivers = collect($result['data'])->map(function ($d) {
+                    $user = new User();
+                    $user->forceFill([
+                        '_id'              => $d['id'],
+                        'name'             => $d['name'],
+                        'phone'            => $d['phone'] ?? null,
+                        'avatar'           => $d['avatar'] ?? null,
+                        'active_schedules' => $d['active_schedules'] ?? [],
+                    ]);
+                    return $user;
+                });
+            }
         }
 
         return view('admin.bookings.show', compact('booking', 'availableDrivers'));
     }
 
-    /**
-     * Admin assign driver → status pending jadi confirmed.
-     * Menggunakan BookingService agar logika terpusat.
-     */
-    public function assignDriver(Request $request, string $id)
+    public function assignDriver(Request $request, string $id, ApiBooking $api)
     {
-        $request->validate([
-            'driver_id' => ['required', 'string'],
-        ]);
+        $req    = $this->makeApiRequest([], ['driver_id' => $request->driver_id]);
+        $result = $this->tryProxyApi(fn() => $api->assignDriver($req, $id));
 
-        $booking = Booking::findOrFail($id);
-        $driver  = User::where('role', 'driver')
-            ->where('is_active', true)
-            ->findOrFail($request->driver_id);
-
-        try {
-            $this->bookingService->adminAssignDriver($booking, $driver);
-
-            return redirect()
-                ->route('admin.bookings.show', $id)
-                ->with('success', "Driver {$driver->name} berhasil di-assign. Pesanan sekarang Confirmed.");
-
-        } catch (\Exception $e) {
-            return back()->withErrors(['error' => $e->getMessage()]);
+        if (!($result['success'] ?? false)) {
+            return back()->withErrors(['error' => $result['message'] ?? 'Gagal assign driver.']);
         }
+
+        $driverName = $result['data']['driver']['name'] ?? 'Driver';
+        return redirect()
+            ->route('admin.bookings.show', $id)
+            ->with('success', "Driver {$driverName} berhasil di-assign. Pesanan sekarang Confirmed.");
     }
 
-    public function cancel(Request $request, string $id)
+    public function cancel(Request $request, string $id, ApiBooking $api)
     {
-        $booking = Booking::findOrFail($id);
-        try {
-            $this->bookingService->cancelBooking(
-                $booking,
-                $request->input('reason', 'Dibatalkan oleh admin.')
-            );
-            return back()->with('success', 'Pesanan dibatalkan.');
-        } catch (\Exception $e) {
-            return back()->withErrors(['error' => $e->getMessage()]);
+        $req    = $this->makeApiRequest([], ['reason' => $request->input('reason', 'Dibatalkan oleh admin.')]);
+        $result = $this->tryProxyApi(fn() => $api->cancel($req, $id));
+
+        if (!($result['success'] ?? false)) {
+            return back()->withErrors(['error' => $result['message'] ?? 'Gagal membatalkan pesanan.']);
         }
+
+        return back()->with('success', 'Pesanan dibatalkan.');
     }
 }

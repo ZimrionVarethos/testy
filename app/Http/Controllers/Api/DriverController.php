@@ -117,6 +117,26 @@ class DriverController extends Controller
         ]);
     }
 
+    // ── ForWeb (dipakai web controller langsung) ─────────────────
+
+    /** Untuk web: daftar semua driver (paginasi) */
+    public function indexForWeb(Request $request): \Illuminate\Contracts\Pagination\LengthAwarePaginator
+    {
+        return User::where('role', 'driver')
+            ->orderBy('created_at', 'desc')
+            ->paginate((int) $request->get('per_page', 15));
+    }
+
+    /** Untuk web: detail driver + riwayat booking */
+    public function showForWeb(string $id): array
+    {
+        $driver   = User::where('role', 'driver')->findOrFail($id);
+        $bookings = Booking::where('driver.driver_id', (string) $driver->_id)
+            ->orderBy('created_at', 'desc')->limit(10)->get();
+
+        return compact('driver', 'bookings');
+    }
+
     // ── Helper ────────────────────────────────────────────────────
 
     private function driverResource(User $d): array

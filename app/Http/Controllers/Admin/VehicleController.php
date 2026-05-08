@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Api\VehicleController as ApiVehicle;
+use App\Http\Traits\WebApiProxy;
 use App\Models\Asset;
 use App\Models\Vehicle;
 use App\Services\CloudinaryService;
@@ -11,16 +13,17 @@ use Illuminate\Http\UploadedFile;
 
 class VehicleController extends Controller
 {
+    use WebApiProxy;
+
     public function __construct(protected CloudinaryService $cloudinary) {}
 
     // ── PUBLIC ACTIONS ─────────────────────────────────────────────────────
 
-    public function index(Request $request)
+    public function index(Request $request, ApiVehicle $api)
     {
-        $status   = $request->query('status');
-        $query    = Vehicle::orderBy('created_at', 'desc');
-        if ($status) $query->where('status', $status);
-        $vehicles = $query->paginate(12);
+        $status = $request->query('status');
+        $req    = $this->makeApiRequest(array_filter(['status' => $status]));
+        ['vehicles' => $vehicles] = $api->indexForWeb($req);
 
         return view('admin.vehicles.index', compact('vehicles', 'status'));
     }
@@ -88,9 +91,9 @@ class VehicleController extends Controller
             ->with('success', 'Kendaraan berhasil ditambahkan.');
     }
 
-    public function edit(string $id)
+    public function edit(string $id, ApiVehicle $api)
     {
-        $vehicle = Vehicle::findOrFail($id);
+        $vehicle = $api->showForWeb($id);
         return view('admin.vehicles.edit', compact('vehicle'));
     }
 

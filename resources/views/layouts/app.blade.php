@@ -236,16 +236,80 @@
         .notif-panel-footer a:hover { color: var(--text-1); }
 
         /* ── User chip (header) ── */
+        .header-user-chip-wrap { position: relative; }
         .header-user-chip {
             display: flex;
             align-items: center;
             gap: 8px;
             padding: 4px 10px 4px 4px;
             border-radius: 99px;
-            cursor: default;
+            cursor: pointer;
             transition: background 0.15s;
+            border: none; background: none;
         }
         .header-user-chip:hover { background: var(--bg); }
+        /* ── User dropdown panel ── */
+        .user-panel {
+            position: absolute;
+            top: calc(100% + 8px);
+            right: -4px;
+            width: 220px;
+            background: var(--white);
+            border: 1px solid var(--border-md);
+            border-radius: 14px;
+            box-shadow: 0 12px 40px rgba(17,24,39,0.13);
+            overflow: hidden;
+            z-index: 200;
+        }
+        .user-panel-info {
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            border-bottom: 1px solid var(--border);
+        }
+        .user-panel-avatar {
+            width: 52px; height: 52px;
+            border-radius: 50%;
+            background: var(--dark);
+            color: white;
+            font-family: 'Epilogue', sans-serif;
+            font-size: 18px;
+            font-weight: 800;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+        }
+        .user-panel-name {
+            font-family: 'Epilogue', sans-serif;
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text-1);
+            text-align: center;
+            line-height: 1.3;
+        }
+        .user-panel-email {
+            font-size: 11px;
+            color: var(--text-2);
+            text-align: center;
+            word-break: break-all;
+        }
+        .user-panel-actions { padding: 8px; }
+        .user-panel-btn {
+            display: flex; align-items: center; gap: 8px;
+            width: 100%;
+            padding: 8px 10px;
+            border-radius: 8px;
+            font-size: 12.5px;
+            font-weight: 500;
+            color: var(--text-1);
+            text-decoration: none;
+            transition: background 0.12s;
+            border: none; background: none; cursor: pointer; text-align: left;
+        }
+        .user-panel-btn:hover { background: var(--bg); }
+        .user-panel-btn.danger { color: var(--s-red); }
+        .user-panel-btn svg { flex-shrink: 0; opacity: 0.65; }
         .header-avatar {
             width: 28px; height: 28px;
             border-radius: 50%;
@@ -521,18 +585,68 @@
                     <div style="width:1px;height:20px;background:var(--border);margin:0 6px"></div>
                     @endauth
 
-                    {{-- User chip --}}
+                    {{-- User chip + dropdown --}}
                     @auth
-                    <div class="header-user-chip">
-                        @if(Auth::user()->avatar)
-                            <img src="{{ Auth::user()->avatar }}" alt="{{ Auth::user()->name }}"
-                                 class="header-avatar" style="object-fit:cover;padding:0;">
-                        @else
-                            <div class="header-avatar">
-                                {{ strtoupper(substr(Auth::user()->name ?? 'U', 0, 2)) }}
+                    <div class="header-user-chip-wrap" x-data="{ open: false }">
+
+                        <button class="header-user-chip" @click="open = !open" aria-label="Profil">
+                            @if(Auth::user()->avatar)
+                                <img src="{{ Auth::user()->avatar }}" alt="{{ Auth::user()->name }}"
+                                     class="header-avatar" style="object-fit:cover;padding:0;">
+                            @else
+                                <div class="header-avatar">
+                                    {{ strtoupper(substr(Auth::user()->name ?? 'U', 0, 2)) }}
+                                </div>
+                            @endif
+                            <span class="header-user-name">{{ Auth::user()->name }}</span>
+                        </button>
+
+                        {{-- Dropdown panel --}}
+                        <div class="user-panel"
+                             x-show="open"
+                             @click.outside="open = false"
+                             x-transition:enter="transition ease-out duration-150"
+                             x-transition:enter-start="opacity-0 scale-95 -translate-y-1"
+                             x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+                             x-transition:leave="transition ease-in duration-100"
+                             x-transition:leave-start="opacity-100 scale-100"
+                             x-transition:leave-end="opacity-0 scale-95"
+                             style="display:none">
+
+                            {{-- Info user --}}
+                            <div class="user-panel-info">
+                                @if(Auth::user()->avatar)
+                                    <img src="{{ Auth::user()->avatar }}" alt="{{ Auth::user()->name }}"
+                                         class="user-panel-avatar" style="object-fit:cover;">
+                                @else
+                                    <div class="user-panel-avatar">
+                                        {{ strtoupper(substr(Auth::user()->name ?? 'U', 0, 2)) }}
+                                    </div>
+                                @endif
+                                <div class="user-panel-name">{{ Auth::user()->name }}</div>
+                                <div class="user-panel-email">{{ Auth::user()->email }}</div>
                             </div>
-                        @endif
-                        <span class="header-user-name">{{ Auth::user()->name }}</span>
+
+                            {{-- Aksi --}}
+                            <div class="user-panel-actions">
+                                <a href="{{ route('profile.edit') }}" class="user-panel-btn" @click="open = false">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
+                                        <circle cx="12" cy="7" r="4"/>
+                                    </svg>
+                                    Edit Profil
+                                </a>
+                                <form method="POST" action="{{ route('logout') }}" style="margin:0">
+                                    @csrf
+                                    <button type="submit" class="user-panel-btn danger">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h6a2 2 0 012 2v1"/>
+                                        </svg>
+                                        Keluar
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
                     </div>
                     @endauth
 

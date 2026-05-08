@@ -3,29 +3,22 @@
 namespace App\Http\Controllers\Pengguna;
 
 use App\Http\Controllers\Controller;
-use App\Models\Vehicle;
-use App\Models\Booking;
-use App\Services\BookingService;
+use App\Http\Controllers\Api\BookingController as ApiBooking;
+use App\Http\Controllers\Api\VehicleController as ApiVehicle;
+use App\Http\Traits\WebApiProxy;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
 
 class VehicleController extends Controller
 {
-    public function __construct(private BookingService $bookingService) {}
+    use WebApiProxy;
 
-    /**
-     * Step 1 — Pilih tanggal dulu, baru tampil kendaraan yang tersedia.
-     * Kalau tanggal belum dipilih, tampilkan form pilih tanggal saja.
-     */
-    public function index(Request $request)
+    public function index(Request $request, ApiVehicle $api, ApiBooking $apiBooking)
     {
         $type      = $request->query('type');
         $startDate = $request->query('start_date');
         $endDate   = $request->query('end_date');
 
-        // Belum pilih tanggal — hanya tampilkan form tanggal
         if (!$startDate || !$endDate) {
             return view('pengguna.vehicles.index', [
                 'vehicles'  => null,
@@ -35,7 +28,6 @@ class VehicleController extends Controller
             ]);
         }
 
-        // Validasi tanggal
         try {
             $start = Carbon::parse($startDate)->startOfDay();
             $end   = Carbon::parse($endDate)->endOfDay();
@@ -51,30 +43,21 @@ class VehicleController extends Controller
             return back()->withErrors(['error' => 'Tanggal selesai harus setelah tanggal mulai.']);
         }
 
-        // Cari vehicle ID yang sudah dipesan di rentang ini
-        // Exclude booking yang end_date-nya sudah lewat (sudah expired tapi belum di-complete scheduler)
-        $bookedVehicleIds = Booking::whereIn('status', [
-                Booking::STATUS_CONFIRMED,
-                Booking::STATUS_ONGOING,
-            ])
-            ->where('start_date', '<', $end)
-            ->where('end_date', '>', $start)
-            ->where('end_date', '>', Carbon::now()) // exclude booking yang sudah expired
-            ->whereNotNull('vehicle.vehicle_id')
-            ->get()
-            ->pluck('vehicle.vehicle_id')
-            ->map(fn($id) => (string) $id)
-            ->unique()
-            ->toArray();
+        $bookedVehicleIds = $apiBooking->bookedVehicleIdsForWeb($start, $end);
 
-        // Filter kendaraan: exclude maintenance + yang punya booking overlap di rentang ini
-        // Kendaraan 'rented' sekarang tetap bisa dipesan kalau tidak ada overlap di rentang yang diminta
-        $query = Vehicle::where('status', '!=', 'maintenance')
-            ->whereNotIn('_id', $bookedVehicleIds);
+        $vehicleReq = $this->makeApiRequest([
+            'type'     => $type,
+            'sort'     => 'price_per_day',
+            'per_page' => 9,
+        ]);
+        ['vehicles' => $vehicles] = $api->indexForWeb($vehicleReq);
 
-        if ($type) $query->where('type', $type);
-
-        $vehicles = $query->orderBy('price_per_day')->paginate(9);
+        $vehicles->setCollection(
+            $vehicles->getCollection()->filter(function ($v) use ($bookedVehicleIds) {
+                return $v->status !== 'maintenance'
+                    && !in_array((string) $v->_id, $bookedVehicleIds);
+            })->values()
+        );
 
         $durationDays = max(1, (int) ceil($start->floatDiffInDays($end)));
 
@@ -83,23 +66,16 @@ class VehicleController extends Controller
         ));
     }
 
-    public function show(string $id)
+    public function show(string $id, ApiVehicle $api)
     {
-        $vehicle = Vehicle::findOrFail($id);
+        $vehicle = $api->showForWeb($id);
         return view('pengguna.vehicles.show', compact('vehicle'));
     }
 
-    /**
-     * Step 2 — Form konfirmasi booking.
-     * Tanggal diambil dari query string (sudah dipilih di step 1).
-     * Kalau tidak ada tanggal, redirect balik ke index.
-     */
-    public function book(Request $request, string $id)
+    public function book(Request $request, string $id, ApiVehicle $api, ApiBooking $apiBooking)
     {
-        $vehicle = Vehicle::findOrFail($id);
+        $vehicle = $api->showForWeb($id);
 
-        // Jangan cek status vehicle karena kendaraan 'rented' sekarang
-        // bisa saja kosong di tanggal yang diminta
         if ($vehicle->status === 'maintenance') {
             return redirect()->route('vehicles.index')
                 ->withErrors(['error' => 'Kendaraan sedang dalam perawatan.']);
@@ -108,7 +84,6 @@ class VehicleController extends Controller
         $startDate = $request->query('start_date');
         $endDate   = $request->query('end_date');
 
-        // Tanggal wajib ada — kalau tidak ada, balik ke index
         if (!$startDate || !$endDate) {
             return redirect()->route('vehicles.index')
                 ->withErrors(['error' => 'Pilih tanggal terlebih dahulu.']);
@@ -119,21 +94,10 @@ class VehicleController extends Controller
         $durationDays = max(1, (int) ceil($start->floatDiffInDays($end)));
         $totalPrice   = $durationDays * $vehicle->price_per_day;
 
-        // Cek konflik sekali lagi (race condition guard)
-        $conflict = Booking::whereIn('status', [
-                Booking::STATUS_CONFIRMED,
-                Booking::STATUS_ONGOING,
-            ])
-            ->where('vehicle.vehicle_id', (string) $vehicle->_id)
-            ->where('start_date', '<', $end)
-            ->where('end_date', '>', $start)
-            ->exists();
+        $conflict = $apiBooking->conflictCheckForWeb((string) $vehicle->_id, $start, $end);
 
         if ($conflict) {
-            return redirect()->route('vehicles.index', [
-                    'start_date' => $startDate,
-                    'end_date'   => $endDate,
-                ])
+            return redirect()->route('vehicles.index', compact('startDate', 'endDate'))
                 ->withErrors(['error' => 'Maaf, kendaraan ini baru saja dipesan orang lain. Pilih kendaraan lain.']);
         }
 
@@ -142,34 +106,22 @@ class VehicleController extends Controller
         ));
     }
 
-    public function storeBooking(Request $request, string $id)
+    public function storeBooking(Request $request, string $id, ApiBooking $api)
     {
-        $request->validate([
-            'start_date'     => 'required|date|after_or_equal:today',
-            'end_date'       => 'required|date|after:start_date',
-            'pickup_address' => 'required|string',
-            'notes'          => 'nullable|string|max:500',
+        $req = $this->makeApiRequest([], [
+            'vehicle_id'     => $id,
+            'start_date'     => $request->start_date,
+            'end_date'       => $request->end_date,
+            'pickup_address' => $request->pickup_address,
+            'pickup_lat'     => $request->pickup_lat,
+            'pickup_lng'     => $request->pickup_lng,
+            'notes'          => $request->notes,
         ]);
 
-        try {
-            $booking = $this->bookingService->createBooking([
-                'vehicle_id' => $id,
-                'start_date' => $request->start_date,
-                'end_date'   => $request->end_date,
-                'pickup'     => [
-                    'address' => $request->pickup_address,
-                    'lat'     => (float) $request->pickup_lat ?? 0,
-                    'lng'     => (float) $request->pickup_lng ?? 0,
-                ],
-                'notes' => $request->notes,
-            ], Auth::user());
+        $result    = $this->proxyApi(fn() => $api->store($req));
+        $bookingId = $result['data']['id'];
 
-            return redirect(route('bookings.pay', (string) $booking->_id))
-                ->with('success', 'Pesanan dibuat! Selesaikan pembayaran dalam 30 menit.');
-
-        } catch (\Exception $e) {
-            Log::error('storeBooking error', ['error' => $e->getMessage()]);
-            return back()->withErrors(['error' => $e->getMessage()]);
-        }
+        return redirect(route('bookings.pay', $bookingId))
+            ->with('success', 'Pesanan dibuat! Selesaikan pembayaran dalam 30 menit.');
     }
 }

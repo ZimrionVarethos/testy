@@ -2,75 +2,53 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Notification;
+use App\Http\Controllers\Api\NotificationController as ApiNotification;
+use App\Http\Traits\WebApiProxy;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 
 class NotificationController extends Controller
 {
-    public function index(Request $request)
+    use WebApiProxy;
+
+    public function index(Request $request, ApiNotification $api)
     {
-        $filter = $request->query('filter', 'all'); // all | unread | read
+        $filter = $request->query('filter', 'all');
+        $req    = $this->makeApiRequest(['filter' => $filter]);
 
-        $query = Notification::where('user_id', (string) Auth::id())
-                             ->orderBy('created_at', 'desc');
-
-        if ($filter === 'unread') {
-            $query->where('is_read', false);
-        } elseif ($filter === 'read') {
-            $query->where('is_read', true);
-        }
-
-        $notifications = $query->paginate(20)->withQueryString();
-
-        $counts = [
-            'all'    => Notification::where('user_id', (string) Auth::id())->count(),
-            'unread' => Notification::where('user_id', (string) Auth::id())->where('is_read', false)->count(),
-            'read'   => Notification::where('user_id', (string) Auth::id())->where('is_read', true)->count(),
-        ];
+        ['notifications' => $notifications, 'counts' => $counts] = $api->indexForWeb($req);
 
         return view('notifications.index', compact('notifications', 'filter', 'counts'));
     }
 
-    public function markRead(string $id)
+    public function markRead(string $id, ApiNotification $api)
     {
-        Notification::where('_id', $id)
-                    ->where('user_id', (string) Auth::id())
-                    ->update(['is_read' => true]);
+        $this->proxyApi(fn() => $api->markRead($id));
         return back();
     }
 
-    public function markAllRead()
+    public function markAllRead(ApiNotification $api)
     {
-        Notification::where('user_id', (string) Auth::id())->update(['is_read' => true]);
+        $this->proxyApi(fn() => $api->readAll());
         return back()->with('success', 'Semua notifikasi ditandai dibaca.');
     }
 
-    /** Hapus satu notifikasi */
-    public function destroy(string $id)
+    public function destroy(string $id, ApiNotification $api)
     {
-        Notification::where('_id', $id)
-                    ->where('user_id', (string) Auth::id())
-                    ->delete();
+        $this->proxyApi(fn() => $api->destroy($id));
         return back()->with('success', 'Notifikasi dihapus.');
     }
 
-    /** Hapus semua notifikasi milik user */
-    public function destroyAll()
+    public function destroyAll(ApiNotification $api)
     {
-        Notification::where('user_id', (string) Auth::id())->delete();
+        $this->proxyApi(fn() => $api->destroyAll());
         return back()->with('success', 'Semua notifikasi dihapus.');
     }
 
-    /** Hapus notifikasi yang dipilih (bulk) */
-    public function destroySelected(Request $request)
+    public function destroySelected(Request $request, ApiNotification $api)
     {
-        $request->validate(['ids' => 'required|array', 'ids.*' => 'string']);
+        $req = $this->makeApiRequest([], ['ids' => $request->ids]);
+        $this->proxyApi(fn() => $api->destroySelected($req));
 
-        Notification::whereIn('_id', $request->ids)
-                    ->where('user_id', (string) Auth::id())
-                    ->delete();
-
-        return back()->with('success', count($request->ids) . ' notifikasi dihapus.');
+        return back()->with('success', count($request->ids ?? []) . ' notifikasi dihapus.');
     }
 }

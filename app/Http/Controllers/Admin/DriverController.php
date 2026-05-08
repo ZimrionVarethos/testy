@@ -1,29 +1,40 @@
 <?php
+
 namespace App\Http\Controllers\Admin;
+
 use App\Http\Controllers\Controller;
-use App\Models\User;
-use App\Models\Booking;
+use App\Http\Controllers\Api\DriverController as ApiDriver;
+use App\Http\Traits\WebApiProxy;
+use Illuminate\Http\Request;
 
 class DriverController extends Controller
 {
-    public function index()
+    use WebApiProxy;
+
+    public function index(Request $request, ApiDriver $api)
     {
-        $drivers = User::where('role', 'driver')->orderBy('created_at', 'desc')->paginate(15);
+        $req     = $this->makeApiRequest(['per_page' => 15]);
+        $drivers = $api->indexForWeb($req);
+
         return view('admin.drivers.index', compact('drivers'));
     }
 
-    public function show(string $id)
+    public function show(string $id, ApiDriver $api)
     {
-        $driver   = User::findOrFail($id);
-        $bookings = Booking::where('driver.driver_id', $id)->orderBy('created_at', 'desc')->limit(10)->get();
+        ['driver' => $driver, 'bookings' => $bookings] = $api->showForWeb($id);
+
         return view('admin.drivers.show', compact('driver', 'bookings'));
     }
 
-    public function toggle(string $id)
+    public function toggle(string $id, ApiDriver $api)
     {
-        $driver = User::findOrFail($id);
-        $driver->update(['is_active' => !$driver->is_active]);
-        $status = $driver->is_active ? 'diaktifkan' : 'dinonaktifkan';
+        $result = $this->tryProxyApi(fn() => $api->toggle($id));
+
+        if (!($result['success'] ?? false)) {
+            return back()->withErrors(['error' => $result['message'] ?? 'Gagal mengubah status driver.']);
+        }
+
+        $status = $result['data']['is_active'] ? 'diaktifkan' : 'dinonaktifkan';
         return back()->with('success', "Driver berhasil {$status}.");
     }
 }

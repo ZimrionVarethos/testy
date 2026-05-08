@@ -155,6 +155,31 @@ class VehicleController extends Controller
         ]);
     }
 
+    // ── ForWeb (dipakai web controller langsung, bukan HTTP) ─────────
+
+    /** Untuk web: daftar kendaraan tersedia di rentang tanggal */
+    public function indexForWeb(Request $request): array
+    {
+        $query = Vehicle::query();
+
+        if ($request->filled('status'))    $query->where('status', $request->status);
+        if ($request->filled('type'))      $query->where('type', $request->type);
+        if ($request->filled('min_price')) $query->where('price_per_day', '>=', (int) $request->min_price);
+        if ($request->filled('max_price')) $query->where('price_per_day', '<=', (int) $request->max_price);
+
+        $vehicles = $query->orderBy($request->get('sort', 'price_per_day'))->paginate(
+            min((int) $request->get('per_page', 9), 50)
+        );
+
+        return compact('vehicles');
+    }
+
+    /** Untuk web: detail satu kendaraan */
+    public function showForWeb(string $id): Vehicle
+    {
+        return Vehicle::findOrFail($id);
+    }
+
     // ── Helper ────────────────────────────────────────────────────
 
     private function vehicleResource(Vehicle $v): array

@@ -160,19 +160,8 @@
 
     </nav>
 
-    {{-- User Info + Logout --}}
+    {{-- Logout --}}
     <div class="shrink-0 border-t border-gray-700 p-2">
-        <div class="flex items-center py-2 mb-1 overflow-hidden">
-            <div class="h-8 w-8 rounded-full bg-indigo-500 flex items-center justify-center text-sm font-bold shrink-0 ml-1">
-                {{ strtoupper(substr(Auth::user()->name, 0, 1)) }}
-            </div>
-            <div class="overflow-hidden transition-all duration-300 whitespace-nowrap ml-3"
-                 :class="sidebarOpen ? 'opacity-100 max-w-xs' : 'opacity-0 max-w-0'">
-                <p class="text-sm font-medium text-white truncate">{{ Auth::user()->name }}</p>
-                <p class="text-xs text-gray-400 truncate">{{ Auth::user()->email }}</p>
-            </div>
-        </div>
-        <x-sidebar-link :href="route('profile.edit')" :active="request()->routeIs('profile.edit')" icon="user-circle">Profil Saya</x-sidebar-link>
         <form method="POST" action="{{ route('logout') }}">
             @csrf
             <button type="submit"
