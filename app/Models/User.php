@@ -34,11 +34,12 @@ class User extends Authenticatable implements MustVerifyEmail
         'is_active',
         'driver_profile',
         'email_verified_at',
-        // Tambahkan ini:
         'last_lat',
         'last_lon',
         'last_location_updated_at',
-        'fcm_token',   // ← tambahkan ini
+        'fcm_token',
+        'avatar',
+        'avatar_public_id',
     ];
 
 

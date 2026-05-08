@@ -524,9 +524,14 @@
                     {{-- User chip --}}
                     @auth
                     <div class="header-user-chip">
-                        <div class="header-avatar">
-                            {{ strtoupper(substr(Auth::user()->name ?? 'U', 0, 2)) }}
-                        </div>
+                        @if(Auth::user()->avatar)
+                            <img src="{{ Auth::user()->avatar }}" alt="{{ Auth::user()->name }}"
+                                 class="header-avatar" style="object-fit:cover;padding:0;">
+                        @else
+                            <div class="header-avatar">
+                                {{ strtoupper(substr(Auth::user()->name ?? 'U', 0, 2)) }}
+                            </div>
+                        @endif
                         <span class="header-user-name">{{ Auth::user()->name }}</span>
                     </div>
                     @endauth

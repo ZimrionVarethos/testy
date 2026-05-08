@@ -1985,7 +1985,11 @@
                             </div>
                             <p class="testi-text">"{{ $t['text'] }}"</p>
                             <div class="testi-author">
-                                <div class="testi-avatar">{{ $t['init'] }}</div>
+                                @if(!empty($t['avatar']))
+                                    <img src="{{ $t['avatar'] }}" alt="{{ $t['name'] }}" class="testi-avatar" style="object-fit:cover;padding:0;">
+                                @else
+                                    <div class="testi-avatar">{{ $t['init'] }}</div>
+                                @endif
                                 <div>
                                     <div class="testi-name">{{ $t['name'] }}</div>
                                     <div class="testi-role">{{ $t['role'] }}</div>

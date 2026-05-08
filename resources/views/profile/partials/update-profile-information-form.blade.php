@@ -9,6 +9,36 @@
         </p>
     </header>
 
+    {{-- ── Avatar Upload ── --}}
+    <div class="mt-6">
+        <x-input-label :value="__('Foto Profil')" />
+        <div class="mt-2 flex items-center gap-4">
+            @if($user->avatar)
+                <img src="{{ $user->avatar }}" alt="Avatar" class="w-16 h-16 rounded-full object-cover ring-2 ring-gray-200">
+            @else
+                <div class="w-16 h-16 rounded-full bg-gray-800 text-white flex items-center justify-center text-xl font-bold select-none">
+                    {{ strtoupper(substr($user->name ?? 'U', 0, 2)) }}
+                </div>
+            @endif
+
+            <form method="post" action="{{ route('profile.avatar') }}" enctype="multipart/form-data" class="flex items-center gap-2">
+                @csrf
+                <label class="cursor-pointer inline-flex items-center px-3 py-1.5 bg-white border border-gray-300 rounded-md text-xs font-medium text-gray-700 hover:bg-gray-50 transition">
+                    <svg class="w-4 h-4 mr-1 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                    </svg>
+                    Ganti Foto
+                    <input type="file" name="avatar" accept="image/jpeg,image/png,image/webp" class="sr-only"
+                           onchange="this.closest('form').submit()">
+                </label>
+            </form>
+        </div>
+        @if(session('status') === 'avatar-updated')
+            <p class="mt-1 text-sm text-green-600">{{ __('Foto profil berhasil diperbarui.') }}</p>
+        @endif
+        <x-input-error class="mt-1" :messages="$errors->get('avatar')" />
+    </div>
+
     <form id="send-verification" method="post" action="{{ route('verification.send') }}">
         @csrf
     </form>

@@ -67,11 +67,12 @@ class WelcomeController extends Controller
             $initials = strtoupper(collect(explode(' ', $name))->take(2)->map(fn($w) => $w[0] ?? '')->implode(''));
 
             return [
-                'init'  => $initials,
-                'name'  => $name,
-                'role'  => $role,
-                'stars' => $rating->score,
-                'text'  => $rating->comment,
+                'init'   => $initials,
+                'name'   => $name,
+                'role'   => $role,
+                'stars'  => $rating->score,
+                'text'   => $rating->comment,
+                'avatar' => $user?->avatar,
             ];
         })->values();
 
