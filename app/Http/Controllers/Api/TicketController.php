@@ -105,7 +105,7 @@ class TicketController extends Controller
                 (string) $admin->_id,
                 'Tiket Baru: ' . $ticket->subject,
                 $user->name . ' membuka tiket untuk pesanan ' . $ticket->booking_code . '.',
-                'booking',
+                'ticket',
                 (string) $ticket->_id,
                 url('/admin/tickets/' . (string) $ticket->_id)
             );
@@ -155,7 +155,7 @@ class TicketController extends Controller
                 (string) $admin->_id,
                 'Balasan Tiket: ' . $ticket->subject,
                 $user->name . ' membalas tiket #' . substr((string) $ticket->_id, -6) . '.',
-                'booking',
+                'ticket',
                 (string) $ticket->_id,
                 url('/admin/tickets/' . (string) $ticket->_id)
             );
@@ -302,7 +302,7 @@ class TicketController extends Controller
             $ticket->user_id,
             'Admin membalas tiket Anda',
             'Tiket "' . $ticket->subject . '" mendapat balasan baru dari admin.',
-            'booking',
+            'ticket',
             (string) $ticket->_id,
             url('/tickets/' . (string) $ticket->_id)
         );
@@ -338,7 +338,7 @@ class TicketController extends Controller
                 $ticket->user_id,
                 'Tiket Anda ' . $label,
                 'Tiket "' . $ticket->subject . '" telah ' . $label . ' oleh admin.',
-                'booking',
+                'ticket',
                 (string) $ticket->_id,
                 url('/tickets/' . (string) $ticket->_id)
             );
