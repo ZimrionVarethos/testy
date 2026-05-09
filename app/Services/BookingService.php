@@ -82,6 +82,7 @@ class BookingService
                 'name'    => $user->name,
                 'email'   => $user->email,
                 'phone'   => $user->phone ?? '',
+                'avatar'  => $user->avatar,
             ],
             'vehicle' => [
                 'vehicle_id'    => (string) $vehicle->_id,

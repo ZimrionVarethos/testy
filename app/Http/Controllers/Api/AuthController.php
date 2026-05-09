@@ -175,7 +175,7 @@ class AuthController extends Controller
 
     private function userResource(User $user): array
     {
-        return [
+        $data = [
             'id'         => (string) $user->_id,
             'name'       => $user->name,
             'email'      => $user->email,
@@ -185,5 +185,13 @@ class AuthController extends Controller
             'avatar'     => $user->avatar,
             'created_at' => $user->created_at?->toIso8601String(),
         ];
+
+        if ($user->role === 'driver' && $user->driver_profile) {
+            $data['license_number'] = $user->driver_profile['license_number'] ?? null;
+            $data['license_expiry'] = $user->driver_profile['license_expiry'] ?? null;
+            $data['rating'] = $user->driver_profile['rating'] ?? null;
+        }
+
+        return $data;
     }
 }
