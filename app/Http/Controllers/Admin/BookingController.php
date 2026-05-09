@@ -40,7 +40,7 @@ class BookingController extends Controller
                         'name'             => $d['name'],
                         'phone'            => $d['phone'] ?? null,
                         'avatar'           => $d['avatar'] ?? null,
-                        'active_schedules' => $d['active_schedules'] ?? [],
+                        'active_schedules' => collect($d['active_schedules'] ?? []), // ← fix
                     ]);
                     return $user;
                 });
