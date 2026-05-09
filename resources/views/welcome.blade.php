@@ -3,8 +3,8 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>DriveEase — Rental Mobil Premium Indonesia</title>
-    <meta name="description" content="Rental mobil premium dengan pengemudi profesional. Perjalanan nyaman, aman, dan tepat waktu di seluruh Indonesia.">
+    <title>Bening Rental — Rental Mobil Premium Indonesia</title>
+    <meta name="description" content="Bening Rental menyediakan layanan rental mobil premium dengan pengemudi profesional. Perjalanan nyaman, aman, dan tepat waktu di seluruh Indonesia.">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1931,7 +1931,7 @@
         </div>
         <div class="tl-scroll">
             @php $timeline = [
-                ['year'=>'2020','title'=>'Pondasi DriveEase','desc'=>'Berawal dari 3 kendaraan dan tekad kuat, DriveEase lahir dengan misi menghadirkan rental mobil yang jujur dan profesional.'],
+                ['year'=>'2020','title'=>'Pondasi Bening Rental','desc'=>'Berawal dari 3 kendaraan dan tekad kuat, Bening Rental lahir dengan misi menghadirkan rental mobil yang jujur dan profesional.'],
                 ['year'=>'2021','title'=>'Ekspansi Armada','desc'=>'Armada berkembang menjadi 15 kendaraan. Mulai menerima pesanan korporat dari berbagai perusahaan di Jabodetabek.'],
                 ['year'=>'2022','title'=>'Platform Digital','desc'=>'Meluncurkan sistem pemesanan online terintegrasi dengan Midtrans untuk pembayaran yang aman dan terpercaya.'],
                 ['year'=>'2023','title'=>'Pelacakan Real-time','desc'=>'Menghadirkan fitur GPS tracking untuk setiap perjalanan. Transparansi penuh untuk ketenangan pikiran pelanggan.'],
@@ -2050,7 +2050,7 @@
     <footer>
         <div class="footer-top">
             <div class="footer-brand">
-                <a href="/" class="footer-logo">DriveEase<sup>™</sup></a>
+                <a href="/" class="footer-logo">Bening Rental<sup>™</sup></a>
                 <p>Rental mobil premium dengan pengemudi profesional untuk perjalanan bisnis dan leisure di seluruh Indonesia.</p>
                 <div class="footer-socials">
                     <a href="#" class="social-btn"><i class="fab fa-instagram"></i></a>
@@ -2064,7 +2064,7 @@
             <div class="footer-col"><h4>Bantuan</h4><ul><li><a href="#">FAQ</a></li><li><a href="#">Syarat & Ketentuan</a></li><li><a href="#">Kebijakan Privasi</a></li><li><a href="#">Hubungi Kami</a></li><li><a href="{{ route('login') }}">Login</a></li></ul></div>
         </div>
         <div class="footer-bottom">
-            <span>© {{ date('Y') }} INEZ RENT CAR. Semua hak dilindungi.</span>
+            <span>© {{ date('Y') }} Bening Rental. Semua hak dilindungi.</span>
         </div>
     </footer>
 
