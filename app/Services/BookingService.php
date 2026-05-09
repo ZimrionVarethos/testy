@@ -155,6 +155,7 @@ class BookingService
                 'driver_id'      => (string) $driver->_id,
                 'name'           => $driver->name,
                 'phone'          => $driver->phone ?? '',
+                'avatar'         => $driver->avatar,
                 'license_number' => $driver->driver_profile['license_number'] ?? '-',
             ],
         ]);

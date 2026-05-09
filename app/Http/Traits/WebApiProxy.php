@@ -13,11 +13,15 @@ trait WebApiProxy
      */
     protected function makeApiRequest(array $query = [], array $body = [], array $files = []): Request
     {
-        $req = new Request($query, $body, [], [], $files);
+        $req = new Request(
+            array_merge($query, $body), // query (GET params) — merge biar validate() bisa baca
+            $body,                       // request (POST body)
+            [], [], $files
+        );
+    
         $req->setUserResolver(fn() => Auth::user());
         return $req;
     }
-
     /**
      * Call an API controller method, decode JSON, and abort on failure.
      * Returns the full decoded array (including 'success', 'data', etc.).
@@ -41,4 +45,7 @@ trait WebApiProxy
         $response = $fn();
         return json_decode($response->getContent(), true) ?? [];
     }
+
+
+    
 }
