@@ -212,11 +212,24 @@ class PaymentController extends Controller
         \Midtrans\Config::$serverKey    = config('midtrans.server_key');
         \Midtrans\Config::$isProduction = config('midtrans.is_production');
 
+        $payload = $request->all();
+        if (empty($payload['order_id']) || empty($payload['transaction_status'])) {
+            Log::info('Midtrans webhook test/empty payload acknowledged', [
+                'payload' => $payload,
+            ]);
+
+            return response()->json(['message' => 'OK']);
+        }
+
         try {
             $notification = new \Midtrans\Notification();
         } catch (\Throwable $e) {
-            Log::error('Midtrans notification parse error', ['error' => $e->getMessage()]);
-            return response()->json(['message' => 'Bad notification'], 400);
+            Log::error('Midtrans notification parse error', [
+                'error' => $e->getMessage(),
+                'payload' => $payload,
+            ]);
+
+            return response()->json(['message' => 'OK']);
         }
 
         $orderId           = $notification->order_id;
@@ -230,8 +243,12 @@ class PaymentController extends Controller
         $payment = Payment::where('midtrans.order_id', $orderId)->first();
 
         if (! $payment) {
-            Log::warning('Midtrans webhook: payment not found', ['order_id' => $orderId]);
-            return response()->json(['message' => 'Payment not found'], 404);
+            Log::warning('Midtrans webhook: payment not found', [
+                'order_id' => $orderId,
+                'payload' => $payload,
+            ]);
+
+            return response()->json(['message' => 'OK']);
         }
 
         if ($payment->isPaid()) {
