@@ -74,11 +74,27 @@ class PaymentController extends Controller
 
     public function createSnap(Request $request, string $bookingId): JsonResponse
     {
-        \Midtrans\Config::$serverKey    = config('midtrans.server_key');
-        \Midtrans\Config::$isProduction = config('midtrans.is_production');
+        $serverKey = (string) config('midtrans.server_key');
+        $clientKey = (string) config('midtrans.client_key');
+        $isProduction = (bool) config('midtrans.is_production');
+
+        if ($serverKey === '' || $clientKey === '') {
+            Log::error('Midtrans Snap config missing', [
+                'has_server_key' => $serverKey !== '',
+                'has_client_key' => $clientKey !== '',
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Konfigurasi Midtrans belum lengkap di server.',
+            ], 500);
+        }
+
+        \Midtrans\Config::$serverKey    = $serverKey;
+        \Midtrans\Config::$isProduction = $isProduction;
         \Midtrans\Config::$isSanitized  = true;
         \Midtrans\Config::$is3ds        = true;
-        $snapUrl = config('midtrans.is_production')
+        $snapUrl = $isProduction
             ? 'https://app.midtrans.com/snap/snap.js'
             : 'https://app.sandbox.midtrans.com/snap/snap.js';
  
@@ -116,7 +132,7 @@ class PaymentController extends Controller
                 'data'    => [
                     'snap_token' => $existing->midtrans['snap_token'],
                     'expired_at' => $existing->expired_at?->toIso8601String(),
-                    'client_key' => config('midtrans.client_key'),
+                    'client_key' => $clientKey,
                     'snap_url'   => $snapUrl,
                 ],
             ]);
@@ -138,12 +154,26 @@ class PaymentController extends Controller
             $existing->update(['status' => Payment::STATUS_EXPIRED]);
         }
  
+        $amount = (int) $booking->total_price;
+        if ($amount < 1) {
+            Log::warning('Midtrans Snap invalid booking amount', [
+                'booking_id' => $bookingId,
+                'booking_code' => $booking->booking_code,
+                'total_price' => $booking->total_price,
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Total pembayaran booking tidak valid.',
+            ], 422);
+        }
+
         $orderId = 'PAY-' . $bookingId . '-' . time();
  
         $params = [
             'transaction_details' => [
                 'order_id'     => $orderId,
-                'gross_amount' => (int) $booking->total_price,
+                'gross_amount' => $amount,
             ],
             'customer_details' => [
                 'first_name' => $user->name,
@@ -152,7 +182,7 @@ class PaymentController extends Controller
             ],
             'item_details' => [[
                 'id'       => $bookingId,
-                'price'    => (int) $booking->total_price,
+                'price'    => $amount,
                 'quantity' => 1,
                 'name'     => 'Sewa ' . ($booking->vehicle['name'] ?? 'Kendaraan')
                                . ' (' . $booking->booking_code . ')',
@@ -167,10 +197,19 @@ class PaymentController extends Controller
         try {
             $snapToken = \Midtrans\Snap::getSnapToken($params);
         } catch (\Throwable $e) {
-            Log::error('Midtrans Snap token error (mobile)', ['error' => $e->getMessage()]);
+            Log::error('Midtrans Snap token error (mobile)', [
+                'error' => $e->getMessage(),
+                'booking_id' => $bookingId,
+                'booking_code' => $booking->booking_code,
+                'order_id' => $orderId,
+                'amount' => $amount,
+                'is_production' => $isProduction,
+                'server_key_prefix' => substr($serverKey, 0, 14),
+            ]);
+
             return response()->json([
                 'success' => false,
-                'message' => 'Gagal menghubungi Midtrans.',
+                'message' => 'Gagal menghubungi Midtrans: ' . $e->getMessage(),
             ], 500);
         }
  
@@ -179,7 +218,7 @@ class PaymentController extends Controller
             'booking_id'   => $bookingId,
             'booking_code' => $booking->booking_code,
             'user_id'      => (string) $user->_id,
-            'amount'       => (int) $booking->total_price,
+            'amount'       => $amount,
             'method'       => 'snap',
             'status'       => Payment::STATUS_PENDING,
             'expired_at'   => $expiredAt,
@@ -195,7 +234,7 @@ class PaymentController extends Controller
             'data'    => [
                 'snap_token' => $snapToken,
                 'expired_at' => $expiredAt->toIso8601String(),
-                'client_key' => config('midtrans.client_key'),
+                'client_key' => $clientKey,
                 'snap_url'   => $snapUrl,
             ],
         ]);
