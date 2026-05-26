@@ -338,6 +338,10 @@ class BookingController extends Controller
         $this->authorizeAccess($request->user(), $booking);
 
         $payment = Payment::activeForBooking($id);
+        if ($payment && $payment->isPending() && !empty($payment->midtrans['order_id'])) {
+            $this->syncPaymentFromMidtrans($payment);
+            $payment->refresh();
+        }
 
         return response()->json([
             'success' => true,
@@ -351,6 +355,63 @@ class BookingController extends Controller
                 'paid_at'    => $payment->paid_at,
             ] : null,
         ]);
+    }
+
+    private function syncPaymentFromMidtrans(Payment $payment): void
+    {
+        \Midtrans\Config::$serverKey    = config('midtrans.server_key');
+        \Midtrans\Config::$isProduction = config('midtrans.is_production');
+
+        try {
+            $status = \Midtrans\Transaction::status($payment->midtrans['order_id']);
+        } catch (\Throwable $e) {
+            \Log::warning('Midtrans status sync failed', [
+                'order_id' => $payment->midtrans['order_id'] ?? null,
+                'error'    => $e->getMessage(),
+            ]);
+            return;
+        }
+
+        $newStatus = $this->resolveMidtransPaymentStatus(
+            $status->transaction_status ?? 'pending',
+            $status->fraud_status ?? null
+        );
+
+        if ($newStatus === $payment->status) return;
+
+        $payment->update([
+            'status'   => $newStatus,
+            'method'   => $newStatus === Payment::STATUS_PAID ? ($status->payment_type ?? $payment->method) : $payment->method,
+            'paid_at'  => $newStatus === Payment::STATUS_PAID ? now() : $payment->paid_at,
+            'midtrans' => array_merge($payment->midtrans ?? [], [
+                'transaction_id'     => $status->transaction_id ?? null,
+                'transaction_status' => $status->transaction_status ?? null,
+                'fraud_status'       => $status->fraud_status ?? null,
+                'payment_type'       => $status->payment_type ?? null,
+            ]),
+        ]);
+
+        if ($newStatus === Payment::STATUS_PAID) {
+            $booking = Booking::find($payment->booking_id);
+            if ($booking && $booking->status === Booking::STATUS_PENDING) {
+                $this->bookingService->notifyAdminAfterPayment($booking);
+            }
+        }
+    }
+
+    private function resolveMidtransPaymentStatus(string $transactionStatus, ?string $fraudStatus): string
+    {
+        if (in_array($transactionStatus, ['settlement', 'capture'], true)) {
+            return $fraudStatus === 'challenge' ? Payment::STATUS_PENDING : Payment::STATUS_PAID;
+        }
+
+        return match ($transactionStatus) {
+            'pending' => Payment::STATUS_PENDING,
+            'deny'    => Payment::STATUS_FAILED,
+            'expire'  => Payment::STATUS_EXPIRED,
+            'cancel'  => Payment::STATUS_CANCELLED,
+            default   => Payment::STATUS_PENDING,
+        };
     }
 
     /**

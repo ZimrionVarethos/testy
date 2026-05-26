@@ -71,7 +71,7 @@ class AssetController extends Controller
         ], empty($errors) ? 201 : 422);
     }
 
-    public function destroy(string $id): JsonResponse
+    public function destroy(Request $request, string $id): JsonResponse
     {
         $assetData = $this->findForDestroyForWeb($id);
 
@@ -79,10 +79,10 @@ class AssetController extends Controller
             return response()->json(['success' => false, 'message' => 'Asset tidak ditemukan.'], 404);
         }
 
-        if ($assetData['is_in_use']) {
+        if ($assetData['is_in_use'] && !$request->boolean('force')) {
             return response()->json([
                 'success' => false,
-                'message' => 'Gambar ini masih digunakan. Hapus dari entitas terlebih dahulu.',
+                'message' => 'Gambar ini masih digunakan. Kirim force=1 jika tetap ingin menghapus dan siap menanggung dampaknya pada konten terkait.',
             ], 422);
         }
 

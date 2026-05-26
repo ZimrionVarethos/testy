@@ -78,6 +78,9 @@ class PaymentController extends Controller
         \Midtrans\Config::$isProduction = config('midtrans.is_production');
         \Midtrans\Config::$isSanitized  = true;
         \Midtrans\Config::$is3ds        = true;
+        $snapUrl = config('midtrans.is_production')
+            ? 'https://app.midtrans.com/snap/snap.js'
+            : 'https://app.sandbox.midtrans.com/snap/snap.js';
  
         $user    = $request->user();
         $booking = Booking::findOrFail($bookingId);
@@ -113,6 +116,8 @@ class PaymentController extends Controller
                 'data'    => [
                     'snap_token' => $existing->midtrans['snap_token'],
                     'expired_at' => $existing->expired_at?->toIso8601String(),
+                    'client_key' => config('midtrans.client_key'),
+                    'snap_url'   => $snapUrl,
                 ],
             ]);
         }
@@ -190,6 +195,8 @@ class PaymentController extends Controller
             'data'    => [
                 'snap_token' => $snapToken,
                 'expired_at' => $expiredAt->toIso8601String(),
+                'client_key' => config('midtrans.client_key'),
+                'snap_url'   => $snapUrl,
             ],
         ]);
     }
