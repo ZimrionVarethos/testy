@@ -6,7 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\StoreVehicleRequest;
 use App\Http\Requests\Api\UpdateVehicleRequest;
 use App\Models\Asset;
+use App\Models\Booking;
 use App\Models\Vehicle;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -16,7 +18,7 @@ class VehicleController extends Controller
 {
     /**
      * GET /api/v1/vehicles
-     * Query params: status, type, min_price, max_price, per_page
+     * Query params: status, type, min_price, max_price, start_date, end_date, per_page
      */
     public function index(Request $request): JsonResponse
     {
@@ -26,6 +28,19 @@ class VehicleController extends Controller
         if ($request->filled('type'))      $query->where('type', $request->type);
         if ($request->filled('min_price')) $query->where('price_per_day', '>=', (int) $request->min_price);
         if ($request->filled('max_price')) $query->where('price_per_day', '<=', (int) $request->max_price);
+
+        if ($request->filled('start_date') || $request->filled('end_date')) {
+            $request->validate([
+                'start_date' => ['required', 'date', 'after_or_equal:today'],
+                'end_date'   => ['required', 'date', 'after:start_date'],
+            ]);
+
+            $start = Carbon::parse($request->start_date);
+            $end = Carbon::parse($request->end_date);
+
+            $query->where('status', '!=', 'maintenance');
+            $query->whereNotIn('_id', $this->bookedVehicleIds($start, $end));
+        }
 
         $perPage  = min((int) $request->get('per_page', 12), 50);
         $vehicles = $query->orderBy('created_at', 'desc')->paginate($perPage);
@@ -464,6 +479,29 @@ class VehicleController extends Controller
             )->values()->all(),
             'created_at'    => $v->created_at?->toIso8601String(),
         ];
+    }
+
+    private function bookedVehicleIds(Carbon $start, Carbon $end): array
+    {
+        $recentPendingCutoff = now()->subMinutes(30);
+
+        return Booking::where('start_date', '<', $end)
+            ->where('end_date', '>', $start)
+            ->where('end_date', '>', now())
+            ->whereNotNull('vehicle.vehicle_id')
+            ->where(function ($query) use ($recentPendingCutoff) {
+                $query->whereIn('status', [Booking::STATUS_CONFIRMED, Booking::STATUS_ONGOING])
+                    ->orWhere(function ($pending) use ($recentPendingCutoff) {
+                        $pending->where('status', Booking::STATUS_PENDING)
+                            ->where('created_at', '>=', $recentPendingCutoff);
+                    });
+            })
+            ->get()
+            ->pluck('vehicle.vehicle_id')
+            ->map(fn($id) => (string) $id)
+            ->unique()
+            ->values()
+            ->all();
     }
 
     private function parseFeatures(string $raw): array

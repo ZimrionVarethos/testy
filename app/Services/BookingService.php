@@ -23,23 +23,32 @@ class BookingService
     {
         $vehicle = Vehicle::findOrFail($data['vehicle_id']);
 
-        if (!$vehicle->isAvailable()) {
-            throw new \Exception('Kendaraan tidak tersedia saat ini.');
+        if ($vehicle->status === 'maintenance') {
+            throw new \Exception('Kendaraan sedang dalam perawatan.');
         }
 
+        $startDate = Carbon::parse($data['start_date']);
+        $endDate   = Carbon::parse($data['end_date']);
+
         // Cek konflik jadwal kendaraan berdasarkan range tanggal
+        $recentPendingCutoff = now()->subMinutes(30);
         $conflict = Booking::where('vehicle.vehicle_id', (string) $vehicle->_id)
-            ->whereIn('status', [Booking::STATUS_CONFIRMED, Booking::STATUS_ONGOING])
-            ->where('start_date', '<', $data['end_date'])
-            ->where('end_date', '>', $data['start_date'])
+            ->where('start_date', '<', $endDate)
+            ->where('end_date', '>', $startDate)
+            ->where('end_date', '>', now())
+            ->where(function ($query) use ($recentPendingCutoff) {
+                $query->whereIn('status', [Booking::STATUS_CONFIRMED, Booking::STATUS_ONGOING])
+                    ->orWhere(function ($pending) use ($recentPendingCutoff) {
+                        $pending->where('status', Booking::STATUS_PENDING)
+                            ->where('created_at', '>=', $recentPendingCutoff);
+                    });
+            })
             ->exists();
 
         if ($conflict) {
             throw new \Exception('Kendaraan tidak tersedia pada tanggal yang dipilih.');
         }
 
-        $startDate    = Carbon::parse($data['start_date']);
-        $endDate      = Carbon::parse($data['end_date']);
         $durationDays = max(1, $startDate->diffInDays($endDate));
         $totalPrice   = $durationDays * $vehicle->price_per_day;
 
