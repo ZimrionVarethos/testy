@@ -126,8 +126,8 @@ Route::prefix('v1')->group(function () {
 
         // ── Payment ──────────────────────────────────────────────
         Route::prefix('payments')->group(function () {
+            Route::get('/', [PaymentController::class, 'index']);
             Route::get('{id}', [PaymentController::class, 'show']);
-            Route::middleware('role:admin')->get('/', [PaymentController::class, 'index']);
         });
 
         // ── Dashboard ────────────────────────────────────────────

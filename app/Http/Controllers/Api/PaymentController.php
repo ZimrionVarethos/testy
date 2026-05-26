@@ -24,8 +24,8 @@ class PaymentController extends Controller
         $user  = $request->user();
         $query = Payment::orderBy('created_at', 'desc');
 
-        // Pengguna hanya lihat milik sendiri
-        if ($user->role === 'pengguna') {
+        // Non-admin only sees their own payments.
+        if ($user->role !== 'admin') {
             $query->where('user_id', (string) $user->_id);
         }
 
@@ -405,6 +405,8 @@ class PaymentController extends Controller
 
     private function formatPayment(Payment $p): array
     {
+        $booking = $p->booking_id ? Booking::find($p->booking_id) : null;
+
         return [
             'id'           => (string) $p->_id,
             'booking_id'   => $p->booking_id,
@@ -416,6 +418,17 @@ class PaymentController extends Controller
             'expired_at'   => $p->expired_at,
             'paid_at'      => $p->paid_at,
             'created_at'   => $p->created_at?->toIso8601String(),
+            'booking'      => $booking ? [
+                'id'           => (string) $booking->_id,
+                'booking_code' => $booking->booking_code,
+                'status'       => $booking->status,
+                'start_date'   => $booking->start_date?->toIso8601String(),
+                'end_date'     => $booking->end_date?->toIso8601String(),
+                'vehicle_name' => $booking->vehicle['name'] ?? '-',
+                'pickup'       => $booking->pickup['address'] ?? null,
+                'dropoff'      => $booking->dropoff['address'] ?? null,
+                'duration_days'=> $booking->duration_days,
+            ] : null,
         ];
     }
 }
