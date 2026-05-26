@@ -54,6 +54,7 @@ Route::prefix('v1')->group(function () {
             Route::get('me',       [AuthController::class, 'me']);
             Route::put('profile',  [AuthController::class, 'updateProfile']);
             Route::post('avatar',  [AuthController::class, 'uploadAvatar']);
+            Route::delete('avatar',[AuthController::class, 'deleteAvatar']);
         });
 
         // ── FCM Token (push notification) ────────────────────────

@@ -150,7 +150,7 @@ class AuthController extends Controller
             $cloudinary->delete($user->avatar_public_id);
         }
 
-        $result = $cloudinary->upload($request->file('avatar'), 'users', [
+        $result = $cloudinary->upload($request->file('avatar'), 'users/' . (string) $user->_id, [
             'transformation' => [['width' => 200, 'height' => 200, 'crop' => 'fill', 'gravity' => 'face', 'quality' => 'auto', 'fetch_format' => 'auto']],
         ]);
 
@@ -161,6 +161,25 @@ class AuthController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Foto profil berhasil diperbarui.',
+            'data'    => $this->userResource($user),
+        ]);
+    }
+
+    public function deleteAvatar(Request $request, CloudinaryService $cloudinary): JsonResponse
+    {
+        $user = $request->user();
+
+        if ($user->avatar_public_id) {
+            $cloudinary->delete($user->avatar_public_id);
+        }
+
+        $user->avatar = null;
+        $user->avatar_public_id = null;
+        $user->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Foto profil berhasil dihapus.',
             'data'    => $this->userResource($user),
         ]);
     }
