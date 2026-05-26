@@ -8,8 +8,10 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"></noscript>
 
     <style>
         /* ══════════════════════════════════════
@@ -17,12 +19,14 @@
         ══════════════════════════════════════ */
         :root {
             --ink:      rgb(17 24 39);
+            --navy:     #111827;
+            --blue:     #111827;
             --ink-80:   rgba(17,24,39,0.8);
             --ink-40:   rgba(17,24,39,0.4);
             --ink-12:   rgba(17,24,39,0.12);
             --ink-06:   rgba(17,24,39,0.06);
             --white:    #ffffff;
-            --off:      #F7F7F5;
+            --off:      #eff6ff;
             --line:     rgba(17,24,39,0.1);
             --ease:     cubic-bezier(0.76, 0, 0.24, 1);
             --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
@@ -59,7 +63,7 @@
         }
         #navbar.scrolled {
             background: rgba(255,255,255,0.96);
-            box-shadow: 0 1px 0 var(--line);
+            box-shadow:none;
             backdrop-filter: blur(12px);
         }
         #navbar.hero-over {
@@ -75,14 +79,14 @@
             height: 120px;
             background: rgba(255, 255, 255, 0.16);
             border-radius: 10% 10% 50% 50%;
-            box-shadow: 0 6px 24px rgba(0,0,0,0.10);
-            z-index: 998;                       /* di bawah navbar → tertutup navbar bagian atas */
+            box-shadow:none;
+            z-index: 998;                       /* di bawah navbar, tertutup navbar bagian atas */
             pointer-events: none;
             transition: background 0.4s var(--ease), box-shadow 0.4s;
         }
         .nav-logo-blob.scrolled {
-            box-shadow: none;            
-            background: rgb(255, 255, 255);  
+            box-shadow:none;
+            background: rgb(255, 255, 255);
             backdrop-filter: blur(12px);                  /* hilang saat navbar sudah scrolled, agar tidak mengganggu estetika */
                    /* menyatu sempurna dengan navbar saat scroll */
         }
@@ -133,7 +137,7 @@
             font-size: 0.82rem;
             font-weight: 700;
             padding: 0.55rem 1.3rem;
-            border-radius: 4px;
+            border-radius:0;
             transition: all 0.24s;
             letter-spacing: 0.01em;
         }
@@ -145,7 +149,7 @@
         .nav-btn-ghost:hover { background: rgba(255,255,255,0.1); color: var(--white); }
         #navbar.scrolled .nav-btn-ghost:hover { background: var(--ink-06); color: var(--ink); }
         .nav-btn-solid { background: var(--white); color: var(--ink); }
-        #navbar.scrolled .nav-btn-solid { background: var(--ink); color: var(--white); }
+        #navbar.scrolled .nav-btn-solid { background: var(--navy); color: var(--white); }
         .nav-btn-solid:hover { opacity: 0.88; transform: translateY(-1px); }
 
         /* ── Hamburger ── */
@@ -159,10 +163,10 @@
         .nav-hamburger span {
             width: 24px; height: 2px;
             background: var(--white);
-            border-radius: 2px;
+            border-radius:0;
             transition: all 0.3s var(--ease);
         }
-        #navbar.scrolled .nav-hamburger span { background: var(--ink); }
+        #navbar.scrolled .nav-hamburger span { background: var(--navy); }
         .nav-hamburger.open span:nth-child(1) { transform: rotate(45deg) translate(5px, 5px); }
         .nav-hamburger.open span:nth-child(2) { opacity: 0; }
         .nav-hamburger.open span:nth-child(3) { transform: rotate(-45deg) translate(5px, -5px); }
@@ -209,7 +213,7 @@
             transition: color 0.2s, padding-left 0.2s;
         }
         .mobile-menu ul li a:hover {
-            color: var(--accent, #2563eb);
+            color: var(--accent, #111827);
             padding-left: 0.5rem;
         }
         .mobile-menu-actions {
@@ -225,10 +229,10 @@
             font-family: 'Syne', sans-serif;
             font-size: 1rem;
             font-weight: 700;
-            border-radius: 6px;
+            border-radius:0;
         }
         .mob-btn-outline { border: 1.5px solid var(--line); color: var(--ink); }
-        .mob-btn-fill { background: var(--ink); color: var(--white); }
+        .mob-btn-fill { background: var(--navy); color: var(--white); }
 
         /* ── Responsive ── */
         @media (max-width: 768px) {
@@ -244,7 +248,7 @@
             height: 100vh;
             min-height: 620px;
             overflow: hidden;
-            background: var(--ink);
+            background: var(--navy);
         }
 
         /* Slides */
@@ -344,7 +348,7 @@
             padding: 0.9rem 2.1rem;
             background: var(--white);
             color: var(--ink);
-            border-radius: 4px;
+            border-radius:0;
             letter-spacing: 0.01em;
             transition: all 0.28s;
             display: inline-flex;
@@ -359,7 +363,7 @@
             padding: 0.88rem 2.1rem;
             border: 1.5px solid rgba(255,255,255,0.28);
             color: rgba(255,255,255,0.82);
-            border-radius: 4px;
+            border-radius:0;
             transition: all 0.28s;
         }
         .btn-hero-border:hover { border-color: rgba(255,255,255,0.7); color: var(--white); }
@@ -384,7 +388,7 @@
         .hero-dot {
             width: 20px; height: 2px;
             background: rgba(255,255,255,0.28);
-            border-radius: 2px;
+            border-radius:0;
             cursor: pointer;
             transition: all 0.3s;
         }
@@ -399,7 +403,7 @@
         .hero-arrow {
             width: 44px; height: 44px;
             border: 1px solid rgba(255,255,255,0.22);
-            border-radius: 3px;
+            border-radius:0;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -440,7 +444,7 @@
            TICKER / TRUST BAR
         ══════════════════════════════════════ */
         .ticker {
-            background: var(--ink);
+            background: var(--navy);
             padding: 1.1rem 0;
             overflow: hidden;
             position: relative;
@@ -548,7 +552,7 @@
         .works-visual {
             position: sticky;
             top: 100px;
-            border-radius: 6px;
+            border-radius:0;
             overflow: hidden;
             aspect-ratio: 4/5;
         }
@@ -578,14 +582,14 @@
             text-transform: uppercase;
             padding: 0.48rem 1.1rem;
             border: 1.5px solid var(--line);
-            border-radius: 3px;
+            border-radius:0;
             background: transparent;
             color: var(--ink-40);
             cursor: pointer;
             transition: all 0.22s;
         }
         .filter-btn.active, .filter-btn:hover {
-            background: var(--ink);
+            background: var(--navy);
             color: var(--white);
             border-color: var(--ink);
         }
@@ -598,7 +602,7 @@
         .car-card {
             break-inside: avoid;
             margin-bottom: 1rem;
-            border-radius: 6px;
+            border-radius:0;
             overflow: hidden;
             border: 1px solid var(--line);
             background: var(--white);
@@ -607,7 +611,7 @@
         .car-card:nth-child(3n+2) { margin-top: 2.5rem; }
         .car-card:hover {
             transform: translateY(-6px);
-            box-shadow: 0 24px 60px rgba(17,24,39,0.1);
+            box-shadow:none;
             border-color: transparent;
         }
         .car-img {
@@ -630,7 +634,7 @@
             letter-spacing: 0.1em;
             text-transform: uppercase;
             padding: 0.28rem 0.65rem;
-            border-radius: 2px;
+            border-radius:0;
         }
         .badge-available { background: rgba(17,24,39,0.85); color: rgba(255,255,255,0.9); }
         .badge-rented    { background: rgba(17,24,39,0.6); color: rgba(255,255,255,0.7); }
@@ -690,9 +694,9 @@
             font-weight: 700;
             letter-spacing: 0.05em;
             padding: 0.52rem 1.15rem;
-            background: var(--ink);
+            background: var(--navy);
             color: var(--white);
-            border-radius: 3px;
+            border-radius:0;
             transition: all 0.22s;
         }
         .btn-book:hover { opacity: 0.8; }
@@ -709,13 +713,13 @@
             padding: 0.9rem 2.2rem;
             border: 1.5px solid var(--ink);
             color: var(--ink);
-            border-radius: 4px;
+            border-radius:0;
             transition: all 0.26s;
             display: inline-flex;
             align-items: center;
             gap: 0.55rem;
         }
-        .btn-outline-ink:hover { background: var(--ink); color: var(--white); }
+        .btn-outline-ink:hover { background: var(--navy); color: var(--white); }
 
         /* ══════════════════════════════════════
            FLEET — Tambahan CSS untuk redesign
@@ -749,9 +753,9 @@
 
         /* ── Datepicker form ── */
         .fleet-datepicker {
-            background: var(--paper, #f9f9f7);
+            background: var(--paper, #f8fbff);
             border: 1px solid var(--line);
-            border-radius: 8px;
+            border-radius:0;
             padding: 2rem 2.2rem;
         }
         .date-form {
@@ -779,7 +783,7 @@
             color: var(--ink);
             background: var(--white);
             border: 1.5px solid var(--line);
-            border-radius: 5px;
+            border-radius:0;
             padding: 0.65rem 0.9rem;
             outline: none;
             transition: border-color 0.2s;
@@ -799,10 +803,10 @@
             font-weight: 700;
             letter-spacing: 0.05em;
             padding: 0.68rem 1.5rem;
-            background: var(--ink);
+            background: var(--navy);
             color: var(--white);
             border: none;
-            border-radius: 5px;
+            border-radius:0;
             cursor: pointer;
             display: inline-flex;
             align-items: center;
@@ -891,7 +895,7 @@
          WHY US — Dark section with app mockup
         ══════════════════════════════════════ */
         #why-us {
-            background: var(--ink);
+            background: var(--navy);
             padding: 7rem 8%;
         }
         #why-us .sec-tag { color: rgba(255,255,255,0.3); }
@@ -916,13 +920,11 @@
             width: 100%;
             max-width: 300px;
             aspect-ratio: 9/19;
-            border-radius: 36px;
+            border-radius:0;
             overflow: hidden;
             border: 1px solid rgba(169, 169, 169, 0.99);        /* lebih terang dari 0.1 */
-            box-shadow:
-                0 0 0 8px rgba(88, 87, 87, 0.41),             /* ring luar lebih terang */
-                0 40px 80px rgba(177, 176, 176, 0.5);
-            background: rgba(24, 12, 12, 0.06);               /* tambah ini biar frame keliatan walau gambar belum penuh */
+            box-shadow:none;
+            background: rgba(37, 99, 235, 0.08);               /* tambah ini biar frame keliatan walau gambar belum penuh */
         }
         .why-mockup-frame img {
             width: 100%;
@@ -947,19 +949,19 @@
             gap: 1px;
             background: rgba(255,255,255,0.07);
             border: 1px solid rgba(255,255,255,0.07);
-            border-radius: 6px;
+            border-radius:0;
             overflow: hidden;
         }
         .why-card {
             padding: 2rem 1.8rem;
-            background: var(--ink);
+            background: var(--navy);
             transition: background 0.3s;
         }
         .why-card:hover { background: rgba(255,255,255,0.04); }
         .why-icon {
             width: 38px; height: 38px;
             border: 1px solid rgba(255,255,255,0.14);
-            border-radius: 4px;
+            border-radius:0;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -995,7 +997,7 @@
         .stat-item:first-child { padding-left: 0; }
         .stat-item:last-child { border-right: none; }
         .stat-num {
-            
+
             font-size: clamp(2.4rem, 4.5vw, 4rem);
             font-weight: 800;
             color: var(--ink);
@@ -1040,12 +1042,12 @@
         }
         .tl-dot {
             width: 12px; height: 12px;
-            border-radius: 50%;
-            background: var(--ink);
+            border-radius:0;
+            background: var(--navy);
             margin-bottom: 2rem;
             flex-shrink: 0;
             position: relative;
-            box-shadow: 0 0 0 4px var(--white), 0 0 0 5px var(--line);
+            box-shadow:none;
         }
         .tl-year-num {
             font-family: 'Syne', sans-serif;
@@ -1148,14 +1150,14 @@
         }
         .testi-card {
             background: var(--white);
-            border-radius: 6px;
+            border-radius:0;
             padding: 2rem;
             border: 1px solid var(--line);
             transition: all 0.3s var(--ease);
         }
         .testi-card:hover {
             transform: translateX(6px);
-            box-shadow: 0 12px 40px rgba(17,24,39,0.06);
+            box-shadow:none;
         }
         .testi-stars { font-size: 0.75rem; color: var(--ink); letter-spacing: 0.08em; margin-bottom: 0.9rem; }
         .testi-text {
@@ -1168,8 +1170,8 @@
         .testi-author { display: flex; align-items: center; gap: 0.75rem; }
         .testi-avatar {
             width: 38px; height: 38px;
-            border-radius: 50%;
-            background: var(--ink);
+            border-radius:50%;
+            background: var(--navy);
             color: var(--white);
             display: flex;
             align-items: center;
@@ -1179,6 +1181,7 @@
             font-weight: 700;
             flex-shrink: 0;
         }
+        img.testi-avatar { border-radius:50%; }
         .testi-name {
             font-family: 'Syne', sans-serif;
             font-size: 0.84rem;
@@ -1191,7 +1194,7 @@
            CTA — Full bleed split
         ══════════════════════════════════════ */
         .cta-section {
-            background: var(--ink);
+            background: var(--navy);
             padding: 0;
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -1227,7 +1230,7 @@
             padding: 1rem 1.8rem;
             background: var(--white);
             color: var(--ink);
-            border-radius: 4px;
+            border-radius:0;
             text-align: center;
             transition: all 0.24s;
         }
@@ -1239,7 +1242,7 @@
             padding: 1rem 1.8rem;
             border: 1px solid rgba(255,255,255,0.16);
             color: rgba(255,255,255,0.6);
-            border-radius: 4px;
+            border-radius:0;
             text-align: center;
             transition: all 0.24s;
         }
@@ -1256,7 +1259,7 @@
         .cta-right-overlay {
             position: absolute;
             inset: 0;
-            background: linear-gradient(to right, var(--ink), transparent);
+            background: linear-gradient(to right, var(--navy), transparent);
         }
 
         /* ══════════════════════════════════════
@@ -1290,7 +1293,7 @@
         .social-btn {
             width: 32px; height: 32px;
             border: 1px solid var(--line);
-            border-radius: 3px;
+            border-radius:0;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -1405,12 +1408,12 @@
         }
 
         @media (max-width: 480px) {
-            .stats-row { 
+            .stats-row {
                 grid-template-columns: 1fr 1fr;
                 display: block;
              }
             .hero-title { font-size: 2.6rem; }
-            
+
         }
 
         /* ══════════════════════════════════════
@@ -1418,7 +1421,7 @@
         ══════════════════════════════════════ */
         .mobile-slider-section {
             position: relative;
-            background: var(--ink);
+            background: var(--navy);
         }
         .mob-slider {
             position: relative;
@@ -1495,7 +1498,7 @@
             padding: 1.05rem;
             background: var(--white);
             color: var(--ink);
-            border-radius: 4px;
+            border-radius:0;
             text-align: center;
             transition: opacity 0.22s;
         }
@@ -1506,7 +1509,7 @@
             padding: 1.05rem;
             border: 1px solid rgba(255,255,255,0.2);
             color: rgba(255,255,255,0.72);
-            border-radius: 4px;
+            border-radius:0;
             text-align: center;
         }
         /* Dots at top of mobile slider */
@@ -1521,7 +1524,7 @@
         .mob-dot {
             width: 16px; height: 2px;
             background: rgba(255,255,255,0.25);
-            border-radius: 2px;
+            border-radius:0;
             cursor: pointer;
             transition: all 0.3s;
         }
@@ -1546,9 +1549,126 @@
 
         /* Mobile ticker */
         .mob-ticker {
-            background: var(--ink);
+            background: var(--navy);
             padding: 0.85rem 0;
             overflow: hidden;
+        }
+
+        /* ══════════════════════════════════════
+           FLOATING CHATBOT
+        ══════════════════════════════════════ */
+        .chatbot-fab {
+            position: fixed;
+            right: 22px;
+            bottom: 22px;
+            z-index: 1200;
+            width: 54px;
+            height: 54px;
+            border: 1px solid rgba(255,255,255,0.22);
+            background: var(--navy);
+            color: var(--white);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1.15rem;
+        }
+        .chatbot-panel {
+            position: fixed;
+            right: 22px;
+            bottom: 88px;
+            z-index: 1200;
+            width: min(360px, calc(100vw - 32px));
+            background: var(--white);
+            border: 1px solid var(--line);
+            display: none;
+        }
+        .chatbot-panel.open { display: block; }
+        .chatbot-head {
+            background: var(--navy);
+            color: var(--white);
+            padding: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+        }
+        .chatbot-title {
+            font-family: 'Syne', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 800;
+        }
+        .chatbot-close {
+            border: 0;
+            background: transparent;
+            color: var(--white);
+            cursor: pointer;
+            font-size: 1rem;
+        }
+        .chatbot-body {
+            height: 300px;
+            overflow-y: auto;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.65rem;
+            background: #f8fbff;
+        }
+        .chatbot-msg {
+            max-width: 88%;
+            padding: 0.7rem 0.8rem;
+            border: 1px solid var(--line);
+            background: var(--white);
+            color: var(--ink-80);
+            font-size: 0.82rem;
+            line-height: 1.55;
+        }
+        .chatbot-msg.user {
+            align-self: flex-end;
+            background: var(--navy);
+            color: var(--white);
+            border-color: var(--navy);
+        }
+        .chatbot-form {
+            display: flex;
+            border-top: 1px solid var(--line);
+        }
+        .chatbot-input {
+            flex: 1;
+            border: 0;
+            padding: 0.9rem;
+            font: inherit;
+            font-size: 0.84rem;
+            outline: none;
+        }
+        .chatbot-send {
+            border: 0;
+            background: var(--navy);
+            color: var(--white);
+            padding: 0 1rem;
+            cursor: pointer;
+            font-weight: 700;
+        }
+        .chatbot-wa {
+            display: block;
+            margin: 0 1rem 1rem;
+            text-align: center;
+            padding: 0.78rem 1rem;
+            background: var(--navy);
+            color: var(--white);
+            font-family: 'Syne', sans-serif;
+            font-size: 0.82rem;
+            font-weight: 800;
+        }
+        .chatbot-meta {
+            padding: 0.7rem 1rem;
+            font-size: 0.72rem;
+            color: var(--ink-40);
+            border-top: 1px solid var(--line);
+        }
+        @media (max-width: 640px) {
+            .chatbot-fab { right: 16px; bottom: 16px; }
+            .chatbot-panel { right: 16px; bottom: 78px; }
         }
     </style>
 </head>
@@ -1557,7 +1677,7 @@
     {{-- ════════ NAVBAR ════════ --}}
     <div class="nav-logo-blob"></div>
     <a href="/" class="nav-logo-link" aria-label="Bening Rental">
-        <img src="{{ asset('image/logo.webp') }}" alt="Bening Rental Logo">
+        <img src="{{ asset('image/logo.webp') }}" alt="Bening Rental Logo" decoding="async">
     </a>
 
     <header id="navbar" class="hero-over">
@@ -1605,7 +1725,7 @@
         <div class="hero-slides" id="heroSlides">
             @foreach($heroSlides as $i => $url)
             <div class="hero-slide {{ $i === 0 ? 'active' : '' }}">
-                <img src="{{ $url }}" alt="Slide {{ $i + 1 }}">
+                <img src="{{ $url }}" alt="Slide {{ $i + 1 }}" @if($i > 0) loading="lazy" @else fetchpriority="high" @endif decoding="async">
             </div>
             @endforeach
         </div>
@@ -1659,7 +1779,7 @@
             </div>
             @foreach($heroSlides as $i => $url)
                 <div class="mob-slide {{ $i === 0 ? 'active' : '' }}">
-                    <img src="{{ $url }}" alt="Slide {{ $i + 1 }}">
+                    <img src="{{ $url }}" alt="Slide {{ $i + 1 }}" loading="lazy" decoding="async">
                 </div>
             @endforeach
             <div class="mob-slide-body">
@@ -1714,7 +1834,7 @@
                 </div>
             </div>
             <div class="works-visual reveal">
-                <img src="{{ $landingImages['how_it_works_image'] }}" alt="Pengemudi Profesional">
+                <img src="{{ $landingImages['how_it_works_image'] }}" alt="Pengemudi Profesional" loading="lazy" decoding="async">
             </div>
         </div>
     </section>
@@ -1738,7 +1858,7 @@
                                min="{{ now()->format('Y-m-d\TH:i') }}"
                                required>
                     </div>
-                    <div class="date-sep">→</div>
+                    <div class="date-sep">-</div>
                     <div class="date-field">
                         <label>Tanggal Selesai</label>
                         <input type="datetime-local" name="end_date"
@@ -1785,10 +1905,10 @@
                 <div class="car-img">
                     @if(!empty($vehicle->images) && count($vehicle->images) > 0)
                         @php $vImg = $vehicle->images[0]; @endphp
-                        <img src="{{ str_starts_with($vImg, 'http') ? $vImg : Storage::url($vImg) }}" alt="{{ $vehicle->name }}" loading="lazy">
+                        <img src="{{ str_starts_with($vImg, 'http') ? $vImg : Storage::url($vImg) }}" alt="{{ $vehicle->name }}" loading="lazy" decoding="async">
                     @else
                         <img src="https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&q=80&w=600"
-                             alt="{{ $vehicle->name }}" loading="lazy">
+                             alt="{{ $vehicle->name }}" loading="lazy" decoding="async">
                     @endif
                     <span class="car-badge badge-{{ $vehicle->status ?? 'available' }}">
                         @if(($vehicle->status ?? 'available') === 'maintenance') Servis
@@ -1838,7 +1958,7 @@
             @foreach($showcases as $car)
             <div class="car-card reveal" data-type="{{ strtolower($car['type']) }}">
                 <div class="car-img">
-                    <img src="{{ $car['img'] }}" alt="{{ $car['brand'] }} {{ $car['model'] }}" loading="lazy">
+                    <img src="{{ $car['img'] }}" alt="{{ $car['brand'] }} {{ $car['model'] }}" loading="lazy" decoding="async">
                     <span class="car-badge badge-{{ $car['status'] }}">
                         {{ $car['status'] === 'available' ? 'Tersedia' : 'Sedang Disewa' }}
                     </span>
@@ -1882,7 +2002,7 @@
         <div class="why-layout">
             <div class="why-mockup reveal">
                 <div class="why-mockup-frame">
-                    <img src="{{ $landingImages['why_us_mockup'] }}" alt="Mockup Aplikasi">
+                    <img src="{{ $landingImages['why_us_mockup'] }}" alt="Mockup Aplikasi" loading="lazy" decoding="async">
                 </div>
             </div>
             <div class="why-right">
@@ -1986,7 +2106,7 @@
                             <p class="testi-text">"{{ $t['text'] }}"</p>
                             <div class="testi-author">
                                 @if(!empty($t['avatar']))
-                                    <img src="{{ $t['avatar'] }}" alt="{{ $t['name'] }}" class="testi-avatar" style="object-fit:cover;padding:0;">
+                                    <img src="{{ $t['avatar'] }}" alt="{{ $t['name'] }}" class="testi-avatar" style="object-fit:cover;padding:0;" loading="lazy" decoding="async">
                                 @else
                                     <div class="testi-avatar">{{ $t['init'] }}</div>
                                 @endif
@@ -2042,7 +2162,7 @@
         </div>
         <div class="cta-right reveal">
             <div class="cta-right-overlay"></div>
-            <img src="{{ $landingImages['cta_image'] }}" alt="">
+            <img src="{{ $landingImages['cta_image'] }}" alt="" loading="lazy" decoding="async">
         </div>
     </div>
 
@@ -2067,6 +2187,27 @@
             <span>© {{ date('Y') }} Bening Rental. Semua hak dilindungi.</span>
         </div>
     </footer>
+
+    {{-- FREE RULE-BASED CHATBOT --}}
+    <button class="chatbot-fab" id="chatbotFab" aria-label="Buka chatbot">
+        <i class="fas fa-message"></i>
+    </button>
+    <div class="chatbot-panel" id="chatbotPanel" aria-live="polite">
+        <div class="chatbot-head">
+            <div>
+                <div class="chatbot-title">Bening Assistant</div>
+                <div style="font-size:.72rem;color:rgba(255,255,255,.62);margin-top:.15rem">Bening Rental</div>
+            </div>
+            <button class="chatbot-close" id="chatbotClose" aria-label="Tutup chatbot">&times;</button>
+        </div>
+        <div class="chatbot-body" id="chatbotBody"></div>
+        <form class="chatbot-form" id="chatbotForm">
+            <input class="chatbot-input" id="chatbotInput" type="text" autocomplete="off" placeholder="Tanya harga, booking, driver..." maxlength="180">
+            <button class="chatbot-send" type="submit">Kirim</button>
+        </form>
+        <div class="chatbot-meta" id="chatbotMeta">Tanyakan hal seputar booking, akun, kendaraan, pembayaran, driver, dan layanan.</div>
+        <a class="chatbot-wa" id="chatbotWa" href="#" target="_blank" rel="noopener">Hubungi WhatsApp</a>
+    </div>
 
     {{-- ════════ SCRIPTS ════════ --}}
     <script>
@@ -2162,6 +2303,113 @@
 
     const testiTrack = document.getElementById('testiTrack');
     if (testiTrack) { testiTrack.innerHTML += testiTrack.innerHTML; }
+
+    const chatbotFab = document.getElementById('chatbotFab');
+    const chatbotPanel = document.getElementById('chatbotPanel');
+    const chatbotClose = document.getElementById('chatbotClose');
+    const chatbotBody = document.getElementById('chatbotBody');
+    const chatbotForm = document.getElementById('chatbotForm');
+    const chatbotInput = document.getElementById('chatbotInput');
+    const chatbotWa = document.getElementById('chatbotWa');
+    const whatsappNumber = '6281234567890';
+    const whatsappText = encodeURIComponent('Halo Bening Rental, saya mau tanya lebih lanjut tentang rental mobil.');
+    chatbotWa.href = `https://wa.me/${whatsappNumber}?text=${whatsappText}`;
+
+    function addChatbotMessage(text, type = 'bot') {
+        const msg = document.createElement('div');
+        msg.className = `chatbot-msg ${type}`;
+        msg.textContent = text;
+        chatbotBody.appendChild(msg);
+        chatbotBody.scrollTop = chatbotBody.scrollHeight;
+    }
+
+    function answerChatbot(question) {
+        const q = question.toLowerCase();
+        if (q.match(/siapa kamu|kamu siapa|ini siapa|anda siapa|bot apa|assistant apa|asisten apa/)) {
+            return 'Saya Bening Assistant, asisten otomatis yang membantu menjawab pertanyaan seputar rental mobil, booking, akun, pembayaran, driver, dan layanan Bening Rental.';
+        }
+        if (q.match(/halo|hai|hello|hi|pagi|siang|sore|malam|permisi|assalam/)) {
+            return 'Halo! Saya bisa bantu info booking, login, armada, harga, pembayaran, driver, area layanan, dan penjemputan.';
+        }
+        if (q.match(/booking|pesan|order|reservasi/)) {
+            return 'Untuk booking, pilih tanggal dan kendaraan di bagian Armada. Setelah itu login dulu. Kalau belum punya akun, daftar terlebih dahulu, lalu isi alamat penjemputan dan lanjutkan pembayaran.';
+        }
+        if (q.match(/login|daftar|register|akun|belum punya akun|buat akun/)) {
+            return 'Kamu perlu login untuk membuat pesanan. Kalau belum punya akun, klik Daftar, isi nama, email, nomor HP, dan password. Setelah itu kamu bisa lanjut booking.';
+        }
+        if (q.match(/harga|biaya|tarif|rate|sewa|berapa|price|murah|mahal/)) {
+            return 'Harga tergantung tipe kendaraan, tanggal, dan durasi sewa. Cara paling akurat: pilih tanggal di bagian Armada, pilih kendaraan, lalu sistem akan menampilkan estimasi total saat booking.';
+        }
+        if (q.match(/armada|mobil|kendaraan|unit|tersedia|available|stok|tipe|jenis/)) {
+            return 'Ketersediaan kendaraan bisa dicek dari bagian Armada. Masukkan tanggal mulai dan selesai agar kendaraan yang tampil sesuai jadwal kosong di periode tersebut.';
+        }
+        if (q.match(/driver|sopir|pengemudi/)) {
+            return 'Driver akan ditugaskan setelah pembayaran dan konfirmasi admin. Untuk kebutuhan khusus, lebih cepat hubungi WhatsApp.';
+        }
+        if (q.match(/bayar|pembayaran|transfer|midtrans|ewallet|e-wallet|qris|bank|dp/)) {
+            return 'Pembayaran dilakukan dari halaman pesanan. Setelah pembayaran berhasil, status pesanan akan diperbarui otomatis dan admin bisa memproses penugasan driver.';
+        }
+        if (q.match(/uang.*aman|aman.*uang|pembayaran.*aman|bayar.*aman|transaksi.*aman|payment.*safe|refund.*aman/)) {
+            return 'Pembayaran diproses melalui alur checkout aplikasi, jadi jangan transfer ke rekening pribadi di luar instruksi sistem. Kalau ragu, simpan bukti pembayaran dan konfirmasi langsung ke WhatsApp admin.';
+        }
+        if (q.match(/lokasi|alamat|jemput|antar|tujuan/)) {
+            return 'Alamat penjemputan diisi saat checkout. Jika rutenya khusus atau luar kota, sebaiknya konfirmasi dulu lewat WhatsApp.';
+        }
+        if (q.match(/luar kota|area|wilayah|kota|bandara|airport|antar kota/)) {
+            return 'Untuk area layanan standar, kamu bisa lanjut booking dari website. Untuk luar kota, bandara, atau rute khusus, sebaiknya chat WhatsApp agar admin bisa hitung kebutuhan dengan tepat.';
+        }
+        if (q.match(/batal|cancel|refund|ubah jadwal|reschedule|ganti tanggal/)) {
+            return 'Perubahan jadwal, pembatalan, dan refund perlu dicek oleh admin berdasarkan status pesanan. Silakan hubungi WhatsApp agar dibantu sesuai kondisi booking kamu.';
+        }
+        if (q.match(/status|pesanan saya|riwayat|konfirmasi/)) {
+            return 'Status pesanan bisa dilihat setelah login di Dashboard atau Pesanan Saya. Jika pembayaran sudah berhasil tetapi status belum berubah, hubungi admin lewat WhatsApp.';
+        }
+        if (q.match(/asuransi|dokumen|sim|ktp|syarat/)) {
+            return 'Untuk syarat sewa dan dokumen, biasanya dibutuhkan data akun dan detail pemesanan. Jika ada kebutuhan khusus seperti perusahaan atau acara, hubungi WhatsApp.';
+        }
+        if (q.match(/aman|keamanan|percaya|penipuan/)) {
+            return 'Untuk keamanan, lakukan booking dan pembayaran lewat alur website. Hindari transaksi di luar sistem. Jika ada hal yang terasa mencurigakan, langsung hubungi WhatsApp admin sebelum membayar.';
+        }
+        if (q.match(/jam|waktu|operasional|buka|tutup|24 jam/)) {
+            return 'Website bisa dipakai kapan saja untuk booking. Untuk respons admin dan permintaan mendadak, langsung chat WhatsApp agar lebih cepat.';
+        }
+        if (q.match(/terima kasih|makasih|thanks|thank you/)) {
+            return 'Sama-sama! Semoga perjalananmu lancar. Kalau butuh bantuan detail, tombol WhatsApp ada di bawah chat ini.';
+        }
+        if (q.match(/judi|slot|pinjam uang|politik|pacar|curhat|kode|hack|virus|dewasa|obat|crypto|saham|film|game/)) {
+            return 'Maaf, saya tidak dirancang untuk menjawab topik itu. Saya hanya membantu pertanyaan terkait rental mobil Bening Rental. Silakan hubungi WhatsApp untuk bantuan lebih lanjut.';
+        }
+        return null;
+    }
+
+    function recommendWhatsapp() {
+        addChatbotMessage('Maaf saya tidak menjawab pertanyaan ini. Biar tidak salah info, langsung hubungi admin lewat WhatsApp ya.');
+    }
+
+    chatbotFab.addEventListener('click', () => {
+        chatbotPanel.classList.toggle('open');
+        if (chatbotBody.children.length === 0) {
+            addChatbotMessage('Halo! Saya Bening Assistant. Saya bisa bantu pertanyaan seputar booking, login, armada, harga, pembayaran, driver, dan layanan rental.');
+        }
+        chatbotInput.focus();
+    });
+
+    chatbotClose.addEventListener('click', () => chatbotPanel.classList.remove('open'));
+    chatbotForm.addEventListener('submit', (event) => {
+        event.preventDefault();
+        const question = chatbotInput.value.trim();
+        if (!question) return;
+
+        addChatbotMessage(question, 'user');
+        chatbotInput.value = '';
+
+        const answer = answerChatbot(question);
+        if (answer) {
+            addChatbotMessage(answer);
+        } else {
+            recommendWhatsapp();
+        }
+    });
     </script>
 </body>
 </html>

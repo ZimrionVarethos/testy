@@ -10,22 +10,22 @@
     }
 @endphp
 @if($showChat)
-<div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+<div class="bg-white border border-gray-100 overflow-hidden">
     <div class="flex items-center gap-2.5 px-4 py-3 border-b border-gray-100 bg-gray-50">
-        <div class="w-2 h-2 rounded-full flex-shrink-0 {{ $chatActive ? 'bg-green-400 animate-pulse' : 'bg-gray-300' }}"></div>
+        <div class="w-2 h-2 flex-shrink-0 {{ $chatActive ? 'bg-green-400 animate-pulse' : 'bg-gray-300' }}"></div>
         <h4 class="text-sm font-semibold text-gray-700">
             @if($senderRole === 'pengguna')
                 {{ $chatHistory ? 'Riwayat Chat' : 'Chat' }} dengan Driver
                 @if(!empty($booking->driver['name']))
-                <span class="text-indigo-600">{{ $booking->driver['name'] }}</span>
+                <span class="text-blue-600">{{ $booking->driver['name'] }}</span>
                 @endif
             @else
                 {{ $chatHistory ? 'Riwayat Chat' : 'Chat' }} dengan Penumpang
-                <span class="text-indigo-600">{{ $booking->user['name'] }}</span>
+                <span class="text-blue-600">{{ $booking->user['name'] }}</span>
             @endif
         </h4>
         @if($chatHistory)
-        <span class="ml-auto text-[10px] px-2 py-0.5 bg-gray-100 text-gray-500 rounded-full font-medium">Read-only</span>
+        <span class="ml-auto text-[10px] px-2 py-0.5 bg-gray-100 text-gray-500 font-medium">Read-only</span>
         @endif
     </div>
     @if($chatActive)
@@ -34,9 +34,9 @@
             <template x-if="loading && messages.length === 0">
                 <div class="flex-1 flex items-center justify-center">
                     <div class="flex gap-1.5">
-                        <div class="w-1.5 h-1.5 rounded-full bg-gray-300 animate-bounce" style="animation-delay:0ms"></div>
-                        <div class="w-1.5 h-1.5 rounded-full bg-gray-300 animate-bounce" style="animation-delay:150ms"></div>
-                        <div class="w-1.5 h-1.5 rounded-full bg-gray-300 animate-bounce" style="animation-delay:300ms"></div>
+                        <div class="w-1.5 h-1.5 bg-gray-300 animate-bounce" style="animation-delay:0ms"></div>
+                        <div class="w-1.5 h-1.5 bg-gray-300 animate-bounce" style="animation-delay:150ms"></div>
+                        <div class="w-1.5 h-1.5 bg-gray-300 animate-bounce" style="animation-delay:300ms"></div>
                     </div>
                 </div>
             </template>
@@ -58,13 +58,13 @@
                         <template x-if="idx === 0 || messages[idx-1].sender_role !== msg.sender_role">
                             <p class="text-[10px] text-gray-400 mb-0.5 px-1" x-text="msg.sender_name"></p>
                         </template>
-                        <div class="max-w-[78%] px-3 py-2 rounded-2xl text-sm leading-relaxed break-words"
-                             :class="msg.sender_role === '{{ $senderRole }}' ? 'bg-indigo-600 text-white rounded-tr-sm' : 'bg-gray-100 text-gray-800 rounded-tl-sm'"
+                        <div class="max-w-[78%] px-3 py-2 text-sm leading-relaxed break-words"
+                             :class="msg.sender_role === '{{ $senderRole }}' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-800'"
                              x-text="msg.message"></div>
                         <div class="flex items-center gap-1 mt-0.5 px-1">
                             <span class="text-[10px] text-gray-400" x-text="msg.time"></span>
                             <template x-if="msg.sender_role === '{{ $senderRole }}'">
-                                <svg x-show="msg.is_read" class="w-3 h-3 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                <svg x-show="msg.is_read" class="w-3 h-3 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
                                 </svg>
                             </template>
@@ -74,8 +74,8 @@
             </template>
         </div>
         <div class="border-t border-gray-100 px-3 py-2.5 flex gap-2 items-end bg-gray-50">
-            <textarea x-model="newMessage" @keydown.enter.prevent="if(!$event.shiftKey) sendMessage()" placeholder="Tulis pesan... (Enter kirim)" rows="1" :disabled="sending" class="flex-1 resize-none rounded-xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 disabled:opacity-50 max-h-24" style="min-height:38px" @input="autoResize($event.target)"></textarea>
-            <button @click="sendMessage()" :disabled="sending || !newMessage.trim()" class="flex-shrink-0 w-9 h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center hover:bg-indigo-700 disabled:opacity-40 transition">
+            <textarea x-model="newMessage" @keydown.enter.prevent="if(!$event.shiftKey) sendMessage()" placeholder="Tulis pesan... (Enter kirim)" rows="1" :disabled="sending" class="flex-1 resize-none border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 disabled:opacity-50 max-h-24" style="min-height:38px" @input="autoResize($event.target)"></textarea>
+            <button @click="sendMessage()" :disabled="sending || !newMessage.trim()" class="flex-shrink-0 w-9 h-9 bg-blue-600 text-white flex items-center justify-center hover:bg-blue-700 disabled:opacity-40 transition">
                 <svg class="w-4 h-4 rotate-90" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
             </button>
         </div>
@@ -113,7 +113,7 @@
                 @if($showName)
                 <p class="text-[10px] text-gray-400 mb-0.5 px-1">{{ $msg->sender_name }}</p>
                 @endif
-                <div class="max-w-[78%] px-3 py-2 rounded-2xl text-sm leading-relaxed break-words {{ $isSelf ? 'bg-indigo-500/80 text-white rounded-tr-sm' : 'bg-white border border-gray-200 text-gray-700 rounded-tl-sm' }}">{{ $msg->message }}</div>
+                <div class="max-w-[78%] px-3 py-2 text-sm leading-relaxed break-words {{ $isSelf ? 'bg-blue-500/80 text-white' : 'bg-white border border-gray-200 text-gray-700' }}">{{ $msg->message }}</div>
                 <span class="text-[10px] text-gray-400 mt-0.5 px-1">{{ $msg->created_at->format('H:i') }}</span>
             </div>
             @endforeach
@@ -131,7 +131,7 @@
             @if($existingRating->comment)
             <p class="text-xs text-gray-500 italic">"{{ $existingRating->comment }}"</p>
             @endif
-            <a href="{{ route('vehicles.index') }}" class="inline-block mt-3 px-5 py-2 bg-indigo-600 text-white text-xs font-semibold rounded-lg hover:bg-indigo-700 transition">Pesan Lagi 🚗</a>
+            <a href="{{ route('vehicles.index') }}" class="inline-block mt-3 px-5 py-2 bg-blue-600 text-white text-xs font-semibold hover:bg-blue-700 transition">Pesan Lagi 🚗</a>
         </div>
         @else
         <div class="px-4 py-4 space-y-3">
@@ -149,8 +149,8 @@
                     @endfor
                 </div>
                 <input type="hidden" name="score" :value="score">
-                <textarea name="comment" rows="2" class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 resize-none" placeholder="Tulis komentar (opsional)..." maxlength="500"></textarea>
-                <button type="submit" :disabled="score === 0" :class="score > 0 ? 'bg-indigo-600 hover:bg-indigo-700 text-white' : 'bg-gray-100 text-gray-400 cursor-not-allowed'" class="w-full py-2.5 text-sm font-medium rounded-lg transition">
+                <textarea name="comment" rows="2" class="w-full border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 resize-none" placeholder="Tulis komentar (opsional)..." maxlength="500"></textarea>
+                <button type="submit" :disabled="score === 0" :class="score > 0 ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-gray-100 text-gray-400 cursor-not-allowed'" class="w-full py-2.5 text-sm font-medium transition">
                     <span x-text="score === 0 ? 'Pilih bintang terlebih dahulu' : 'Kirim Rating'"></span>
                 </button>
             </form>
@@ -182,39 +182,6 @@
 @endif
 @once
 @push('scripts')
-<script>
-function chatRoom({ fetchUrl, postUrl, csrfToken, senderRole }) {
-    return {
-        messages: [], newMessage: '', sending: false, loading: true, errorMsg: '', pollTimer: null,
-        init() { this.fetchMessages(); this.pollTimer = setInterval(() => this.fetchMessages(), 5000); },
-        async fetchMessages() {
-            try {
-                const res = await fetch(fetchUrl, { headers: { 'X-CSRF-TOKEN': csrfToken, 'Accept': 'application/json' }, credentials: 'same-origin' });
-                if (!res.ok) throw new Error();
-                const data = await res.json();
-                const atBottom = this.isAtBottom();
-                this.messages = data.messages; this.loading = false; this.errorMsg = '';
-                if (atBottom) this.$nextTick(() => this.scrollToBottom());
-            } catch { this.loading = false; this.errorMsg = 'Gagal memuat pesan.'; }
-        },
-        async sendMessage() {
-            const text = this.newMessage.trim();
-            if (!text || this.sending) return;
-            this.sending = true; this.errorMsg = '';
-            try {
-                const res = await fetch(postUrl, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken, 'Accept': 'application/json' }, credentials: 'same-origin', body: JSON.stringify({ message: text }) });
-                if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.message || 'Gagal.'); }
-                const data = await res.json();
-                this.messages.push(data.message); this.newMessage = '';
-                this.$nextTick(() => { this.scrollToBottom(); const ta = this.$el.querySelector('textarea'); if (ta) ta.style.height = '38px'; });
-            } catch(e) { this.errorMsg = e.message || 'Gagal mengirim pesan.'; }
-            finally { this.sending = false; }
-        },
-        scrollToBottom() { const b = this.$refs.messageBox; if (b) b.scrollTop = b.scrollHeight; },
-        isAtBottom() { const b = this.$refs.messageBox; if (!b) return true; return b.scrollHeight - b.scrollTop - b.clientHeight < 60; },
-        autoResize(el) { el.style.height = '38px'; el.style.height = Math.min(el.scrollHeight, 96) + 'px'; },
-    };
-}
-</script>
+<script src="{{ asset('js/partials/chat-room.js') }}"></script>
 @endpush
 @endonce

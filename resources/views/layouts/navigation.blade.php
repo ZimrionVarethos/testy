@@ -91,10 +91,10 @@
 
             {{-- Chat dengan badge unread --}}
             <a href="{{ route('pengguna.chats.index') }}"
-               class="flex items-center py-2 px-2 rounded-lg text-sm transition-colors duration-150 relative
+               class="flex items-center py-2 px-2 text-sm transition-colors duration-150 relative
                       {{ request()->routeIs('pengguna.chats.*')
-                          ? 'bg-indigo-600 text-white'
-                          : 'text-gray-400 hover:text-white hover:bg-gray-700' }}">
+                          ? 'bg-gray-800 text-white border border-gray-600'
+                          : 'text-gray-400 hover:text-white hover:bg-gray-700 border border-transparent' }}">
                 <svg class="h-5 w-5 shrink-0 ml-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                           d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
@@ -104,7 +104,7 @@
                     Chat
                 </span>
                 @if($__chatUnread > 0)
-                <span class="ml-auto mr-1 px-1.5 py-0.5 bg-red-500 text-white text-[9px] font-bold rounded-full leading-none
+                <span class="ml-auto mr-1 px-1.5 py-0.5 bg-red-500 text-white text-[9px] font-bold leading-none
                              transition-all duration-300"
                       :class="sidebarOpen ? 'opacity-100' : 'opacity-0'">
                     {{ $__chatUnread > 9 ? '9+' : $__chatUnread }}
@@ -133,10 +133,10 @@
 
             {{-- Chat dengan badge unread --}}
             <a href="{{ route('driver.chats.index') }}"
-               class="flex items-center py-2 px-2 rounded-lg text-sm transition-colors duration-150 relative
+               class="flex items-center py-2 px-2 text-sm transition-colors duration-150 relative
                       {{ request()->routeIs('driver.chats.*')
-                          ? 'bg-indigo-600 text-white'
-                          : 'text-gray-400 hover:text-white hover:bg-gray-700' }}">
+                          ? 'bg-gray-800 text-white border border-gray-600'
+                          : 'text-gray-400 hover:text-white hover:bg-gray-700 border border-transparent' }}">
                 <svg class="h-5 w-5 shrink-0 ml-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                           d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
@@ -146,7 +146,7 @@
                     Chat
                 </span>
                 @if($__driverChatUnread > 0)
-                <span class="ml-auto mr-1 px-1.5 py-0.5 bg-red-500 text-white text-[9px] font-bold rounded-full leading-none
+                <span class="ml-auto mr-1 px-1.5 py-0.5 bg-red-500 text-white text-[9px] font-bold leading-none
                              transition-all duration-300"
                       :class="sidebarOpen ? 'opacity-100' : 'opacity-0'">
                     {{ $__driverChatUnread > 9 ? '9+' : $__driverChatUnread }}
@@ -165,7 +165,7 @@
         <form method="POST" action="{{ route('logout') }}">
             @csrf
             <button type="submit"
-                class="w-full flex items-center py-2 px-2 rounded-lg text-sm text-gray-400 hover:text-white hover:bg-gray-700 transition-colors duration-150">
+                class="w-full flex items-center py-2 px-2 text-sm text-gray-400 hover:text-white hover:bg-gray-700 border border-transparent transition-colors duration-150">
                 <svg class="h-5 w-5 shrink-0 ml-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h6a2 2 0 012 2v1"/>

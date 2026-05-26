@@ -142,11 +142,11 @@ Route::middleware(['auth', 'verified', 'role:admin'])
         // Upload
         Route::post('/',           [AssetController::class, 'store'])          ->name('store');
     
-        // Hapus satu
-        Route::delete('/{id}',     [AssetController::class, 'destroy'])        ->name('destroy');
-    
         // Hapus banyak (bulk)
         Route::delete('/bulk',     [AssetController::class, 'destroyBulk'])    ->name('destroy-bulk');
+
+        // Hapus satu
+        Route::delete('/{id}',     [AssetController::class, 'destroy'])        ->name('destroy');
     
         // JSON untuk Asset Picker (dipanggil via JS)
         Route::get('/picker',      [AssetController::class, 'pickerData'])     ->name('picker');

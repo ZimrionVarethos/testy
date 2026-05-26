@@ -4,36 +4,36 @@
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
 
     {{-- Greeting --}}
-    <div class="bg-gradient-to-r from-blue-600 to-blue-500 rounded-xl p-6 text-white">
+    <div class="bg-blue-700 p-6 text-white border border-blue-800">
         <h3 class="text-xl font-bold">Halo, {{ Auth::user()->name }}!</h3>
         <p class="text-blue-200 text-sm mt-1">Mau pergi ke mana hari ini?</p>
         <a href="{{ route('vehicles.index') }}"
-           class="mt-4 inline-block bg-white text-blue-600 text-sm font-semibold px-4 py-2 rounded-lg hover:bg-blue-50 transition">
-            Sewa Kendaraan Sekarang →
+           class="mt-4 inline-block bg-white text-blue-600 text-sm font-semibold px-4 py-2 hover:bg-blue-50 transition">
+            Sewa Kendaraan Sekarang
         </a>
     </div>
 
     {{-- Stats --}}
     <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
-        <div class="bg-white rounded-xl shadow-sm p-5 border border-gray-100 text-center">
+        <div class="bg-white p-5 border border-gray-100 text-center">
             <p class="text-2xl font-bold text-gray-800">{{ $stats['total'] ?? 0 }}</p>
             <p class="text-xs text-gray-500 mt-1">Total Pesanan</p>
         </div>
-        <div class="bg-white rounded-xl shadow-sm p-5 border border-gray-100 text-center">
+        <div class="bg-white p-5 border border-gray-100 text-center">
             <p class="text-2xl font-bold text-green-500">{{ $stats['ongoing'] ?? 0 }}</p>
             <p class="text-xs text-gray-500 mt-1">Sedang Berjalan</p>
         </div>
-        <div class="bg-white rounded-xl shadow-sm p-5 border border-gray-100 text-center">
+        <div class="bg-white p-5 border border-gray-100 text-center">
             <p class="text-2xl font-bold text-gray-400">{{ $stats['completed'] ?? 0 }}</p>
             <p class="text-xs text-gray-500 mt-1">Selesai</p>
         </div>
     </div>
 
     {{-- Pesanan Aktif --}}
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100">
+    <div class="bg-white border border-gray-100">
         <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100">
             <h4 class="font-semibold text-gray-700">Pesanan Aktif</h4>
-            <a href="{{ route('bookings.index') }}" class="text-xs text-indigo-500 hover:underline">Lihat semua</a>
+            <a href="{{ route('bookings.index') }}" class="text-xs text-blue-500 hover:underline">Lihat semua</a>
         </div>
         <div class="divide-y divide-gray-50">
             @forelse($activeBookings ?? [] as $booking)
@@ -48,7 +48,7 @@
                         <p class="text-sm text-gray-600 mt-0.5">{{ $booking->vehicle['name'] ?? '-' }}</p>
                         <p class="text-xs text-gray-400 mt-1">
                             {{ \Carbon\Carbon::parse($booking->start_date)->format('d M Y') }}
-                            →
+                            -
                             {{ \Carbon\Carbon::parse($booking->end_date)->format('d M Y') }}
                         </p>
 
@@ -60,7 +60,7 @@
                             <p class="text-xs text-amber-500 mt-1">⏱ Belum dibayar</p>
                             @endif
                         @elseif($booking->status === 'confirmed' && !empty($booking->driver['name']))
-                            <p class="text-xs text-indigo-500 mt-1">
+                            <p class="text-xs text-blue-500 mt-1">
                                 Driver: {{ $booking->driver['name'] }}
                             </p>
                         @endif
@@ -69,18 +69,18 @@
                     {{-- Badge --}}
                     @if($booking->status === 'pending')
                         @if($sudahBayar)
-                        <span class="px-2 py-1 text-xs rounded-full font-medium shrink-0 bg-blue-100 text-blue-700">
+                        <span class="px-2 py-1 text-xs font-medium shrink-0 bg-blue-100 text-blue-700">
                             Menunggu Admin
                         </span>
                         @else
-                        <span class="px-2 py-1 text-xs rounded-full font-medium shrink-0 bg-yellow-100 text-yellow-700">
+                        <span class="px-2 py-1 text-xs font-medium shrink-0 bg-yellow-100 text-yellow-700">
                             Belum Dibayar
                         </span>
                         @endif
                     @else
                     <span @class([
-                        'px-2 py-1 text-xs rounded-full font-medium shrink-0',
-                        'bg-indigo-100 text-indigo-700' => $booking->status === 'confirmed',
+                        'px-2 py-1 text-xs font-medium shrink-0',
+                        'bg-blue-100 text-blue-700' => $booking->status === 'confirmed',
                         'bg-green-100 text-green-700'   => $booking->status === 'ongoing',
                     ])>
                         @switch($booking->status)
@@ -95,7 +95,7 @@
             @empty
             <div class="px-5 py-8 text-center">
                 <p class="text-sm text-gray-400">Belum ada pesanan aktif.</p>
-                <a href="{{ route('vehicles.index') }}" class="mt-2 inline-block text-indigo-500 text-sm hover:underline">
+                <a href="{{ route('vehicles.index') }}" class="mt-2 inline-block text-blue-500 text-sm hover:underline">
                     Mulai sewa sekarang
                 </a>
             </div>
@@ -105,15 +105,15 @@
 
     {{-- Notifikasi Terbaru --}}
     @if(isset($notifications) && $notifications->count() > 0)
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100">
+    <div class="bg-white border border-gray-100">
         <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100">
             <h4 class="font-semibold text-gray-700">Notifikasi Terbaru</h4>
-            <a href="{{ route('notifications.index') }}" class="text-xs text-indigo-500 hover:underline">Lihat semua</a>
+            <a href="{{ route('notifications.index') }}" class="text-xs text-blue-500 hover:underline">Lihat semua</a>
         </div>
         <div class="divide-y divide-gray-50">
             @foreach($notifications as $notif)
-            <div class="px-5 py-3 flex items-start gap-3 {{ $notif->is_read ? '' : 'bg-indigo-50/40' }}">
-                <div class="h-2 w-2 rounded-full mt-2 shrink-0 {{ $notif->is_read ? 'bg-gray-300' : 'bg-indigo-500' }}"></div>
+            <div class="px-5 py-3 flex items-start gap-3 {{ $notif->is_read ? '' : 'bg-blue-50/40' }}">
+                <div class="h-2 w-2 mt-2 shrink-0 {{ $notif->is_read ? 'bg-gray-300' : 'bg-blue-500' }}"></div>
                 <div>
                     <p class="text-sm font-medium text-gray-800">{{ $notif->title }}</p>
                     <p class="text-xs text-gray-500">{{ $notif->message }}</p>

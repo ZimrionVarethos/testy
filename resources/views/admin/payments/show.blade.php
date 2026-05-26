@@ -6,14 +6,14 @@
 
         <a href="{{ route('admin.payments.index') }}"
            class="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-blue-600 transition-colors">
-            ← Kembali
+            Kembali
         </a>
 
         {{-- Payment Info --}}
-        <div class="bg-white rounded-xl border border-gray-100 shadow-sm divide-y divide-gray-100">
+        <div class="bg-white border border-gray-100 divide-y divide-gray-100">
             <div class="px-6 py-4 flex items-center justify-between">
                 <h2 class="font-semibold text-gray-800">{{ $payment->booking_code }}</h2>
-                <span class="px-3 py-1 rounded-full text-sm font-medium {{ $payment->statusBadgeClass() }}">
+                <span class="px-3 py-1 text-sm font-medium {{ $payment->statusBadgeClass() }}">
                     {{ $payment->statusLabel() }}
                 </span>
             </div>
@@ -41,7 +41,7 @@
 
         {{-- Midtrans Data --}}
         @if(!empty($payment->midtrans))
-        <div class="bg-white rounded-xl border border-gray-100 shadow-sm">
+        <div class="bg-white border border-gray-100">
             <div class="px-6 py-4 border-b border-gray-100">
                 <h3 class="font-semibold text-gray-700 text-sm">Data Midtrans</h3>
             </div>
@@ -66,7 +66,7 @@
 
         {{-- Booking Info --}}
         @if($booking)
-        <div class="bg-white rounded-xl border border-gray-100 shadow-sm">
+        <div class="bg-white border border-gray-100">
             <div class="px-6 py-4 border-b border-gray-100">
                 <h3 class="font-semibold text-gray-700 text-sm">Booking Terkait</h3>
             </div>
@@ -93,7 +93,7 @@
             <div class="px-6 py-3 border-t border-gray-100">
                 <a href="{{ route('admin.bookings.show', $booking->_id) }}"
                    class="text-sm text-blue-600 hover:underline font-medium">
-                    Lihat Detail Booking →
+                    Lihat Detail Booking
                 </a>
             </div>
         </div>

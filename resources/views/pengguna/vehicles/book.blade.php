@@ -4,17 +4,17 @@
     <div class="py-6 max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
 
         <a href="{{ route('vehicles.index', ['start_date' => $startDate, 'end_date' => $endDate]) }}"
-           class="text-sm text-blue-500 hover:underline">← Pilih kendaraan lain</a>
+           class="text-sm text-blue-500 hover:underline">Pilih kendaraan lain</a>
 
         @if($errors->any())
-        <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+        <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 text-sm">
             {{ $errors->first() }}
         </div>
         @endif
 
         {{-- Ringkasan kendaraan --}}
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 flex gap-4 items-start">
-            <div class="h-16 w-24 rounded-lg overflow-hidden bg-gray-100 shrink-0">
+        <div class="bg-white border border-gray-100 p-5 flex gap-4 items-start">
+            <div class="h-16 w-24 overflow-hidden bg-gray-100 shrink-0">
                 @if(!empty($vehicle->images[0]))
                     @php $bImg = $vehicle->images[0]; @endphp
                     <img src="{{ str_starts_with($bImg, 'http') ? $bImg : Storage::url($bImg) }}"
@@ -38,7 +38,7 @@
         </div>
 
         {{-- Ringkasan tanggal & harga --}}
-        <div class="bg-blue-50 border border-blue-100 rounded-xl p-4 space-y-2 text-sm">
+        <div class="bg-blue-50 border border-blue-100 p-4 space-y-2 text-sm">
             <div class="flex justify-between">
                 <span class="text-gray-500">Tanggal Mulai</span>
                 <span class="font-medium">{{ \Carbon\Carbon::parse($startDate)->format('d M Y H:i') }}</span>
@@ -67,7 +67,7 @@
             <input type="hidden" name="start_date" value="{{ $startDate }}">
             <input type="hidden" name="end_date"   value="{{ $endDate }}">
 
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 space-y-4">
+            <div class="bg-white border border-gray-100 p-5 space-y-4">
                 <h4 class="font-semibold text-gray-700">Detail Penjemputan</h4>
 
                 <div>
@@ -78,7 +78,7 @@
                            value="{{ old('pickup_address') }}"
                            placeholder="Masukkan alamat lengkap penjemputan"
                            required
-                           class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none @error('pickup_address') border-red-300 @enderror">
+                           class="w-full border border-gray-200 px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none @error('pickup_address') border-red-300 @enderror">
                     @error('pickup_address')
                     <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                     @enderror
@@ -88,18 +88,18 @@
                     <label class="block text-sm font-medium text-gray-700 mb-1">Catatan (opsional)</label>
                     <textarea name="notes" rows="3"
                               placeholder="Instruksi tambahan untuk driver..."
-                              class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none resize-none">{{ old('notes') }}</textarea>
+                              class="w-full border border-gray-200 px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none resize-none">{{ old('notes') }}</textarea>
                 </div>
             </div>
 
             {{-- Info pembayaran --}}
-            <div class="bg-amber-50 border border-amber-100 rounded-xl px-4 py-3 text-xs text-amber-700 space-y-1">
+            <div class="bg-amber-50 border border-amber-100 px-4 py-3 text-xs text-amber-700 space-y-1">
                 <p class="font-semibold">⏱ Batas waktu pembayaran: 30 menit</p>
                 <p>Setelah pesanan dibuat, selesaikan pembayaran dalam 30 menit. Pesanan akan dibatalkan otomatis jika melewati batas waktu.</p>
             </div>
 
             <button type="submit"
-                    class="w-full py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 active:scale-95 transition">
+                    class="w-full py-3 bg-blue-600 text-white font-semibold hover:bg-blue-700 active:scale-95 transition">
                 Buat Pesanan & Bayar
             </button>
         </form>

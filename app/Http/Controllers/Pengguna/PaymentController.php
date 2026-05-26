@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Pengguna;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Api\PaymentController as ApiPayment;
 use App\Http\Traits\WebApiProxy;
-use App\Models\Booking;
 
 class PaymentController extends Controller
 {
@@ -32,7 +31,7 @@ class PaymentController extends Controller
         $req     = $this->makeApiRequest();
         $booking = $api->bookingForSnapForWeb($req, $bookingId);
 
-        if ($booking->status !== Booking::STATUS_PENDING) {
+        if ($booking->status !== 'pending') {
             return redirect()->route('bookings.show', $bookingId)
                 ->with('info', 'Pesanan ini sudah ' . $booking->statusLabel() . '.');
         }

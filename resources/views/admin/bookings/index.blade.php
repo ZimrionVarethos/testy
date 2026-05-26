@@ -5,14 +5,14 @@
     <div class="py-6 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
 
         @if(session('success'))
-            <div class="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-sm">{{ session('success') }}</div>
+            <div class="bg-green-50 border border-green-200 text-green-700 px-4 py-3 text-sm">{{ session('success') }}</div>
         @endif
         @if($errors->any())
-            <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">{{ $errors->first() }}</div>
+            <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 text-sm">{{ $errors->first() }}</div>
         @endif
 
         {{-- Filter status — 'accepted' dihapus dari alur utama --}}
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 flex flex-wrap gap-2">
+        <div class="bg-white border border-gray-100 p-4 flex flex-wrap gap-2">
             @foreach([
                 ''          => 'Semua',
                 'pending'   => 'Pending',
@@ -22,14 +22,14 @@
                 'cancelled' => 'Dibatalkan',
             ] as $val => $label)
             <a href="{{ route('admin.bookings.index', ['status' => $val]) }}"
-               class="px-3 py-1.5 rounded-lg text-sm font-medium transition
+               class="px-3 py-1.5 text-sm font-medium transition
                       {{ $status == $val ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200' }}">
                 {{ $label }}
             </a>
             @endforeach
         </div>
 
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="bg-white border border-gray-100 overflow-hidden">
             <table class="w-full text-sm">
                 <thead class="bg-gray-50 border-b border-gray-100">
                     <tr>
@@ -60,7 +60,7 @@
                             @endif
                         </td>
                         <td class="px-5 py-3">
-                            <span @class(['px-2 py-1 text-xs rounded-full font-medium',
+                            <span @class(['px-2 py-1 text-xs font-medium',
                                 'bg-yellow-100 text-yellow-700' => $b->status === 'pending',
                                 'bg-blue-100 text-blue-700'     => $b->status === 'confirmed',
                                 'bg-green-100 text-green-700'   => $b->status === 'ongoing',

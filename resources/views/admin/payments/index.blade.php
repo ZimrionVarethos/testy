@@ -6,17 +6,17 @@
 
         {{-- Summary Cards --}}
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+            <div class="bg-white border border-gray-100 p-5">
                 <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide">Total Pendapatan</p>
                 <p class="text-2xl font-bold text-green-600 mt-1">
                     Rp {{ number_format($summary['total_paid'], 0, ',', '.') }}
                 </p>
             </div>
-            <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+            <div class="bg-white border border-gray-100 p-5">
                 <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide">Transaksi Lunas</p>
                 <p class="text-2xl font-bold text-blue-600 mt-1">{{ number_format($summary['count_paid']) }}</p>
             </div>
-            <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+            <div class="bg-white border border-gray-100 p-5">
                 <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide">Menunggu Bayar</p>
                 <p class="text-2xl font-bold text-yellow-500 mt-1">{{ number_format($summary['total_pending']) }}</p>
             </div>
@@ -27,7 +27,7 @@
             <div>
                 <label class="block text-xs text-gray-500 mb-1">Status</label>
                 <select name="status"
-                        class="rounded-lg border-gray-200 text-sm focus:ring-blue-500 focus:border-blue-500">
+                        class=" border-gray-200 text-sm focus:ring-blue-500 focus:border-blue-500">
                     <option value="">Semua</option>
                     <option value="pending"   @selected(request('status') === 'pending')>Pending</option>
                     <option value="paid"      @selected(request('status') === 'paid')>Lunas</option>
@@ -40,22 +40,22 @@
                 <label class="block text-xs text-gray-500 mb-1">Cari Kode</label>
                 <input type="text" name="search" value="{{ request('search') }}"
                        placeholder="BRN-..."
-                       class="rounded-lg border-gray-200 text-sm focus:ring-blue-500 focus:border-blue-500">
+                       class=" border-gray-200 text-sm focus:ring-blue-500 focus:border-blue-500">
             </div>
             <button type="submit"
-                    class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors">
+                    class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-colors">
                 Filter
             </button>
             @if(request()->hasAny(['status','search']))
             <a href="{{ route('admin.payments.index') }}"
-               class="px-4 py-2 border border-gray-200 text-gray-600 text-sm rounded-lg hover:bg-gray-50 transition-colors">
+               class="px-4 py-2 border border-gray-200 text-gray-600 text-sm hover:bg-gray-50 transition-colors">
                 Reset
             </a>
             @endif
         </form>
 
         {{-- Table --}}
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="bg-white border border-gray-100 overflow-hidden">
             <table class="w-full text-sm">
                 <thead class="bg-gray-50 border-b border-gray-100">
                     <tr>
@@ -78,7 +78,7 @@
                             Rp {{ number_format($payment->amount, 0, ',', '.') }}
                         </td>
                         <td class="px-5 py-3">
-                            <span class="px-2 py-1 text-xs rounded-full font-medium {{ $payment->statusBadgeClass() }}">
+                            <span class="px-2 py-1 text-xs font-medium {{ $payment->statusBadgeClass() }}">
                                 {{ $payment->statusLabel() }}
                             </span>
                         </td>

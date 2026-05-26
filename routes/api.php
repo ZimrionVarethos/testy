@@ -12,6 +12,9 @@ use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\ChatController;
 use App\Http\Controllers\Api\TicketController;
 use App\Http\Controllers\Api\FcmController;
+use App\Http\Controllers\Api\LandingController;
+use App\Http\Controllers\Api\WebAuthController;
+use App\Http\Controllers\Api\AssetController;
 
 Route::prefix('v1')->group(function () {
 
@@ -19,10 +22,17 @@ Route::prefix('v1')->group(function () {
     // PUBLIC — tidak perlu auth
     // ════════════════════════════════════════════════════════════
 
+    // Data landing page (dipakai WelcomeController via Http::)
+    Route::get('landing', [LandingController::class, 'index'])->name('api.landing.index');
+
     Route::prefix('auth')->group(function () {
         Route::post('register',        [AuthController::class, 'register']);
         Route::post('login',           [AuthController::class, 'login']);       // admin diblokir di dalam method
         Route::post('forgot-password', [AuthController::class, 'forgotPassword']);
+    });
+
+    Route::prefix('web/auth')->group(function () {
+        Route::post('login', [WebAuthController::class, 'login']);
     });
 
     // Midtrans webhook — public, diverifikasi via signature key di dalam method
@@ -33,6 +43,10 @@ Route::prefix('v1')->group(function () {
     // PROTECTED — semua route di bawah butuh token Sanctum
     // ════════════════════════════════════════════════════════════
     Route::middleware('auth:sanctum')->group(function () {
+        Route::prefix('web/auth')->group(function () {
+            Route::get('me', [WebAuthController::class, 'me']);
+            Route::post('logout', [WebAuthController::class, 'logout']);
+        });
 
         // ── Auth ─────────────────────────────────────────────────
         Route::prefix('auth')->group(function () {
@@ -121,8 +135,9 @@ Route::prefix('v1')->group(function () {
             Route::get('driver',   [DashboardController::class, 'driver']);
             Route::get('pengguna', [DashboardController::class, 'pengguna']);
             Route::middleware('role:admin')->group(function () {
-                Route::get('/',       [DashboardController::class, 'index']);
-                Route::get('reports', [DashboardController::class, 'reports']);
+                Route::get('/',                   [DashboardController::class, 'index']);
+                Route::get('reports',             [DashboardController::class, 'reports']);
+                Route::delete('reports/cleanup',  [DashboardController::class, 'deleteOld']);
             });
         });
 
@@ -157,6 +172,33 @@ Route::prefix('v1')->group(function () {
             Route::get('{id}',                 [TicketController::class, 'adminShow']);
             Route::post('{id}/reply',          [TicketController::class, 'adminReply']);
             Route::put('{id}/status',          [TicketController::class, 'adminUpdateStatus']);
+        });
+
+        Route::middleware('role:admin')->prefix('admin/maps')->group(function () {
+            Route::get('/', [DashboardController::class, 'maps']);
+            Route::get('{vehicleId}', [DashboardController::class, 'mapShow']);
+        });
+
+        Route::middleware('role:admin')->prefix('admin/assets')->group(function () {
+            Route::get('/', [AssetController::class, 'index']);
+            Route::post('/', [AssetController::class, 'store']);
+            Route::delete('/', [AssetController::class, 'destroyBulk']);
+            Route::get('picker', [AssetController::class, 'picker']);
+            Route::get('usage', [AssetController::class, 'usage']);
+            Route::delete('{id}', [AssetController::class, 'destroy']);
+        });
+
+        Route::middleware('role:admin')->prefix('admin/landing')->group(function () {
+            Route::get('/', [LandingController::class, 'adminIndex']);
+            Route::post('slides', [LandingController::class, 'adminStoreSlide']);
+            Route::put('{key}', [LandingController::class, 'adminUpdate']);
+            Route::delete('{key}', [LandingController::class, 'adminDestroy']);
+        });
+
+        Route::middleware('role:admin')->prefix('admin/vehicles')->group(function () {
+            Route::post('/', [VehicleController::class, 'adminStore']);
+            Route::put('{id}', [VehicleController::class, 'adminUpdate']);
+            Route::delete('{id}', [VehicleController::class, 'adminDestroy']);
         });
     });
 

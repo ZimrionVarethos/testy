@@ -5,12 +5,12 @@
     <div class="py-6 max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
 
         {{-- Filter tabs --}}
-        <div class="flex gap-1 bg-white border border-gray-100 rounded-xl p-1 shadow-sm">
+        <div class="flex gap-1 bg-white border border-gray-100 p-1">
             @foreach(['active' => 'Sedang Berjalan', 'history' => 'Riwayat'] as $key => $label)
             <a href="{{ route('pengguna.chats.index', ['filter' => $key]) }}"
-               class="flex-1 text-center px-3 py-1.5 rounded-lg text-xs font-medium transition
+               class="flex-1 text-center px-3 py-1.5 text-xs font-medium transition
                       {{ $filter === $key
-                          ? 'bg-indigo-600 text-white'
+                          ? 'bg-blue-600 text-white'
                           : 'text-gray-500 hover:bg-gray-50' }}">
                 {{ $label }}
             </a>
@@ -27,14 +27,14 @@
         @endphp
 
         <a href="{{ route('bookings.show', $bid) }}"
-           class="block bg-white rounded-xl border transition hover:shadow-md
-                  {{ $unread > 0 ? 'border-indigo-200 shadow-sm' : 'border-gray-100' }}">
+           class="block bg-white border transition
+                  {{ $unread > 0 ? 'border-blue-200' : 'border-gray-100' }}">
             <div class="p-4 flex items-start gap-3">
 
                 {{-- Avatar / icon --}}
-                <div class="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center
-                            {{ $isDone ? 'bg-gray-100' : 'bg-indigo-50' }}">
-                    <svg class="w-5 h-5 {{ $isDone ? 'text-gray-400' : 'text-indigo-500' }}"
+                <div class="flex-shrink-0 w-10 h-10 flex items-center justify-center
+                            {{ $isDone ? 'bg-gray-100' : 'bg-blue-50' }}">
+                    <svg class="w-5 h-5 {{ $isDone ? 'text-gray-400' : 'text-blue-500' }}"
                          fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
                         <path stroke-linecap="round" stroke-linejoin="round"
                               d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
@@ -49,13 +49,13 @@
                         </p>
                         <div class="flex items-center gap-1.5 flex-shrink-0">
                             @if($unread > 0)
-                            <span class="px-1.5 py-0.5 bg-indigo-600 text-white text-[10px] font-bold rounded-full leading-none">
+                            <span class="px-1.5 py-0.5 bg-blue-600 text-white text-[10px] font-bold leading-none">
                                 {{ $unread }}
                             </span>
                             @endif
                             <span @class([
-                                'px-2 py-0.5 text-[10px] rounded-full font-medium',
-                                'bg-indigo-100 text-indigo-700' => $booking->status === 'confirmed',
+                                'px-2 py-0.5 text-[10px] font-medium',
+                                'bg-blue-100 text-blue-700' => $booking->status === 'confirmed',
                                 'bg-green-100 text-green-700'   => $booking->status === 'ongoing',
                                 'bg-gray-100 text-gray-500'     => $booking->status === 'completed',
                                 'bg-red-100 text-red-500'       => $booking->status === 'cancelled',
@@ -90,7 +90,7 @@
                             {{ $rating->starLabel() }} — sudah dirating
                         </p>
                         @else
-                        <p class="text-xs text-indigo-500 mt-1 font-medium">
+                        <p class="text-xs text-blue-500 mt-1 font-medium">
                             ✍ Belum memberikan rating
                         </p>
                         @endif
@@ -107,8 +107,8 @@
         </a>
 
         @empty
-        <div class="bg-white rounded-xl border border-gray-100 py-16 text-center">
-            <div class="w-12 h-12 rounded-xl bg-gray-50 flex items-center justify-center mx-auto mb-3">
+        <div class="bg-white border border-gray-100 py-16 text-center">
+            <div class="w-12 h-12 bg-gray-50 flex items-center justify-center mx-auto mb-3">
                 <svg class="w-6 h-6 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                     <path stroke-linecap="round" stroke-linejoin="round"
                           d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>

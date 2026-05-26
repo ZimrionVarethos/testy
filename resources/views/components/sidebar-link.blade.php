@@ -3,8 +3,8 @@
 
 @php
 $classes = $active
-    ? 'flex items-center px-2 py-2 rounded-lg text-sm font-medium bg-indigo-600 text-white'
-    : 'flex items-center px-2 py-2 rounded-lg text-sm text-gray-400 hover:text-white hover:bg-gray-700 transition-colors duration-150';
+    ? 'flex items-center px-2 py-2 text-sm font-medium bg-gray-800 text-white border border-gray-600'
+    : 'flex items-center px-2 py-2 text-sm text-gray-400 hover:text-white hover:bg-gray-700 border border-transparent transition-colors duration-150';
 
 $icons = [
     'home'             => 'M3 9.75L12 3l9 6.75V21a.75.75 0 01-.75.75H15a.75.75 0 01-.75-.75v-4.5h-4.5V21a.75.75 0 01-.75.75H3.75A.75.75 0 013 21V9.75z',

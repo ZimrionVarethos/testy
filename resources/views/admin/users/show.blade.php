@@ -5,14 +5,14 @@
     <div class="py-6 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
 
         @if(session('success'))
-            <div class="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-sm">{{ session('success') }}</div>
+            <div class="bg-green-50 border border-green-200 text-green-700 px-4 py-3 text-sm">{{ session('success') }}</div>
         @endif
 
         {{-- Header Card --}}
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <div class="bg-white border border-gray-100 p-6">
             <div class="flex items-start justify-between flex-wrap gap-4">
                 <div class="flex items-center gap-4">
-                    <div class="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center text-2xl font-bold text-blue-600">
+                    <div class="w-16 h-16 bg-blue-100 flex items-center justify-center text-2xl font-bold text-blue-600">
                         {{ strtoupper(substr($user->name, 0, 1)) }}
                     </div>
                     <div>
@@ -22,27 +22,27 @@
                 </div>
                 <div class="flex items-center gap-3 flex-wrap">
                     <span @class([
-                        'px-3 py-1 rounded-full text-xs font-medium',
+                        'px-3 py-1 text-xs font-medium',
                         'bg-green-100 text-green-700' => $user->is_active,
                         'bg-red-100 text-red-600'     => !$user->is_active,
                     ])>{{ $user->is_active ? 'Aktif' : 'Nonaktif' }}</span>
 
                     <form method="POST" action="{{ route('admin.users.toggle', $user->_id) }}">
                         @csrf
-                        <button class="px-4 py-1.5 text-sm rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition">
+                        <button class="px-4 py-1.5 text-sm border border-gray-200 text-gray-600 hover:bg-gray-50 transition">
                             {{ $user->is_active ? 'Nonaktifkan' : 'Aktifkan' }}
                         </button>
                     </form>
 
-                    <a href="{{ route('admin.users.index') }}" class="px-4 py-1.5 text-sm rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 transition">
-                        ← Kembali
+                    <a href="{{ route('admin.users.index') }}" class="px-4 py-1.5 text-sm bg-gray-100 text-gray-600 hover:bg-gray-200 transition">
+                        Kembali
                     </a>
                 </div>
             </div>
         </div>
 
         {{-- Info Akun --}}
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+        <div class="bg-white border border-gray-100 p-5">
             <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide border-b pb-2 mb-3">Info Akun</h3>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
                 <div class="flex justify-between">
@@ -67,7 +67,7 @@
         </div>
 
         {{-- Riwayat Booking --}}
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="bg-white border border-gray-100 overflow-hidden">
             <div class="px-5 py-4 border-b border-gray-100">
                 <h3 class="text-sm font-semibold text-gray-700">Riwayat Booking (10 Terakhir)</h3>
             </div>
@@ -95,7 +95,7 @@
                             {{ \Carbon\Carbon::parse($b->end_date)->format('d M Y') }}
                         </td>
                         <td class="px-5 py-3">
-                            <span @class(['px-2 py-1 text-xs rounded-full font-medium',
+                            <span @class(['px-2 py-1 text-xs font-medium',
                                 'bg-yellow-100 text-yellow-700' => $b->status === 'pending',
                                 'bg-blue-100 text-blue-700'     => $b->status === 'accepted',
                                 'bg-blue-100 text-blue-700' => $b->status === 'confirmed',

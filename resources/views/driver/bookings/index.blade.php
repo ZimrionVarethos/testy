@@ -5,7 +5,7 @@
 
         @forelse($bookings as $b)
         <a href="{{ route('driver.bookings.show', $b->_id) }}"
-           class="block bg-white rounded-xl shadow-sm border border-gray-100 p-5 hover:border-indigo-200 hover:shadow-md transition">
+           class="block bg-white border border-gray-100 p-5 hover:border-blue-200 transition">
             <div class="flex items-start justify-between gap-3">
                 <div class="flex-1 min-w-0">
                     <p class="font-semibold text-gray-800">{{ $b->booking_code }}</p>
@@ -15,7 +15,7 @@
                     <p class="text-sm text-gray-500">👤 {{ $b->user['name'] ?? '-' }}</p>
                     <p class="text-sm text-gray-500 truncate">📍 {{ $b->pickup['address'] ?? '-' }}</p>
                     <p class="text-xs text-gray-400 mt-1">
-                        {{ \Carbon\Carbon::parse($b->start_date)->format('d M Y H:i') }} →
+                        {{ \Carbon\Carbon::parse($b->start_date)->format('d M Y H:i') }} -
                         {{ \Carbon\Carbon::parse($b->end_date)->format('d M Y H:i') }}
                     </p>
 
@@ -23,7 +23,7 @@
                     @if($b->status === 'confirmed')
                         @php $diffHours = now()->diffInHours(\Carbon\Carbon::parse($b->start_date), false); @endphp
                         @if($diffHours > 0)
-                        <p class="text-xs text-indigo-500 mt-1">
+                        <p class="text-xs text-blue-500 mt-1">
                             ⏱ Jemput dalam {{ $diffHours }} jam
                         </p>
                         @elseif($diffHours >= -1)
@@ -35,8 +35,8 @@
                 </div>
 
                 <div class="shrink-0">
-                    <span @class(['px-2 py-1 text-xs rounded-full font-medium',
-                        'bg-indigo-100 text-indigo-700' => $b->status === 'confirmed',
+                    <span @class(['px-2 py-1 text-xs font-medium',
+                        'bg-blue-100 text-blue-700' => $b->status === 'confirmed',
                         'bg-green-100 text-green-700'   => $b->status === 'ongoing',
                         'bg-gray-100 text-gray-600'     => $b->status === 'completed',
                         'bg-red-100 text-red-600'       => $b->status === 'cancelled',

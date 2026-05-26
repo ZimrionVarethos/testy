@@ -35,15 +35,14 @@ class ProfileController extends Controller
         return Redirect::route('profile.edit')->with('status', 'avatar-updated');
     }
 
-    public function destroy(Request $request): RedirectResponse
+    public function destroy(Request $request, ApiAuth $api): RedirectResponse
     {
         $request->validateWithBag('userDeletion', [
             'password' => ['required', 'current_password'],
         ]);
 
-        $user = $request->user();
+        $api->deleteAccountForWeb($request);
         Auth::logout();
-        $user->delete();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 

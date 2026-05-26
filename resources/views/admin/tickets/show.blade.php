@@ -3,16 +3,16 @@
     <x-slot name="header">Detail Tiket</x-slot>
 
     <div class="py-6 max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
-        <a href="{{ route('admin.tickets.index') }}" class="text-sm text-blue-500 hover:underline">← Semua Tiket</a>
+        <a href="{{ route('admin.tickets.index') }}" class="text-sm text-blue-500 hover:underline">Semua Tiket</a>
 
         @if(session('success'))
-        <div class="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-sm">
+        <div class="bg-green-50 border border-green-200 text-green-700 px-4 py-3 text-sm">
             {{ session('success') }}
         </div>
         @endif
 
         {{-- Header tiket --}}
-        <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+        <div class="bg-white border border-gray-100 p-5">
             <div class="flex items-start justify-between gap-3 mb-3">
                 <div class="flex-1">
                     <h2 class="font-semibold text-gray-800 text-base">{{ $ticket->subject }}</h2>
@@ -24,9 +24,9 @@
                 </div>
                 <div class="flex gap-1.5 flex-shrink-0">
                     @if($ticket->priority === 'urgent')
-                    <span class="px-2 py-0.5 text-xs rounded-full font-bold bg-red-100 text-red-600">URGENT</span>
+                    <span class="px-2 py-0.5 text-xs font-bold bg-red-100 text-red-600">URGENT</span>
                     @endif
-                    <span class="px-2 py-0.5 text-xs rounded-full font-medium {{ $ticket->statusBadgeClass() }}">
+                    <span class="px-2 py-0.5 text-xs font-medium {{ $ticket->statusBadgeClass() }}">
                         {{ $ticket->statusLabel() }}
                     </span>
                 </div>
@@ -38,7 +38,7 @@
                 @csrf
                 <label class="text-xs text-gray-500 font-medium flex-shrink-0">Ubah Status:</label>
                 <select name="status"
-                        class="text-xs rounded-lg border border-gray-200 px-2 py-1.5
+                        class="text-xs border border-gray-200 px-2 py-1.5
                                focus:outline-none focus:ring-2 focus:ring-blue-300">
                     <option value="open"        {{ $ticket->status === 'open'        ? 'selected' : '' }}>Terbuka</option>
                     <option value="in_progress" {{ $ticket->status === 'in_progress' ? 'selected' : '' }}>Diproses</option>
@@ -46,7 +46,7 @@
                     <option value="closed"      {{ $ticket->status === 'closed'      ? 'selected' : '' }}>Ditutup</option>
                 </select>
                 <button type="submit"
-                        class="px-3 py-1.5 bg-gray-800 text-white text-xs font-medium rounded-lg hover:bg-gray-700 transition">
+                        class="px-3 py-1.5 bg-gray-800 text-white text-xs font-medium hover:bg-gray-700 transition">
                     Simpan
                 </button>
                 @if($ticket->resolved_at)
@@ -61,7 +61,7 @@
         <div class="space-y-3">
             {{-- Pesan pertama --}}
             <div class="flex flex-col items-start">
-                <div class="max-w-[85%] bg-white border border-gray-200 text-gray-800 rounded-2xl rounded-tl-sm shadow-sm px-4 py-3">
+                <div class="max-w-[85%] bg-white border border-gray-200 text-gray-800 px-4 py-3">
                     <p class="text-xs font-semibold mb-1 text-gray-500">{{ $ticket->user_name }} (Pengguna)</p>
                     <p class="text-sm leading-relaxed whitespace-pre-line">{{ $ticket->message }}</p>
                 </div>
@@ -72,10 +72,10 @@
             @foreach($ticket->replies ?? [] as $reply)
             @php $isAdmin = $reply['sender_role'] === 'admin'; @endphp
             <div class="flex flex-col {{ $isAdmin ? 'items-end' : 'items-start' }}">
-                <div class="max-w-[85%] rounded-2xl px-4 py-3
+                <div class="max-w-[85%] px-4 py-3
                     {{ $isAdmin
-                        ? 'bg-blue-600 text-white rounded-tr-sm'
-                        : 'bg-white border border-gray-200 text-gray-800 rounded-tl-sm shadow-sm' }}">
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-white border border-gray-200 text-gray-800' }}">
                     <p class="text-xs font-semibold mb-1 {{ $isAdmin ? 'text-blue-200' : 'text-gray-500' }}">
                         {{ $reply['sender_name'] }} {{ $isAdmin ? '(Admin)' : '(Pengguna)' }}
                     </p>
@@ -90,12 +90,12 @@
 
         {{-- Form Balas + Catatan Admin --}}
         @if($ticket->isOpen())
-        <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-5 space-y-4">
+        <div class="bg-white border border-gray-100 p-5 space-y-4">
             <h3 class="text-sm font-semibold text-gray-700">Balas Tiket</h3>
             <form method="POST" action="{{ route('admin.tickets.reply', $ticket->_id) }}" class="space-y-3">
                 @csrf
                 <textarea name="message" rows="4"
-                          class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm
+                          class="w-full border border-gray-200 px-3 py-2 text-sm
                                  focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-400
                                  resize-none"
                           placeholder="Tulis balasan untuk pengguna..."
@@ -108,7 +108,7 @@
                         <span class="font-normal text-gray-400">(hanya terlihat oleh admin)</span>
                     </label>
                     <textarea name="admin_notes" rows="2"
-                              class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm
+                              class="w-full border border-gray-200 px-3 py-2 text-sm
                                      focus:outline-none focus:ring-2 focus:ring-amber-200 focus:border-amber-300
                                      resize-none bg-amber-50"
                               placeholder="Catatan internal (opsional)..."
@@ -116,7 +116,7 @@
                 </div>
 
                 <button type="submit"
-                        class="px-5 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg
+                        class="px-5 py-2 bg-blue-600 text-white text-sm font-medium
                                hover:bg-blue-700 transition">
                     Kirim Balasan
                 </button>
@@ -125,7 +125,7 @@
         @else
         {{-- Tetap tampilkan catatan admin jika ada meski tiket closed --}}
         @if($ticket->admin_notes)
-        <div class="bg-amber-50 border border-amber-100 rounded-xl px-4 py-3">
+        <div class="bg-amber-50 border border-amber-100 px-4 py-3">
             <p class="text-xs font-semibold text-amber-700 mb-1">Catatan Internal</p>
             <p class="text-sm text-amber-800 whitespace-pre-line">{{ $ticket->admin_notes }}</p>
         </div>

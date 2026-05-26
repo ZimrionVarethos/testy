@@ -241,11 +241,37 @@ class CloudinaryService
      */
     public static function publicIdFromUrl(string $url): ?string
     {
-        // Match everything after /upload/v{digits}/ or /upload/
-        if (preg_match('~/upload/(?:v\d+/)?(.+?)(?:\.\w+)?$~', $url, $m)) {
-            return $m[1];
+        $path = parse_url($url, PHP_URL_PATH);
+        if (!$path) return null;
+
+        $parts = explode('/', trim($path, '/'));
+        $uploadIndex = array_search('upload', $parts, true);
+        if ($uploadIndex === false) return null;
+
+        $tail = array_slice($parts, $uploadIndex + 1);
+        $versionIndex = null;
+        foreach ($tail as $i => $part) {
+            if (preg_match('/^v\d+$/', $part)) {
+                $versionIndex = $i;
+                break;
+            }
         }
-        return null;
+
+        $publicParts = $versionIndex !== null
+            ? array_slice($tail, $versionIndex + 1)
+            : $tail;
+
+        if (!$publicParts) return null;
+
+        $last = array_pop($publicParts);
+        $publicParts[] = preg_replace('/\.\w+$/', '', $last);
+        $publicId = implode('/', $publicParts);
+
+        if (str_contains($publicId, ',')) {
+            return null;
+        }
+
+        return $publicId ?: null;
     }
 
     /**
@@ -262,6 +288,53 @@ class CloudinaryService
     public static function isLocalPath(string $url): bool
     {
         return str_starts_with($url, '/storage/');
+    }
+
+    /**
+     * Sisipkan transformasi delivery Cloudinary ke URL.
+     */
+    public static function transformUrl(string $url, string $transformation): string
+    {
+        if (!self::isCloudinaryUrl($url) || !str_contains($url, '/upload/')) {
+            return $url;
+        }
+
+        $clean = trim($transformation, '/');
+        $path = parse_url($url, PHP_URL_PATH);
+        if (!$path) {
+            return str_replace('/upload/', "/upload/{$clean}/", $url);
+        }
+
+        $parts = explode('/', trim($path, '/'));
+        $uploadIndex = array_search('upload', $parts, true);
+        if ($uploadIndex === false) {
+            return $url;
+        }
+
+        $tail = array_slice($parts, $uploadIndex + 1);
+        $versionIndex = null;
+        foreach ($tail as $i => $part) {
+            if (preg_match('/^v\d+$/', $part)) {
+                $versionIndex = $i;
+                break;
+            }
+        }
+
+        if ($versionIndex === null) {
+            return str_replace('/upload/', "/upload/{$clean}/", $url);
+        }
+
+        $newParts = array_merge(
+            array_slice($parts, 0, $uploadIndex + 1),
+            [$clean],
+            array_slice($tail, $versionIndex)
+        );
+
+        $scheme = parse_url($url, PHP_URL_SCHEME) ?: 'https';
+        $host = parse_url($url, PHP_URL_HOST);
+        $query = parse_url($url, PHP_URL_QUERY);
+
+        return $scheme . '://' . $host . '/' . implode('/', $newParts) . ($query ? '?' . $query : '');
     }
 
     /**

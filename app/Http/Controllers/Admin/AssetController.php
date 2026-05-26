@@ -2,30 +2,30 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Http\Controllers\Api\AssetController as ApiAsset;
 use App\Http\Controllers\Controller;
-use App\Models\Asset;
 use App\Services\CloudinaryService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
 class AssetController extends Controller
 {
-    public function __construct(protected CloudinaryService $cloudinary) {}
+    public function __construct(
+        protected CloudinaryService $cloudinary,
+        protected ApiAsset $assetApi,
+    ) {}
 
-    // ── Page utama Asset Manager ────────────────────────────────────────────
+    // ── Halaman utama Asset Manager ────────────────────────────────────────
 
     public function index(Request $request)
     {
+        // Semua query MongoDB ada di Api/AssetController::indexForWeb()
+        ['assets' => $assets, 'folders' => $folders] = $this->assetApi->indexForWeb($request);
+
+        $usage = $this->cloudinary->usage();
+
         $subfolder = $request->query('folder', '');
         $search    = $request->query('search', '');
-
-        $query = Asset::orderBy('created_at', 'desc');
-        if ($subfolder) $query->inFolder($subfolder);
-        if ($search)    $query->search($search);
-
-        $assets  = $query->paginate(24)->withQueryString();
-        $folders = $this->getFolderList();
-        $usage   = $this->cloudinary->usage();
 
         return view('admin.assets.index', compact('assets', 'folders', 'usage', 'subfolder', 'search'));
     }
@@ -41,13 +41,16 @@ class AssetController extends Controller
 
         $subfolder = trim($request->input('subfolder', 'admin'), '/');
         $uploaded  = [];
+        $created   = [];
         $errors    = [];
 
         foreach ($request->file('files', []) as $file) {
             try {
+                // Upload ke Cloudinary (infrastruktur — Web layer)
                 $result = $this->cloudinary->upload($file, $subfolder);
 
-                $asset = Asset::create([
+                // Buat record di MongoDB lewat API
+                $asset = $this->assetApi->createForWeb([
                     'public_id'     => $result['public_id'],
                     'url'           => $result['url'],
                     'folder'        => $result['folder'],
@@ -61,7 +64,17 @@ class AssetController extends Controller
                     'tags'          => [],
                 ]);
 
-                $uploaded[] = $asset;
+                $uploaded[] = $result['public_id'];
+                $created[] = [
+                    'id'        => (string) $asset->id,
+                    'url'       => $result['url'],
+                    'thumb_url' => CloudinaryService::transformUrl($result['url'], 'c_fill,w_360,h_260,g_auto,f_auto,q_auto'),
+                    'name'      => $file->getClientOriginalName(),
+                    'size'      => isset($result['bytes']) ? round($result['bytes'] / 1024) . ' KB' : '',
+                    'subfolder' => $subfolder,
+                    'width'     => $result['width'],
+                    'height'    => $result['height'],
+                ];
                 Log::info("[Assets] Uploaded: {$result['public_id']}");
             } catch (\Throwable $e) {
                 Log::error('[Assets] Upload error: ' . $e->getMessage());
@@ -70,7 +83,14 @@ class AssetController extends Controller
         }
 
         if ($errors) {
+            if ($request->expectsJson()) {
+                return response()->json(['message' => count($uploaded) . ' file berhasil, ' . count($errors) . ' gagal.', 'assets' => $created ?? [], 'errors' => $errors], 422);
+            }
             return back()->withErrors($errors)->with('warning', count($uploaded) . ' file berhasil, ' . count($errors) . ' gagal.');
+        }
+
+        if ($request->expectsJson()) {
+            return response()->json(['message' => count($uploaded) . ' file berhasil diupload ke Cloudinary.', 'assets' => $created ?? []]);
         }
 
         return back()->with('success', count($uploaded) . ' file berhasil diupload ke Cloudinary.');
@@ -80,22 +100,38 @@ class AssetController extends Controller
 
     public function destroy(string $id)
     {
-        $asset = Asset::findOrFail($id);
+        // Cek asset dan status penggunaan dari API — TIDAK query MongoDB langsung
+        $assetData = $this->assetApi->findForDestroyForWeb($id);
 
-        if ($asset->isInUse()) {
+        if (!$assetData) {
+            if (request()->expectsJson()) {
+                return response()->json(['message' => 'Asset tidak ditemukan.'], 404);
+            }
+            return back()->withErrors(['Asset tidak ditemukan.']);
+        }
+
+        if ($assetData['is_in_use']) {
+            if (request()->expectsJson()) {
+                return response()->json(['message' => 'Gambar ini masih digunakan. Hapus dari entitas terlebih dahulu.'], 422);
+            }
             return back()->withErrors(['Gambar ini masih digunakan. Hapus dari entitas terlebih dahulu.']);
         }
 
-        $deleted = $this->cloudinary->delete($asset->public_id);
+        // Hapus dari Cloudinary (infrastruktur — Web layer)
+        $deleted = $this->cloudinary->delete($assetData['public_id']);
 
         if (!$deleted) {
-            // Tetap hapus record meski Cloudinary error (mungkin sudah tidak ada)
-            Log::warning("[Assets] Cloudinary delete failed for: {$asset->public_id}");
+            Log::warning("[Assets] Cloudinary delete failed for: {$assetData['public_id']}");
         }
 
-        $asset->delete();
+        // Hapus record dari MongoDB lewat API
+        $this->assetApi->deleteForWeb($id);
 
-        return back()->with('success', "Gambar '{$asset->original_name}' dihapus.");
+        if (request()->expectsJson()) {
+            return response()->json(['message' => "Gambar '{$assetData['original_name']}' dihapus."]);
+        }
+
+        return back()->with('success', "Gambar '{$assetData['original_name']}' dihapus.");
     }
 
     /**
@@ -106,19 +142,12 @@ class AssetController extends Controller
         $ids = $request->input('ids', []);
         if (empty($ids)) return back()->with('info', 'Tidak ada yang dipilih.');
 
-        $assets    = Asset::whereIn('_id', $ids)->get();
-        $publicIds = [];
-        $skipped   = 0;
+        // Hapus record MongoDB lewat API, dapat daftar public_id yang perlu dihapus dari Cloudinary
+        $result    = $this->assetApi->deleteBulkForWeb($ids);
+        $publicIds = $result['deleted_public_ids'];
+        $skipped   = $result['skipped'];
 
-        foreach ($assets as $asset) {
-            if ($asset->isInUse()) {
-                $skipped++;
-                continue;
-            }
-            $publicIds[] = $asset->public_id;
-            $asset->delete();
-        }
-
+        // Hapus dari Cloudinary (infrastruktur — Web layer)
         if ($publicIds) {
             $this->cloudinary->deleteMany($publicIds);
         }
@@ -130,58 +159,23 @@ class AssetController extends Controller
     }
 
     // ── Asset Picker (AJAX / JSON) ─────────────────────────────────────────
+    // Endpoint ini dipanggil via AJAX dari halaman Vehicle/Landing edit.
+    // Tetap di Admin namespace agar URL tidak berubah dan frontend tidak perlu diubah.
 
-    /**
-     * Dipakai oleh popup Asset Picker di halaman Vehicle / Landing.
-     * Mengembalikan JSON daftar aset untuk dirender di frontend.
-     */
     public function pickerData(Request $request)
     {
-        $subfolder = $request->query('folder', '');
-        $search    = $request->query('search', '');
-        $page      = max(1, (int) $request->query('page', 1));
-        $perPage   = 24;
+        // Semua query MongoDB ada di Api/AssetController::pickerDataForWeb()
+        $data = $this->assetApi->pickerDataForWeb($request);
 
-        $query = Asset::orderBy('created_at', 'desc');
-        if ($subfolder) $query->inFolder($subfolder);
-        if ($search)    $query->search($search);
-
-        $paginated = $query->paginate($perPage, ['*'], 'page', $page);
-
-        return response()->json([
-            'data'       => $paginated->map(fn($a) => [
-                'id'         => $a->id,
-                'url'        => $a->url,
-                'name'       => $a->original_name,
-                'size'       => $a->human_size,
-                'subfolder'  => $a->subfolder,
-                'created_at' => $a->created_at?->format('d M Y'),
-            ]),
-            'current_page' => $paginated->currentPage(),
-            'last_page'    => $paginated->lastPage(),
-            'total'        => $paginated->total(),
-            'folders'      => $this->getFolderList(),
-        ]);
+        return response()->json($data);
     }
 
     // ── Refresh usage dari Cloudinary (AJAX) ───────────────────────────────
 
     public function usageRefresh()
     {
+        // Cloudinary usage API call — tidak ada MongoDB di sini
         $usage = $this->cloudinary->usage();
         return response()->json($usage);
-    }
-
-    // ── Helper ─────────────────────────────────────────────────────────────
-
-    protected function getFolderList(): array
-    {
-        return Asset::select('subfolder')
-            ->groupBy('subfolder')
-            ->pluck('subfolder')
-            ->filter()
-            ->sort()
-            ->values()
-            ->all();
     }
 }

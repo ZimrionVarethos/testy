@@ -46,8 +46,8 @@
             <x-sidebar-link :href="route('dashboard')" :active="request()->routeIs('dashboard')" icon="home">
                 Dashboard
             </x-sidebar-link>
-            
-            
+
+
 
 
 
@@ -86,7 +86,7 @@
     {{-- User Info + Logout (selalu tampil di bawah) --}}
     <div class="shrink-0 border-t border-gray-700 p-3">
         <div class="flex items-center gap-3 px-2 py-2 mb-1">
-            <div class="h-8 w-8 rounded-full bg-indigo-500 flex items-center justify-center text-sm font-bold shrink-0">
+            <div class="h-8 w-8 bg-blue-500 flex items-center justify-center text-sm font-bold shrink-0">
                 {{ strtoupper(substr(Auth::user()->name, 0, 1)) }}
             </div>
             <div class="flex-1 min-w-0">
@@ -102,7 +102,7 @@
         <form method="POST" action="{{ route('logout') }}">
             @csrf
             <button type="submit"
-                class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-gray-400 hover:text-white hover:bg-gray-700 transition-colors duration-150 text-left">
+                class="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-400 hover:text-white hover:bg-gray-700 transition-colors duration-150 text-left">
                 <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h6a2 2 0 012 2v1"/>

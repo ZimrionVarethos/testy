@@ -60,6 +60,10 @@ class BookingController extends Controller
     public function indexForWeb(Request $request): array
     {
         $user  = $request->user();
+        if ($user->role === 'pengguna') {
+            $this->bookingService->autoCancelExpiredForUser((string) $user->_id);
+        }
+
         $query = Booking::query();
 
         if ($user->role === 'driver') {
@@ -87,6 +91,10 @@ class BookingController extends Controller
     /** Untuk web: ambil satu booking + payment (akses sudah divalidasi) */
     public function showForWeb(Request $request, string $id): array
     {
+        if ($request->user()?->role === 'pengguna') {
+            $this->bookingService->autoCancelExpiredForUser((string) $request->user()->_id);
+        }
+
         [$booking, $payment] = $this->queryShow($request, $id);
         return compact('booking', 'payment');
     }
@@ -116,17 +124,27 @@ class BookingController extends Controller
             $query->whereIn('status', ['completed', 'cancelled']);
         }
 
-        $bookings = $query->orderBy('created_at', 'desc')->get();
+        $bookings   = $query->orderBy('created_at', 'desc')->get();
+        $bookingIds = $bookings->map(fn($b) => (string) $b->_id)->toArray();
+        $readerRole = $user->role === 'driver' ? 'driver' : 'pengguna';
 
-        $readerRole   = $user->role === 'driver' ? 'driver' : 'pengguna';
-        $unreadCounts = [];
-        $ratings      = [];
+        $unreadGroups = ChatMessage::whereIn('booking_id', $bookingIds)
+            ->where('sender_role', '!=', $readerRole)
+            ->where('is_read', false)
+            ->get(['booking_id'])
+            ->groupBy('booking_id');
 
-        foreach ($bookings as $b) {
-            $unreadCounts[(string) $b->_id] = ChatMessage::unreadCount((string) $b->_id, $readerRole);
+        $unreadCounts = array_fill_keys($bookingIds, 0);
+        foreach ($unreadGroups as $bid => $msgs) {
+            $unreadCounts[$bid] = $msgs->count();
         }
-        foreach ($bookings->where('status', 'completed') as $b) {
-            $ratings[(string) $b->_id] = Rating::forBooking((string) $b->_id);
+
+        $completedIds      = $bookings->where('status', 'completed')->map(fn($b) => (string) $b->_id)->values()->toArray();
+        $ratingsCollection = Rating::whereIn('booking_id', $completedIds)->get()->keyBy('booking_id');
+
+        $ratings = [];
+        foreach ($completedIds as $id) {
+            $ratings[$id] = $ratingsCollection->get($id);
         }
 
         return compact('bookings', 'unreadCounts', 'ratings');
@@ -346,18 +364,26 @@ class BookingController extends Controller
 
         $busyIds = Booking::busyDriverIdsInRange($startDate, $endDate);
 
-        $drivers = User::where('role', 'driver')
+        $availableDrivers   = User::where('role', 'driver')
             ->where('is_active', true)
             ->get()
-            ->filter(fn($d) => !in_array((string) $d->_id, $busyIds))
-            ->map(fn($d) => [
-                'id'               => (string) $d->_id,
-                'name'             => $d->name,
-                'phone'            => $d->phone,
-                'avatar'           => $d->avatar,
-                'active_schedules' => Booking::activeScheduleForDriver((string) $d->_id),
-            ])
-            ->values();
+            ->filter(fn($d) => !in_array((string) $d->_id, $busyIds));
+
+        $availableDriverIds = $availableDrivers->map(fn($d) => (string) $d->_id)->values()->toArray();
+
+        $schedulesByDriver  = Booking::whereIn('status', [Booking::STATUS_CONFIRMED, Booking::STATUS_ONGOING])
+            ->whereIn('driver.driver_id', $availableDriverIds)
+            ->orderBy('start_date', 'asc')
+            ->get()
+            ->groupBy(fn($b) => (string) ($b->driver['driver_id'] ?? ''));
+
+        $drivers = $availableDrivers->map(fn($d) => [
+            'id'               => (string) $d->_id,
+            'name'             => $d->name,
+            'phone'            => $d->phone,
+            'avatar'           => $d->avatar,
+            'active_schedules' => $schedulesByDriver->get((string) $d->_id, collect()),
+        ])->values();
 
         return response()->json(['success' => true, 'data' => $drivers]);
     }
@@ -409,29 +435,44 @@ class BookingController extends Controller
             $query->whereIn('status', ['completed', 'cancelled']);
         }
 
-        $bookings = $query->orderBy('created_at', 'desc')->get();
-
+        $bookings   = $query->orderBy('created_at', 'desc')->get();
+        $bookingIds = $bookings->map(fn($b) => (string) $b->_id)->toArray();
         $readerRole = $user->role === 'driver' ? 'driver' : 'pengguna';
 
-        $data = $bookings->map(function ($b) use ($readerRole) {
-            $lastMsg   = ChatMessage::where('booking_id', (string) $b->_id)
-                ->orderBy('created_at', 'desc')->first();
-            $unread    = ChatMessage::unreadCount((string) $b->_id, $readerRole);
-            $rating    = $b->status === 'completed' ? Rating::forBooking((string) $b->_id) : null;
+        $lastMessages = ChatMessage::whereIn('booking_id', $bookingIds)
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->groupBy('booking_id')
+            ->map(fn($msgs) => $msgs->first());
+
+        $unreadGroups = ChatMessage::whereIn('booking_id', $bookingIds)
+            ->where('sender_role', '!=', $readerRole)
+            ->where('is_read', false)
+            ->get(['booking_id'])
+            ->groupBy('booking_id');
+
+        $completedIds = $bookings->where('status', 'completed')->map(fn($b) => (string) $b->_id)->values()->toArray();
+        $ratingsMap   = Rating::whereIn('booking_id', $completedIds)->get()->keyBy('booking_id');
+
+        $data = $bookings->map(function ($b) use ($readerRole, $lastMessages, $unreadGroups, $ratingsMap) {
+            $bid     = (string) $b->_id;
+            $lastMsg = $lastMessages->get($bid);
+            $unread  = $unreadGroups->get($bid, collect())->count();
+            $rating  = $b->status === 'completed' ? $ratingsMap->get($bid) : null;
 
             return [
-                'booking_id'   => (string) $b->_id,
-                'booking_code' => $b->booking_code,
-                'status'       => $b->status,
-                'start_date'   => $b->start_date?->toIso8601String(),
-                'vehicle_name' => $b->vehicle['name'] ?? '-',
-                'partner_name' => $readerRole === 'driver'
+                'booking_id'      => $bid,
+                'booking_code'    => $b->booking_code,
+                'status'          => $b->status,
+                'start_date'      => $b->start_date?->toIso8601String(),
+                'vehicle_name'    => $b->vehicle['name'] ?? '-',
+                'partner_name'    => $readerRole === 'driver'
                     ? ($b->user['name'] ?? '-')
                     : ($b->driver['name'] ?? '-'),
-                'last_message' => $lastMsg?->message,
+                'last_message'    => $lastMsg?->message,
                 'last_message_at' => $lastMsg?->created_at?->toIso8601String(),
-                'unread_count' => $unread,
-                'has_rating'   => $rating !== null,
+                'unread_count'    => $unread,
+                'has_rating'      => $rating !== null,
             ];
         });
 

@@ -5,16 +5,16 @@
     </x-slot>
 
     <div class="py-6 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
-        <a href="{{ route('admin.bookings.index') }}" class="text-sm text-blue-500 hover:underline">← Kembali</a>
+        <a href="{{ route('admin.bookings.index') }}" class="text-sm text-blue-500 hover:underline">Kembali</a>
 
         @if(session('success'))
-            <div class="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-sm">
+            <div class="bg-green-50 border border-green-200 text-green-700 px-4 py-3 text-sm">
                 {{ session('success') }}
             </div>
         @endif
 
         @if($errors->any())
-            <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+            <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 text-sm">
                 {{ $errors->first() }}
             </div>
         @endif
@@ -24,7 +24,7 @@
             $payment = \App\Models\Payment::activeForBooking((string) $booking->_id);
         @endphp
         @if($booking->status === 'pending' && $payment && $payment->isPaid())
-        <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 flex gap-3 items-start">
+        <div class="bg-blue-50 border border-blue-200 p-4 flex gap-3 items-start">
             <svg class="w-5 h-5 text-blue-500 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
             </svg>
@@ -39,13 +39,13 @@
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             {{-- Info Pesanan --}}
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 space-y-3">
+            <div class="bg-white border border-gray-100 p-5 space-y-3">
                 <h3 class="font-semibold text-gray-700 border-b pb-2">Info Pesanan</h3>
                 <div class="space-y-2 text-sm">
                     <div class="flex justify-between"><span class="text-gray-500">Kode</span><span class="font-medium">{{ $booking->booking_code }}</span></div>
                     <div class="flex justify-between">
                         <span class="text-gray-500">Status</span>
-                        <span class="{{ $booking->statusBadgeClass() }} px-2 py-0.5 text-xs rounded-full font-medium">
+                        <span class="{{ $booking->statusBadgeClass() }} px-2 py-0.5 text-xs font-medium">
                             {{ $booking->statusLabel() }}
                         </span>
                     </div>
@@ -56,7 +56,7 @@
                     @if($payment)
                     <div class="flex justify-between">
                         <span class="text-gray-500">Pembayaran</span>
-                        <span @class(['px-2 py-0.5 text-xs rounded-full font-medium',
+                        <span @class(['px-2 py-0.5 text-xs font-medium',
                             'bg-green-100 text-green-700'  => $payment->isPaid(),
                             'bg-yellow-100 text-yellow-700'=> $payment->isPending(),
                             'bg-red-100 text-red-600'      => !$payment->isPaid() && !$payment->isPending(),
@@ -69,7 +69,7 @@
             </div>
 
             {{-- Info Pengguna + Kendaraan --}}
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 space-y-3">
+            <div class="bg-white border border-gray-100 p-5 space-y-3">
                 <h3 class="font-semibold text-gray-700 border-b pb-2">Pengguna</h3>
                 <div class="space-y-2 text-sm">
                     <div class="flex justify-between"><span class="text-gray-500">Nama</span><span>{{ $booking->user['name'] ?? '-' }}</span></div>
@@ -85,7 +85,7 @@
             </div>
 
             {{-- Driver --}}
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 space-y-3">
+            <div class="bg-white border border-gray-100 p-5 space-y-3">
                 <h3 class="font-semibold text-gray-700 border-b pb-2">Driver</h3>
 
                 @if(!empty($booking->driver['driver_id']))
@@ -115,7 +115,7 @@
                             yang ditampilkan.
                         </p>
                         <select name="driver_id" required
-                            class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none">
+                            class="w-full border border-gray-200 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none">
                             <option value="">— Pilih driver —</option>
                             @foreach($availableDrivers as $driver)
                             <option value="{{ $driver->_id }}">
@@ -132,13 +132,13 @@
                             @endforeach
                         </select>
                         <button type="submit"
-                            class="w-full px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition">
+                            class="w-full px-4 py-2 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition">
                             Assign Driver & Konfirmasi Pesanan
                         </button>
                     </form>
 
                 @elseif($booking->status === 'pending' && $availableDrivers->isEmpty())
-                    <div class="bg-yellow-50 border border-yellow-200 text-yellow-700 rounded-lg px-3 py-2 text-sm">
+                    <div class="bg-yellow-50 border border-yellow-200 text-yellow-700 px-3 py-2 text-sm">
                         Tidak ada driver tersedia di rentang tanggal
                         <span class="font-medium">
                             {{ \Carbon\Carbon::parse($booking->start_date)->format('d M') }} —
@@ -148,7 +148,7 @@
                     </div>
 
                 @elseif($booking->status === 'pending' && !$payment?->isPaid())
-                    <div class="bg-gray-50 border border-gray-200 text-gray-500 rounded-lg px-3 py-2 text-sm">
+                    <div class="bg-gray-50 border border-gray-200 text-gray-500 px-3 py-2 text-sm">
                         Menunggu pembayaran dari pengguna sebelum bisa di-assign.
                     </div>
 
@@ -158,7 +158,7 @@
             </div>
 
             {{-- Lokasi --}}
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 space-y-3">
+            <div class="bg-white border border-gray-100 p-5 space-y-3">
                 <h3 class="font-semibold text-gray-700 border-b pb-2">Lokasi</h3>
                 <div class="space-y-2 text-sm">
                     <div><span class="text-gray-500 block">Penjemputan</span><span>{{ $booking->pickup['address'] ?? '-' }}</span></div>
@@ -178,7 +178,7 @@
             <form method="POST" action="{{ route('admin.bookings.cancel', $booking->_id) }}"
                   onsubmit="return confirm('Batalkan pesanan ini?')">
                 @csrf
-                <button class="px-4 py-2 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600 transition">
+                <button class="px-4 py-2 bg-red-500 text-white text-sm hover:bg-red-600 transition">
                     Batalkan Pesanan
                 </button>
             </form>

@@ -9,13 +9,14 @@
 
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
-        <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
+        <link href="https://fonts.bunny.net/css?family=epilogue:400,500,600,700,800|dm-sans:400,500|dm-mono:400,500&display=swap" rel="stylesheet" />
 
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
+        <link rel="stylesheet" href="{{ asset('css/layouts/app.css') }}">
     </head>
     <body class="font-sans text-gray-900 antialiased">
-        <div class="min-h-screen flex bg-gradient-to-r from-blue-50 via-white to-blue-100">
+        <div class="min-h-screen flex">
             <!-- Left Side - Logo -->
             <div class="hidden lg:flex w-1/2 items-center justify-center p-8">
                 <div class="text-center">

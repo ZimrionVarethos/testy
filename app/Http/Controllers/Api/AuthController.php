@@ -98,6 +98,11 @@ class AuthController extends Controller
         ]);
     }
 
+    public function deleteAccountForWeb(Request $request): void
+    {
+        $request->user()->delete();
+    }
+
     public function me(Request $request): JsonResponse
     {
         return response()->json([

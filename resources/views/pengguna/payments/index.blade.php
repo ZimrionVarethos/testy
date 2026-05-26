@@ -5,7 +5,7 @@
     <div class="py-6 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-3">
 
         @forelse($payments as $payment)
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 flex items-center justify-between gap-4">
+        <div class="bg-white border border-gray-100 p-5 flex items-center justify-between gap-4">
             <div class="min-w-0">
                 <p class="font-semibold text-gray-800 truncate">{{ $payment->booking_code }}</p>
                 <p class="text-xs text-gray-400 mt-1">
@@ -13,7 +13,7 @@
                         ? \Carbon\Carbon::parse($payment->paid_at)->format('d M Y H:i')
                         : \Carbon\Carbon::parse($payment->created_at)->format('d M Y H:i') }}
                 </p>
-                {{-- ← BARU: tampilkan sisa waktu jika pending & belum expired --}}
+                {{-- BARU: tampilkan sisa waktu jika pending & belum expired --}}
                 @if($payment->isPending() && !$payment->isExpired() && $payment->expired_at)
                 <p class="text-xs text-amber-600 mt-0.5">
                     ⏱ {{ $payment->expiryLabel() }}
@@ -22,18 +22,18 @@
             </div>
 
             <div class="text-right shrink-0 space-y-1">
-                <p class="font-bold text-indigo-600">
+                <p class="font-bold text-blue-600">
                     Rp {{ number_format($payment->amount, 0, ',', '.') }}
                 </p>
-                <span class="px-2 py-0.5 text-xs rounded-full font-medium {{ $payment->statusBadgeClass() }}">
+                <span class="px-2 py-0.5 text-xs font-medium {{ $payment->statusBadgeClass() }}">
                     {{ $payment->statusLabel() }}
                 </span>
-                {{-- ← BARU: cek expired sebelum tampilkan tombol --}}
+                {{-- BARU: cek expired sebelum tampilkan tombol --}}
                 @if($payment->isPending() && !$payment->isExpired())
                 <div>
                     <a href="{{ route('bookings.pay', $payment->booking_id) }}"
-                       class="text-xs text-indigo-600 hover:underline font-medium">
-                        Selesaikan Pembayaran →
+                       class="text-xs text-blue-600 hover:underline font-medium">
+                        Selesaikan Pembayaran
                     </a>
                 </div>
                 @elseif($payment->isPending() && $payment->isExpired())

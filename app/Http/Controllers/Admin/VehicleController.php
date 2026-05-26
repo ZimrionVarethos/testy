@@ -2,14 +2,13 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Http\Controllers\Controller;
 use App\Http\Controllers\Api\VehicleController as ApiVehicle;
+use App\Http\Controllers\Controller;
 use App\Http\Traits\WebApiProxy;
-use App\Models\Asset;
-use App\Models\Vehicle;
 use App\Services\CloudinaryService;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Cache;
 
 class VehicleController extends Controller
 {
@@ -33,7 +32,7 @@ class VehicleController extends Controller
         return view('admin.vehicles.create');
     }
 
-    public function store(Request $request)
+    public function store(Request $request, ApiVehicle $api)
     {
         $data = $request->validate([
             'name'          => 'required|string|max:100',
@@ -44,9 +43,7 @@ class VehicleController extends Controller
             'type'          => 'required|in:MPV,SUV,Van,Sedan,Minibus',
             'capacity'      => 'required|integer|min:2|max:20',
             'price_per_day' => 'required|integer|min:100000',
-            // Upload baru
             'images.0'      => 'nullable|image|mimes:jpg,jpeg,png,webp|max:5120',
-            // Atau pilih dari Asset Picker (public_id dari koleksi Asset)
             'asset_id'      => 'nullable|string',
         ]);
 
@@ -56,36 +53,39 @@ class VehicleController extends Controller
         $data['total_bookings'] = 0;
         $data['images']         = [];
 
-        // Prioritas: upload baru → pilih dari asset picker
+        $cloudinaryPublicId = null;
+        $pickedAssetId      = null;
+
+        // Infrastruktur: upload ke Cloudinary ada di Web layer
         if ($request->hasFile('images.0')) {
             $result = $this->uploadVehicleImage(
                 $request->file('images.0'),
                 (int) $request->input('new_focal_x', 50),
                 (int) $request->input('new_focal_y', 50),
             );
-            $data['images'][] = $result['url'];
-
-            // Catat pemakaian di Asset record
-            if ($asset = Asset::where('public_id', $result['public_id'])->first()) {
-                $asset->addUsage('vehicle', 'new');
-            }
+            $data['images'][]   = $this->applyFocalToUrl($result['url'], (int) $request->input('new_focal_x', 50), (int) $request->input('new_focal_y', 50), $result['width'] ?? null, $result['height'] ?? null);
+            $cloudinaryPublicId = $result['public_id'];
 
         } elseif ($assetId = $request->input('asset_id')) {
-            $asset = Asset::findOrFail($assetId);
-            $data['images'][] = $this->applyFocalToUrl(
-                $asset->url,
-                (int) $request->input('new_focal_x', 50),
-                (int) $request->input('new_focal_y', 50),
-            );
+            // Ambil URL asset dari API — TIDAK query langsung ke MongoDB
+            $assetData = $api->getAssetForPickerForWeb($assetId);
+            if ($assetData) {
+                $data['images'][] = $this->applyFocalToUrl(
+                    $assetData['url'],
+                    (int) $request->input('new_focal_x', 50),
+                    (int) $request->input('new_focal_y', 50),
+                    $assetData['width'] ?? null,
+                    $assetData['height'] ?? null,
+                );
+                $pickedAssetId = $assetId;
+            }
         }
 
         unset($data['features_raw'], $data['asset_id']);
-        $vehicle = Vehicle::create($data);
 
-        // Update usage setelah vehicle punya ID
-        if ($assetId ?? false) {
-            $asset->addUsage('vehicle', $vehicle->id);
-        }
+        // Semua operasi MongoDB ada di API layer
+        $api->storeVehicleForWeb($data, $cloudinaryPublicId, $pickedAssetId);
+        Cache::forget('welcome:landing:v1');
 
         return redirect()->route('admin.vehicles.index')
             ->with('success', 'Kendaraan berhasil ditambahkan.');
@@ -97,10 +97,8 @@ class VehicleController extends Controller
         return view('admin.vehicles.edit', compact('vehicle'));
     }
 
-    public function update(Request $request, string $id)
+    public function update(Request $request, string $id, ApiVehicle $api)
     {
-        $vehicle = Vehicle::findOrFail($id);
-
         $data = $request->validate([
             'name'          => 'required|string|max:100',
             'brand'         => 'required|string|max:50',
@@ -117,85 +115,96 @@ class VehicleController extends Controller
 
         $data['features'] = $this->parseFeatures($request->input('features_raw', ''));
 
-        $keptUrl  = $request->input('kept_images.0'); // URL Cloudinary yang dipertahankan
-        $oldImages = $vehicle->images ?? [];
+        $keptUrl  = $request->input('kept_images.0');
 
-        // Hapus gambar lama yang tidak dipertahankan dari Cloudinary + Asset usage
+        // Ambil data kendaraan lama dari API — TIDAK query MongoDB langsung
+        $vehicleData = $api->getVehicleDataForWeb($id);
+        $oldImages   = $vehicleData['images'];
+
+        // Infrastruktur: hapus gambar lama dari Cloudinary (di Web layer)
+        $removedPublicIds = [];
         foreach ($oldImages as $oldUrl) {
             if ($oldUrl === $keptUrl) continue;
-
             $publicId = CloudinaryService::publicIdFromUrl($oldUrl);
             if ($publicId) {
                 $this->cloudinary->delete($publicId);
-
-                // Bersihkan usage di Asset collection
-                if ($asset = Asset::where('public_id', $publicId)->first()) {
-                    $asset->removeUsage('vehicle', $vehicle->id);
-                }
+                $removedPublicIds[] = $publicId;
             }
         }
 
-        $finalImages = [];
+        $finalImages        = [];
+        $newCloudinaryPubId = null;
+        $pickedAssetId      = null;
 
         if ($keptUrl) {
-            // Gambar lama dipertahankan — update focal jika berubah
             $x = (int) $request->input('kept_focal_x', 50);
             $y = (int) $request->input('kept_focal_y', 50);
             $finalImages[] = $this->applyFocalToUrl($keptUrl, $x, $y);
         }
 
-        // Upload baru
+        // Infrastruktur: upload gambar baru ke Cloudinary (di Web layer)
         if ($request->hasFile('images.0')) {
             $result = $this->uploadVehicleImage(
                 $request->file('images.0'),
                 (int) $request->input('new_focal_x', 50),
                 (int) $request->input('new_focal_y', 50),
             );
-            $finalImages[] = $result['url'];
-
-            if ($asset = Asset::where('public_id', $result['public_id'])->first()) {
-                $asset->addUsage('vehicle', $vehicle->id);
-            }
+            $finalImages[]      = $this->applyFocalToUrl($result['url'], (int) $request->input('new_focal_x', 50), (int) $request->input('new_focal_y', 50), $result['width'] ?? null, $result['height'] ?? null);
+            $newCloudinaryPubId = $result['public_id'];
 
         } elseif ($assetId = $request->input('asset_id')) {
-            // Pilih dari Asset Picker
-            $asset = Asset::findOrFail($assetId);
-            $finalImages[] = $this->applyFocalToUrl(
-                $asset->url,
-                (int) $request->input('new_focal_x', 50),
-                (int) $request->input('new_focal_y', 50),
-            );
-            $asset->addUsage('vehicle', $vehicle->id);
+            // Ambil URL asset dari API — TIDAK query MongoDB langsung
+            $assetData = $api->getAssetForPickerForWeb($assetId);
+            if ($assetData) {
+                $finalImages[] = $this->applyFocalToUrl(
+                    $assetData['url'],
+                    (int) $request->input('new_focal_x', 50),
+                    (int) $request->input('new_focal_y', 50),
+                    $assetData['width'] ?? null,
+                    $assetData['height'] ?? null,
+                );
+                $pickedAssetId = $assetId;
+            }
         }
 
         $data['images'] = $finalImages;
         unset($data['features_raw'], $data['asset_id']);
-        $vehicle->update($data);
+
+        // Semua operasi MongoDB ada di API layer
+        $api->updateVehicleForWeb($id, $data, $newCloudinaryPubId, $removedPublicIds, $pickedAssetId);
+        Cache::forget('welcome:landing:v1');
 
         return redirect()->route('admin.vehicles.index')
             ->with('success', 'Kendaraan berhasil diupdate.');
     }
 
-    public function destroy(string $id)
+    public function destroy(string $id, ApiVehicle $api)
     {
-        $vehicle = Vehicle::findOrFail($id);
+        // Ambil data kendaraan dari API — TIDAK query MongoDB langsung
+        $vehicleData = $api->getVehicleDataForWeb($id);
 
-        if ($vehicle->status === 'rented') {
+        if ($vehicleData['status'] === 'rented') {
             return back()->withErrors(['error' => 'Tidak bisa hapus kendaraan yang sedang disewa.']);
         }
 
-        // Hapus gambar dari Cloudinary
-        foreach ($vehicle->images ?? [] as $url) {
+        // Infrastruktur: hapus gambar dari Cloudinary (di Web layer)
+        $removedPublicIds = [];
+        foreach ($vehicleData['images'] as $url) {
             $publicId = CloudinaryService::publicIdFromUrl($url);
             if ($publicId) {
                 $this->cloudinary->delete($publicId);
-                if ($asset = Asset::where('public_id', $publicId)->first()) {
-                    $asset->removeUsage('vehicle', $vehicle->id);
-                }
+                $removedPublicIds[] = $publicId;
             }
         }
 
-        $vehicle->delete();
+        // Operasi MongoDB (hapus vehicle + cleanup asset usage) ada di API layer
+        $result = $api->deleteVehicleForWeb($id, $removedPublicIds);
+
+        if (!$result['success']) {
+            return back()->withErrors(['error' => $result['message']]);
+        }
+
+        Cache::forget('welcome:landing:v1');
 
         return redirect()->route('admin.vehicles.index')
             ->with('success', 'Kendaraan dihapus.');
@@ -203,10 +212,6 @@ class VehicleController extends Controller
 
     // ── PRIVATE HELPERS ────────────────────────────────────────────────────
 
-    /**
-     * Upload gambar kendaraan ke Cloudinary dengan focal point di context metadata.
-     * Focal point disimpan di context Cloudinary, bukan di nama file lagi.
-     */
     private function uploadVehicleImage(UploadedFile $file, int $x, int $y): array
     {
         return $this->cloudinary->upload($file, 'vehicles', [
@@ -214,33 +219,17 @@ class VehicleController extends Controller
         ]);
     }
 
-    /**
-     * Sisipkan focal-point sebagai Cloudinary transformation parameter di URL.
-     * Format: .../upload/c_fill,g_xy_center,x_{x},y_{y}/...
-     * Untuk sekarang kita simpan sebagai query param custom di URL (non-transformasi)
-     * karena focal point sudah di context Cloudinary — cukup return URL apa adanya.
-     */
-    private function applyFocalToUrl(string $url, int $x, int $y): string
+    private function applyFocalToUrl(string $url, int $x, int $y, ?int $sourceWidth = null, ?int $sourceHeight = null): string
     {
-        // Focal point di Cloudinary bisa disisipkan via `g_auto` atau custom crop.
-        // Untuk sederhananya: kita tambahkan transformation c_fill,g_auto ke URL.
-        // Contoh: .../upload/c_fill,ar_4:3,g_auto/...
-        // Karena crop tergantung konteks tampilan, return URL asli + context saja.
-        return $url;
+        if ($sourceWidth && $sourceHeight) {
+            $px = max(1, min($sourceWidth, (int) round($sourceWidth * $x / 100)));
+            $py = max(1, min($sourceHeight, (int) round($sourceHeight * $y / 100)));
+            return CloudinaryService::transformUrl($url, "c_fill,w_1200,h_800,g_xy_center,x_{$px},y_{$py},f_auto,q_auto");
+        }
+
+        return CloudinaryService::transformUrl($url, 'c_fill,w_1200,h_800,g_auto,f_auto,q_auto');
     }
 
-    /**
-     * Parse focal point dari URL (legacy support).
-     */
-    private function parseFocalFromUrl(string $url): array
-    {
-        // Coba baca dari Cloudinary context — untuk sekarang default 50/50
-        return [50, 50];
-    }
-
-    /**
-     * Parse string CSV fitur menjadi array bersih.
-     */
     private function parseFeatures(string $raw): array
     {
         return array_values(array_filter(

@@ -4,7 +4,7 @@
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
 
     {{-- Greeting + Status Ketersediaan --}}
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 flex items-center justify-between">
+    <div class="bg-white border border-gray-100 p-5 flex items-center justify-between">
         <div>
             <h3 class="text-lg font-semibold text-gray-800">Halo, {{ Auth::user()->name }}!</h3>
             <p class="text-sm text-gray-500 mt-0.5">
@@ -19,7 +19,7 @@
         <form method="POST" action="{{ route('driver.toggle-availability') }}">
             @csrf
             <button type="submit" @class([
-                'px-4 py-2 text-sm font-medium rounded-lg transition',
+                'px-4 py-2 text-sm font-medium transition',
                 'bg-red-100 text-red-600 hover:bg-red-200'      => Auth::user()->driver_profile['is_available'] ?? false,
                 'bg-green-100 text-green-600 hover:bg-green-200' => !(Auth::user()->driver_profile['is_available'] ?? false),
             ])>
@@ -30,25 +30,25 @@
 
     {{-- Stats --}}
     <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
-        <div class="bg-white rounded-xl shadow-sm p-5 border border-gray-100 text-center">
+        <div class="bg-white p-5 border border-gray-100 text-center">
             <p class="text-2xl font-bold text-gray-800">{{ $stats['total_trips'] ?? 0 }}</p>
             <p class="text-xs text-gray-500 mt-1">Total Trip</p>
         </div>
-        <div class="bg-white rounded-xl shadow-sm p-5 border border-gray-100 text-center">
+        <div class="bg-white p-5 border border-gray-100 text-center">
             <p class="text-2xl font-bold text-green-500">{{ $stats['ongoing'] ?? 0 }}</p>
             <p class="text-xs text-gray-500 mt-1">Sedang Berjalan</p>
         </div>
-        <div class="bg-white rounded-xl shadow-sm p-5 border border-gray-100 text-center">
-            <p class="text-2xl font-bold text-indigo-500">{{ $stats['confirmed'] ?? 0 }}</p>
+        <div class="bg-white p-5 border border-gray-100 text-center">
+            <p class="text-2xl font-bold text-blue-500">{{ $stats['confirmed'] ?? 0 }}</p>
             <p class="text-xs text-gray-500 mt-1">Akan Datang</p>
         </div>
     </div>
 
     {{-- Pesanan Aktif Saya --}}
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100">
+    <div class="bg-white border border-gray-100">
         <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100">
             <h4 class="font-semibold text-gray-700">Pesanan Aktif Saya</h4>
-            <a href="{{ route('driver.bookings.index') }}" class="text-xs text-indigo-500 hover:underline">Lihat semua</a>
+            <a href="{{ route('driver.bookings.index') }}" class="text-xs text-blue-500 hover:underline">Lihat semua</a>
         </div>
         <div class="divide-y divide-gray-50">
             @forelse($myActiveBookings ?? [] as $booking)
@@ -78,8 +78,8 @@
                         </p>
                     </div>
                     <span @class([
-                        'px-2 py-1 text-xs rounded-full font-medium shrink-0 ml-3',
-                        'bg-indigo-100 text-indigo-700' => $booking->status === 'confirmed',
+                        'px-2 py-1 text-xs font-medium shrink-0 ml-3',
+                        'bg-blue-100 text-blue-700' => $booking->status === 'confirmed',
                         'bg-green-100 text-green-700'   => $booking->status === 'ongoing',
                     ])>
                         @switch($booking->status)

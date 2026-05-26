@@ -2,8 +2,8 @@
 <x-app-layout>
     <x-slot name="header">Kelola Pengguna</x-slot>
     <div class="py-6 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        @if(session('success'))<div class="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-sm mb-4">{{ session('success') }}</div>@endif
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        @if(session('success'))<div class="bg-green-50 border border-green-200 text-green-700 px-4 py-3 text-sm mb-4">{{ session('success') }}</div>@endif
+        <div class="bg-white border border-gray-100 overflow-hidden">
             <table class="w-full text-sm">
                 <thead class="bg-gray-50 border-b border-gray-100">
                     <tr>
@@ -18,7 +18,7 @@
                     <tr class="hover:bg-gray-50">
                         <td class="px-5 py-3">
                             <div class="flex items-center gap-3">
-                                <div class="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-sm">{{ strtoupper(substr($u->name,0,1)) }}</div>
+                                <div class="h-8 w-8 bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-sm">{{ strtoupper(substr($u->name,0,1)) }}</div>
                                 <div>
                                     <p class="font-medium text-gray-800">{{ $u->name }}</p>
                                     <p class="text-xs text-gray-400">{{ $u->email }}</p>
@@ -27,7 +27,7 @@
                         </td>
                         <td class="px-5 py-3 text-gray-500 text-xs">{{ \Carbon\Carbon::parse($u->created_at)->format('d M Y') }}</td>
                         <td class="px-5 py-3">
-                            <span class="{{ $u->is_active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600' }} px-2 py-1 text-xs rounded-full font-medium">
+                            <span class="{{ $u->is_active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600' }} px-2 py-1 text-xs font-medium">
                                 {{ $u->is_active ? 'Aktif' : 'Nonaktif' }}
                             </span>
                         </td>

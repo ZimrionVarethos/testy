@@ -5,8 +5,6 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Api\BookingController as ApiBooking;
 use App\Http\Traits\WebApiProxy;
-use App\Models\Booking;
-use App\Models\User;
 use Illuminate\Http\Request;
 
 class BookingController extends Controller
@@ -30,19 +28,18 @@ class BookingController extends Controller
 
         $availableDrivers = collect();
 
-        if ($booking->status === Booking::STATUS_PENDING && empty($booking->driver['driver_id'])) {
+        if ($booking->status === 'pending' && empty($booking->driver['driver_id'])) {
             $result = $this->tryProxyApi(fn() => $api->availableDrivers($req, $id));
             if ($result['success'] ?? false) {
                 $availableDrivers = collect($result['data'])->map(function ($d) {
-                    $user = new User();
-                    $user->forceFill([
+                    return (object) [
                         '_id'              => $d['id'],
                         'name'             => $d['name'],
                         'phone'            => $d['phone'] ?? null,
                         'avatar'           => $d['avatar'] ?? null,
                         'active_schedules' => collect($d['active_schedules'] ?? []), // ← fix
-                    ]);
-                    return $user;
+                        'driver_profile'   => ['license_number' => $d['license_number'] ?? null],
+                    ];
                 });
             }
         }

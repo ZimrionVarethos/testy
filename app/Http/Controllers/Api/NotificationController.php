@@ -55,13 +55,30 @@ class NotificationController extends Controller
 
         $notifications = $query->paginate(20)->withQueryString();
 
+        $totalCount  = Notification::where('user_id', $userId)->count();
+        $unreadCount = Notification::where('user_id', $userId)->where('is_read', false)->count();
         $counts = [
-            'all'    => Notification::where('user_id', $userId)->count(),
-            'unread' => Notification::where('user_id', $userId)->where('is_read', false)->count(),
-            'read'   => Notification::where('user_id', $userId)->where('is_read', true)->count(),
+            'all'    => $totalCount,
+            'unread' => $unreadCount,
+            'read'   => $totalCount - $unreadCount,
         ];
 
         return compact('notifications', 'counts');
+    }
+
+    /** Untuk layout web: dropdown notifikasi kecil. */
+    public function navPreviewForWeb(Request $request): array
+    {
+        $userId = (string) $request->user()->_id;
+        $items = Notification::where('user_id', $userId)
+            ->orderBy('created_at', 'desc')
+            ->limit(12)
+            ->get();
+
+        return [
+            'items' => $items,
+            'unread_count' => $items->where('is_read', false)->count(),
+        ];
     }
 
     /**
