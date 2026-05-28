@@ -24,6 +24,7 @@ Route::prefix('v1')->group(function () {
 
     // Data landing page (dipakai WelcomeController via Http::)
     Route::get('landing', [LandingController::class, 'index'])->name('api.landing.index');
+    Route::get('landing/available-vehicles', [LandingController::class, 'availableVehicles'])->name('api.landing.available-vehicles');
 
     Route::prefix('auth')->group(function () {
         Route::post('register',        [AuthController::class, 'register']);

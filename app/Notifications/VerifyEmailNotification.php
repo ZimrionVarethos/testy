@@ -6,8 +6,9 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Config;
-use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\URL;
 
 class VerifyEmailNotification extends Notification
 {
@@ -27,38 +28,60 @@ class VerifyEmailNotification extends Notification
         );
     }
 
-// app/Notifications/VerifyEmailNotification.php
-
     public function toBrevo($notifiable): void
     {
         $url = $this->verificationUrl($notifiable);
-    
-        $response = Http::withHeaders([
-            'api-key' => env('BREVO_API_KEY'),
+
+        $apiKey = config('services.brevo.key') ?: env('BREVO_API_KEY');
+        $fromEmail = config('mail.from.address') ?: env('MAIL_FROM_ADDRESS');
+        $fromName = config('mail.from.name') ?: config('app.name');
+
+        if (!$apiKey || !$fromEmail) {
+            Log::warning('Brevo email skipped because configuration is incomplete.', [
+                'api_key_set' => !empty($apiKey),
+                'from_email_set' => !empty($fromEmail),
+                'to_email' => $notifiable->email,
+            ]);
+
+            return;
+        }
+
+        $response = Http::timeout(15)->withHeaders([
+            'api-key' => $apiKey,
             'Content-Type' => 'application/json',
         ])->post('https://api.brevo.com/v3/smtp/email', [
             'sender' => [
-                'name' => config('app.name'),
-                'email' => env('MAIL_FROM_ADDRESS'),
+                'name' => $fromName,
+                'email' => $fromEmail,
             ],
-            'to' => [['email' => $notifiable->email]],
-            'subject' => 'Verify Your Email Address',
+            'to' => [[
+                'email' => $notifiable->email,
+                'name' => $notifiable->name,
+            ]],
+            'subject' => 'Verifikasi Email Bening Rental',
             'htmlContent' => "
-                <h2>Verify Your Email</h2>
-                <p>Click the button below to verify your email address.</p>
-                <a href='{$url}' style='background:#4F46E5;color:white;padding:12px 24px;text-decoration:none;border-radius:6px;display:inline-block;'>
-                    Verify Email
+                <h2>Verifikasi Email</h2>
+                <p>Halo {$notifiable->name}, klik tombol di bawah untuk memverifikasi email akun Bening Rental Anda.</p>
+                <a href='{$url}' style='background:#111827;color:white;padding:12px 24px;text-decoration:none;display:inline-block;font-weight:700;'>
+                    Verifikasi Email
                 </a>
-                <p>Link expires in 60 minutes.</p>
+                <p>Link berlaku selama 60 menit.</p>
             ",
         ]);
-    
-        \Log::info('Brevo response', [
+
+        $logContext = [
             'status' => $response->status(),
             'body' => $response->body(),
-            'api_key_set' => !empty(env('BREVO_API_KEY')),
-            'from_email' => env('MAIL_FROM_ADDRESS'),
+            'api_key_set' => true,
+            'from_email' => $fromEmail,
             'to_email' => $notifiable->email,
-        ]);
+        ];
+
+        if ($response->successful()) {
+            Log::info('Brevo verification email sent.', $logContext);
+            return;
+        }
+
+        Log::warning('Brevo verification email failed.', $logContext);
     }
 }

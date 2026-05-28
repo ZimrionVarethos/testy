@@ -10,6 +10,7 @@ use App\Models\Rating;
 use App\Models\User;
 use App\Models\Vehicle;
 use App\Services\CloudinaryService;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -154,6 +155,70 @@ class LandingController extends Controller
     }
 
     // ── ForWeb Methods (dipakai Admin LandingPageController langsung) ─────────
+
+    /**
+     * GET /api/v1/landing/available-vehicles
+     * Public availability checker untuk landing page guest.
+     */
+    public function availableVehicles(Request $request): JsonResponse
+    {
+        $request->validate([
+            'start_date' => ['required', 'date', 'after_or_equal:today'],
+            'end_date'   => ['required', 'date', 'after:start_date'],
+        ]);
+
+        $start = Carbon::parse($request->start_date);
+        $end   = Carbon::parse($request->end_date);
+        $recentPendingCutoff = now()->subMinutes(30);
+
+        $bookedVehicleIds = Booking::where('start_date', '<', $end)
+            ->where('end_date', '>', $start)
+            ->where('end_date', '>', now())
+            ->whereNotNull('vehicle.vehicle_id')
+            ->where(function ($query) use ($recentPendingCutoff) {
+                $query->whereIn('status', [Booking::STATUS_CONFIRMED, Booking::STATUS_ONGOING])
+                    ->orWhere(function ($pending) use ($recentPendingCutoff) {
+                        $pending->where('status', Booking::STATUS_PENDING)
+                            ->where('created_at', '>=', $recentPendingCutoff);
+                    });
+            })
+            ->get()
+            ->pluck('vehicle.vehicle_id')
+            ->map(fn($id) => (string) $id)
+            ->unique()
+            ->values()
+            ->all();
+
+        $vehicles = Vehicle::where('status', '!=', 'maintenance')
+            ->whereNotIn('_id', $bookedVehicleIds)
+            ->orderBy('created_at', 'desc')
+            ->limit(12)
+            ->get()
+            ->map(fn($v) => [
+                'id'             => (string) $v->_id,
+                '_id'            => (string) $v->_id,
+                'name'           => $v->name,
+                'brand'          => $v->brand,
+                'model'          => $v->model,
+                'year'           => $v->year,
+                'type'           => $v->type,
+                'capacity'       => $v->capacity,
+                'price_per_day'  => $v->price_per_day,
+                'status'         => $v->status,
+                'features'       => $v->features ?? [],
+                'rating_avg'     => $v->rating_avg ?? 0,
+                'total_bookings' => $v->total_bookings ?? 0,
+                'images'         => collect($v->images ?? [])->map(
+                    fn($p) => str_starts_with($p, 'http') ? $p : url('storage/' . $p)
+                )->values()->all(),
+            ])
+            ->values();
+
+        return response()->json([
+            'success' => true,
+            'data'    => $vehicles,
+        ]);
+    }
 
     /** Data settings untuk halaman admin landing page */
     public function adminIndex(): JsonResponse

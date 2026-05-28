@@ -10,6 +10,7 @@ use App\Services\CloudinaryService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Password;
 
 class AuthController extends Controller
@@ -25,11 +26,21 @@ class AuthController extends Controller
             'is_active' => true,
         ]);
 
+        try {
+            $user->sendEmailVerificationNotification();
+        } catch (\Throwable $e) {
+            Log::warning('Registration verification email could not be sent.', [
+                'user_id' => (string) $user->getKey(),
+                'email' => $user->email,
+                'error' => $e->getMessage(),
+            ]);
+        }
+
         $token = $user->createToken('mobile')->plainTextToken;
 
         return response()->json([
             'success' => true,
-            'message' => 'Registrasi berhasil.',
+            'message' => 'Registrasi berhasil. Cek email Anda untuk verifikasi akun.',
             'data'    => [
                 'user'  => $this->userResource($user),
                 'token' => $token,
