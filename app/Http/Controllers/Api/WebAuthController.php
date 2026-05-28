@@ -26,6 +26,13 @@ class WebAuthController extends Controller
             ], 401);
         }
 
+        if (!$user->hasVerifiedEmail()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Email belum diverifikasi. Cek inbox email Anda terlebih dahulu.',
+            ], 403);
+        }
+
         if (!$user->is_active) {
             return response()->json([
                 'success' => false,

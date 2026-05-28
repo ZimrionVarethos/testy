@@ -7,7 +7,9 @@ use App\Http\Requests\Api\RegisterRequest;
 use App\Models\PersonalAccessToken;
 use App\Models\User;
 use App\Services\CloudinaryService;
+use Illuminate\Auth\Events\Verified;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
@@ -24,6 +26,7 @@ class AuthController extends Controller
             'password'  => Hash::make($request->password),
             'role'      => 'pengguna',
             'is_active' => true,
+            'email_verified_at' => null,
         ]);
 
         try {
@@ -36,16 +39,28 @@ class AuthController extends Controller
             ]);
         }
 
-        $token = $user->createToken('mobile')->plainTextToken;
-
         return response()->json([
             'success' => true,
             'message' => 'Registrasi berhasil. Cek email Anda untuk verifikasi akun.',
             'data'    => [
                 'user'  => $this->userResource($user),
-                'token' => $token,
             ],
         ], 201);
+    }
+
+    public function verifyEmail(Request $request, string $id, string $hash): RedirectResponse
+    {
+        $user = User::findOrFail($id);
+
+        abort_unless(hash_equals($hash, sha1($user->getEmailForVerification())), 403);
+
+        if (!$user->hasVerifiedEmail() && $user->markEmailAsVerified()) {
+            event(new Verified($user));
+        }
+
+        $frontendUrl = rtrim(env('FRONTEND_URL', config('app.url')), '/');
+
+        return redirect()->away($frontendUrl . '/login?verified=1');
     }
 
     public function login(Request $request): JsonResponse
@@ -66,6 +81,13 @@ class AuthController extends Controller
 
         // ── BLOKIR ADMIN LOGIN DI MOBILE ─────────────────────────
         // Admin hanya bisa login lewat web dashboard
+        if (!$user->hasVerifiedEmail()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Email belum diverifikasi. Cek inbox email Anda terlebih dahulu.',
+            ], 403);
+        }
+
         if ($user->role === 'admin') {
             return response()->json([
                 'success' => false,

@@ -30,6 +30,9 @@ Route::prefix('v1')->group(function () {
         Route::post('register',        [AuthController::class, 'register']);
         Route::post('login',           [AuthController::class, 'login']);       // admin diblokir di dalam method
         Route::post('forgot-password', [AuthController::class, 'forgotPassword']);
+        Route::get('verify-email/{id}/{hash}', [AuthController::class, 'verifyEmail'])
+             ->middleware(['signed', 'throttle:6,1'])
+             ->name('api.auth.verify-email');
     });
 
     Route::prefix('web/auth')->group(function () {
