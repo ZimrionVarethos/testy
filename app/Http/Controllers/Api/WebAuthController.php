@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\PersonalAccessToken;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 
 class WebAuthController extends Controller
@@ -40,11 +42,18 @@ class WebAuthController extends Controller
             ], 403);
         }
 
+        Auth::guard('web')->login($user);
+        $request->session()->regenerate();
+
+        PersonalAccessToken::where('tokenable_id', (string) $user->getKey())
+                           ->where('tokenable_type', User::class)
+                           ->where('name', 'web-spa')
+                           ->delete();
         $token = $user->createToken('web-spa')->plainTextToken;
 
         return response()->json([
             'success' => true,
-            'message' => 'Login web berhasil.',
+            'message' => 'Login web berhasil. Session aktif.',
             'data'    => [
                 'user'  => $this->userResource($user),
                 'token' => $token,
@@ -62,11 +71,21 @@ class WebAuthController extends Controller
 
     public function logout(Request $request): JsonResponse
     {
-        $request->user()->currentAccessToken()?->delete();
+        if ($user = $request->user()) {
+            $request->user()->currentAccessToken()?->delete();
+            PersonalAccessToken::where('tokenable_id', (string) $user->getKey())
+                               ->where('tokenable_type', User::class)
+                               ->where('name', 'web-spa')
+                               ->delete();
+        }
+
+        Auth::guard('web')->logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
 
         return response()->json([
             'success' => true,
-            'message' => 'Logout web berhasil.',
+            'message' => 'Logout web berhasil. Session dihapus.',
         ]);
     }
 
