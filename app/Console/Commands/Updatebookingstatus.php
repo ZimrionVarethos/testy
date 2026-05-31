@@ -91,6 +91,10 @@ class UpdateBookingStatus extends Command
      */
     private function handlePendingPaidExpired(): void
     {
+        $count = $this->bookingService->autoCancelPendingPaidWithoutDriver(Carbon::now());
+        $this->warn("[CANCELLED - NO DRIVER] {$count} booking");
+        return;
+
         // Ambil booking pending yang start_date-nya sudah lewat
         $bookings = Booking::pending()
             ->where('start_date', '<', Carbon::now())

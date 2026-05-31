@@ -137,6 +137,79 @@ class BookingService
     //  Hanya bisa dilakukan via web dashboard
     // ══════════════════════════════════════════════════════════════
 
+    public function autoCancelPendingPaidWithoutDriver(?Carbon $now = null): int
+    {
+        $now ??= Carbon::now();
+
+        $paidBookingIds = Payment::where('status', Payment::STATUS_PAID)
+            ->pluck('booking_id')
+            ->map(fn($id) => (string) $id)
+            ->toArray();
+
+        if (empty($paidBookingIds)) {
+            Notification::where('type', 'booking')
+                ->where('title', 'Pesanan Baru Perlu Diproses')
+                ->delete();
+
+            return 0;
+        }
+
+        $bookings = Booking::pending()
+            ->whereIn('_id', $paidBookingIds)
+            ->whereNull('driver.driver_id')
+            ->where('start_date', '<=', $now)
+            ->get();
+
+        $count = 0;
+
+        foreach ($bookings as $booking) {
+            $reason = 'Dibatalkan otomatis: admin tidak menugaskan driver sebelum waktu keberangkatan.';
+
+            $booking->update([
+                'status'        => Booking::STATUS_CANCELLED,
+                'cancelled_at'  => $now,
+                'cancel_reason' => $reason,
+            ]);
+
+            Notification::where('type', 'booking')
+                ->where('related_id', (string) $booking->_id)
+                ->where(function ($query) {
+                    $query->where('title', 'Pesanan Baru Perlu Diproses')
+                        ->orWhere('message', 'like', '%assign driver%');
+                })
+                ->delete();
+
+            Notification::send(
+                $booking->user['user_id'] ?? $booking->user_id,
+                'Pesanan Dibatalkan Otomatis',
+                "Pesanan {$booking->booking_code} dibatalkan karena tidak ada driver yang ditugaskan sebelum jadwal. Silakan hubungi admin untuk proses refund.",
+                'booking',
+                (string) $booking->_id,
+                route('bookings.show', (string) $booking->_id)
+            );
+
+            $count++;
+        }
+
+        $activeAssignIds = Booking::pending()
+            ->whereIn('_id', $paidBookingIds)
+            ->whereNull('driver.driver_id')
+            ->pluck('_id')
+            ->map(fn($id) => (string) $id)
+            ->toArray();
+
+        $staleAssignQuery = Notification::where('type', 'booking')
+            ->where('title', 'Pesanan Baru Perlu Diproses');
+
+        if (empty($activeAssignIds)) {
+            $staleAssignQuery->delete();
+        } else {
+            $staleAssignQuery->whereNotIn('related_id', $activeAssignIds)->delete();
+        }
+
+        return $count;
+    }
+
     public function adminAssignDriver(Booking $booking, User $driver): Booking
     {
         if ($booking->status !== Booking::STATUS_PENDING) {

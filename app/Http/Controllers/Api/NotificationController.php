@@ -4,17 +4,26 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Notification;
+use App\Services\BookingService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class NotificationController extends Controller
 {
+    public function __construct(private BookingService $bookingService)
+    {
+    }
+
     /**
      * GET /api/v1/notifications
      */
     public function index(): JsonResponse
     {
+        if (Auth::user()?->role === 'admin') {
+            $this->bookingService->autoCancelPendingPaidWithoutDriver();
+        }
+
         $notifications = Notification::where('user_id', (string) Auth::id())
             ->orderBy('created_at', 'desc')
             ->paginate(20);
@@ -28,7 +37,8 @@ class NotificationController extends Controller
                 'type'       => $n->type,
                 'is_read'    => (bool) $n->is_read,
                 'related_id' => $n->related_id,
-                'url'        => $n->url ?? null,
+                'action_url' => $n->action_url ?? null,
+                'url'        => $n->action_url ?? null,
                 'created_at' => $n->created_at?->toIso8601String(),
             ]),
             'meta' => [

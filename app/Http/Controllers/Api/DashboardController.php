@@ -8,17 +8,24 @@ use App\Models\Notification;
 use App\Models\Payment;
 use App\Models\User;
 use App\Models\Vehicle;
+use App\Services\BookingService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class DashboardController extends Controller
 {
+    public function __construct(private BookingService $bookingService)
+    {
+    }
+
     /**
      * GET /api/v1/dashboard — statistik ringkas untuk dashboard admin
      */
     public function index(): JsonResponse
     {
+        $this->bookingService->autoCancelPendingPaidWithoutDriver();
+
         $now       = Carbon::now();
         $weekStart = $now->copy()->startOfWeek();
 
@@ -123,6 +130,8 @@ class DashboardController extends Controller
     /** Untuk web admin dashboard */
     public function adminForWeb(): array
     {
+        $this->bookingService->autoCancelPendingPaidWithoutDriver();
+
         $now       = Carbon::now();
         $weekStart = $now->copy()->startOfWeek();
 
