@@ -22,6 +22,7 @@ class UpdateBookingStatus extends Command
         $this->handleOngoingToCompleted();
         $this->handleConfirmedNotPickedUp();
         $this->handlePendingPaidExpired();
+        $this->bookingService->syncVehicleRentalStatus(Carbon::now());
     }
 
     /**

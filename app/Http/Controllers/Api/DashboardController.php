@@ -25,6 +25,7 @@ class DashboardController extends Controller
     public function index(): JsonResponse
     {
         $this->bookingService->autoCancelPendingPaidWithoutDriver();
+        $this->bookingService->syncVehicleRentalStatus();
 
         $now       = Carbon::now();
         $weekStart = $now->copy()->startOfWeek();
@@ -46,12 +47,25 @@ class DashboardController extends Controller
                 ->sum('amount'),
         ];
 
+        $activeVehicleIds = Booking::ongoing()
+            ->where('start_date', '<=', $now)
+            ->where('end_date', '>', $now)
+            ->get()
+            ->map(fn($booking) => (string) ($booking->vehicle['vehicle_id'] ?? $booking->vehicle_id ?? ''))
+            ->filter()
+            ->unique()
+            ->values()
+            ->toArray();
+
         $vehicleStats = [
             'available'   => Vehicle::where('status', 'available')->count(),
-            'rented'      => Vehicle::where('status', 'rented')->count(),
+            'rented'      => count($activeVehicleIds),
             'maintenance' => Vehicle::where('status', 'maintenance')->count(),
         ];
-        $stats['ongoing_bookings'] = $vehicleStats['rented'];
+        $stats['ongoing_bookings'] = Booking::ongoing()
+            ->where('start_date', '<=', $now)
+            ->where('end_date', '>', $now)
+            ->count();
 
         // Pending yang sudah bayar — perlu tindakan admin
         $paidBookingIds = Payment::where('status', Payment::STATUS_PAID)
@@ -111,14 +125,9 @@ class DashboardController extends Controller
         // Tambahkan pending_paid ke stats agar SPA bisa baca stats.pending_paid
         $stats['pending_paid'] = $pendingPaidBookings->count();
 
-        $rentedVehicleIds = Vehicle::where('status', 'rented')
-            ->get()
-            ->map(fn($v) => (string) $v->_id)
-            ->toArray();
-
-        $activeBookingsByDriver = Booking::whereIn('status', [Booking::STATUS_CONFIRMED, Booking::STATUS_ONGOING])
+        $activeBookingsByDriver = Booking::where('status', Booking::STATUS_ONGOING)
+            ->where('start_date', '<=', $now)
             ->where('end_date', '>', $now)
-            ->whereIn('vehicle.vehicle_id', $rentedVehicleIds)
             ->get()
             ->keyBy(fn($b) => (string) ($b->driver['driver_id'] ?? ''));
 
@@ -169,6 +178,7 @@ class DashboardController extends Controller
     public function adminForWeb(): array
     {
         $this->bookingService->autoCancelPendingPaidWithoutDriver();
+        $this->bookingService->syncVehicleRentalStatus();
 
         $now       = Carbon::now();
         $weekStart = $now->copy()->startOfWeek();
@@ -196,12 +206,25 @@ class DashboardController extends Controller
 
         $recentBookings = Booking::orderBy('created_at', 'desc')->limit(6)->get();
 
+        $activeVehicleIds = Booking::ongoing()
+            ->where('start_date', '<=', $now)
+            ->where('end_date', '>', $now)
+            ->get()
+            ->map(fn($booking) => (string) ($booking->vehicle['vehicle_id'] ?? $booking->vehicle_id ?? ''))
+            ->filter()
+            ->unique()
+            ->values()
+            ->toArray();
+
         $vehicleStats = [
             'available'   => Vehicle::where('status', 'available')->count(),
-            'rented'      => Vehicle::where('status', 'rented')->count(),
+            'rented'      => count($activeVehicleIds),
             'maintenance' => Vehicle::where('status', 'maintenance')->count(),
         ];
-        $stats['ongoing_bookings'] = $vehicleStats['rented'];
+        $stats['ongoing_bookings'] = Booking::ongoing()
+            ->where('start_date', '<=', $now)
+            ->where('end_date', '>', $now)
+            ->count();
 
         $trendStart    = Carbon::now()->subDays(6)->startOfDay();
         $trendBookings = Booking::where('created_at', '>=', $trendStart)->get(['created_at']);
@@ -223,13 +246,9 @@ class DashboardController extends Controller
             return ['month' => $date->locale('id')->shortMonthName, 'revenue' => (int) $revenueByMonth->get($date->format('Y-m'), collect())->sum('amount')];
         })->values()->toArray();
 
-        // Sumber kebenaran: hanya kendaraan berstatus 'rented' yang boleh muncul di peta
-        $rentedVehicleIds = Vehicle::where('status', 'rented')
-            ->get()->map(fn($v) => (string) $v->_id)->toArray();
-
-        $activeBookingsByDriver = Booking::whereIn('status', [Booking::STATUS_CONFIRMED, Booking::STATUS_ONGOING])
+        $activeBookingsByDriver = Booking::where('status', Booking::STATUS_ONGOING)
+            ->where('start_date', '<=', $now)
             ->where('end_date', '>', $now)
-            ->whereIn('vehicle.vehicle_id', $rentedVehicleIds)
             ->get()
             ->keyBy(fn($b) => (string) ($b->driver['driver_id'] ?? ''));
 
@@ -312,10 +331,13 @@ class DashboardController extends Controller
     /** Untuk web: data peta kendaraan aktif (admin) */
     public function mapsIndexForWeb(): array
     {
+        $this->bookingService->syncVehicleRentalStatus();
+
         $vehicles = \App\Models\Vehicle::all();
         $now      = Carbon::now();
 
-        $activeBookings = Booking::whereIn('status', ['confirmed', 'ongoing'])
+        $activeBookings = Booking::where('status', Booking::STATUS_ONGOING)
+            ->where('start_date', '<=', $now)
             ->where('end_date', '>', $now)
             ->get()
             ->keyBy(fn($b) => (string) ($b->vehicle['vehicle_id'] ?? ''));
@@ -333,7 +355,8 @@ class DashboardController extends Controller
             $label   = $name ?: ($brand && $model ? "$brand $model" : ($brand ?: $model));
             // Hanya kendaraan berstatus 'rented' yang boleh lookup booking — kendaraan 'available'
             // tidak boleh menampilkan driver/GPS meski ada booking future yang di-assign
-            $booking = $v->status === 'rented' ? $activeBookings->get($vid) : null;
+            $booking = $activeBookings->get($vid);
+            $displayStatus = $booking ? 'rented' : ($v->status === 'rented' ? 'available' : ($v->status ?? 'available'));
 
             $lat = $lon = $locationUpdatedAt = null;
             $isStale = false;
@@ -353,7 +376,7 @@ class DashboardController extends Controller
                 'plate'                  => $v->plate_number ?? '-',
                 'label'                  => $label ?: '-',
                 'driver'                 => $booking?->driver['name'] ?? '-',
-                'status'                 => $v->status ?? 'available',
+                'status'                 => $displayStatus,
                 'lat'                    => $lat,
                 'lon'                    => $lon,
                 'has_active_booking'     => $booking !== null,
@@ -367,7 +390,7 @@ class DashboardController extends Controller
 
         $stats = [
             'total'       => $mappedVehicles->count(),
-            'ongoing'     => $mappedVehicles->where('status', 'rented')->count(),
+            'ongoing'     => $mappedVehicles->where('has_active_booking', true)->count(),
             'available'   => $mappedVehicles->where('status', 'available')->count(),
             'maintenance' => $mappedVehicles->where('status', 'maintenance')->count(),
         ];

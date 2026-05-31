@@ -210,6 +210,31 @@ class BookingService
         return $count;
     }
 
+    public function syncVehicleRentalStatus(?Carbon $now = null): void
+    {
+        $now ??= Carbon::now();
+
+        $activeVehicleIds = Booking::ongoing()
+            ->where('start_date', '<=', $now)
+            ->where('end_date', '>', $now)
+            ->get()
+            ->map(fn($booking) => (string) ($booking->vehicle['vehicle_id'] ?? $booking->vehicle_id ?? ''))
+            ->filter()
+            ->unique()
+            ->values()
+            ->toArray();
+
+        Vehicle::where('status', 'rented')
+            ->when(!empty($activeVehicleIds), fn($query) => $query->whereNotIn('_id', $activeVehicleIds))
+            ->update(['status' => 'available']);
+
+        if (!empty($activeVehicleIds)) {
+            Vehicle::whereIn('_id', $activeVehicleIds)
+                ->where('status', '!=', 'maintenance')
+                ->update(['status' => 'rented']);
+        }
+    }
+
     public function adminAssignDriver(Booking $booking, User $driver): Booking
     {
         if ($booking->status !== Booking::STATUS_PENDING) {
