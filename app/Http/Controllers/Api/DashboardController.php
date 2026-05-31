@@ -36,7 +36,6 @@ class DashboardController extends Controller
         $stats = [
             'total_bookings'   => Booking::count(),
             'pending_bookings' => Booking::where('status', 'pending')->count(),
-            'ongoing_bookings' => Booking::where('status', 'ongoing')->count(),
             'week_bookings'    => Booking::where('created_at', '>=', $weekStart)->count(),
             'week_completed'   => Booking::completed()->where('completed_at', '>=', $weekStart)->count(),
             'week_revenue'     => $weekRevenue,
@@ -52,6 +51,7 @@ class DashboardController extends Controller
             'rented'      => Vehicle::where('status', 'rented')->count(),
             'maintenance' => Vehicle::where('status', 'maintenance')->count(),
         ];
+        $stats['ongoing_bookings'] = $vehicleStats['rented'];
 
         // Pending yang sudah bayar — perlu tindakan admin
         $paidBookingIds = Payment::where('status', Payment::STATUS_PAID)
@@ -111,6 +111,43 @@ class DashboardController extends Controller
         // Tambahkan pending_paid ke stats agar SPA bisa baca stats.pending_paid
         $stats['pending_paid'] = $pendingPaidBookings->count();
 
+        $rentedVehicleIds = Vehicle::where('status', 'rented')
+            ->get()
+            ->map(fn($v) => (string) $v->_id)
+            ->toArray();
+
+        $activeBookingsByDriver = Booking::whereIn('status', [Booking::STATUS_CONFIRMED, Booking::STATUS_ONGOING])
+            ->where('end_date', '>', $now)
+            ->whereIn('vehicle.vehicle_id', $rentedVehicleIds)
+            ->get()
+            ->keyBy(fn($b) => (string) ($b->driver['driver_id'] ?? ''));
+
+        $locationDriverIds = $activeBookingsByDriver->keys()->filter()->values()->toArray();
+        $driversMap = User::whereIn('_id', $locationDriverIds)
+            ->whereNotNull('last_lat')
+            ->whereNotNull('last_lon')
+            ->get()
+            ->keyBy(fn($d) => (string) $d->_id);
+
+        $vehicleLocations = $activeBookingsByDriver
+            ->filter(fn($b) => $driversMap->has((string) ($b->driver['driver_id'] ?? '')))
+            ->map(function ($booking) use ($driversMap) {
+                $driver = $driversMap->get((string) $booking->driver['driver_id']);
+                return [
+                    'lat'                    => $driver->last_lat,
+                    'lon'                    => $driver->last_lon,
+                    'plate'                  => $booking->vehicle['plate_number'] ?? '-',
+                    'driver'                 => $booking->driver['name'] ?? $driver->name,
+                    'status'                 => $booking->status,
+                    'location_updated_at'    => $driver->last_location_updated_at?->toIso8601String(),
+                    'location_updated_human' => $driver->last_location_updated_at
+                        ? Carbon::parse($driver->last_location_updated_at)->diffForHumans()
+                        : null,
+                ];
+            })
+            ->filter(fn($v) => $v['lat'] && $v['lon'])
+            ->values();
+
         return response()->json([
             'success' => true,
             'data'    => [
@@ -121,6 +158,7 @@ class DashboardController extends Controller
                 'recent_bookings'      => $recentBookings,
                 'booking_trend'        => $bookingTrend,
                 'revenue_chart'        => $revenueChart,
+                'vehicle_locations'    => $vehicleLocations,
             ],
         ]);
     }
@@ -141,7 +179,6 @@ class DashboardController extends Controller
         $stats = [
             'total_bookings'   => Booking::count(),
             'week_bookings'    => Booking::where('created_at', '>=', $weekStart)->count(),
-            'ongoing_bookings' => Booking::ongoing()->count(),
             'week_completed'   => Booking::completed()->where('completed_at', '>=', $weekStart)->count(),
             'week_revenue'     => $weekRevenue,
             'pending_paid'     => 0, // diisi di bawah
@@ -164,6 +201,7 @@ class DashboardController extends Controller
             'rented'      => Vehicle::where('status', 'rented')->count(),
             'maintenance' => Vehicle::where('status', 'maintenance')->count(),
         ];
+        $stats['ongoing_bookings'] = $vehicleStats['rented'];
 
         $trendStart    = Carbon::now()->subDays(6)->startOfDay();
         $trendBookings = Booking::where('created_at', '>=', $trendStart)->get(['created_at']);
@@ -210,8 +248,9 @@ class DashboardController extends Controller
                     'plate'               => $booking->vehicle['plate_number'] ?? '-',
                     'driver'              => $booking->driver['name'] ?? $driver->name,
                     'status'              => $booking->status,
-                    'location_updated_at' => $driver->last_location_updated_at
-                        ? Carbon::parse($driver->last_location_updated_at)->format('d M H:i') : null,
+                    'location_updated_at' => $driver->last_location_updated_at?->toIso8601String(),
+                    'location_updated_human' => $driver->last_location_updated_at
+                        ? Carbon::parse($driver->last_location_updated_at)->diffForHumans() : null,
                 ];
             })->filter(fn($v) => $v['lat'] && $v['lon'])->values()->toArray();
 
