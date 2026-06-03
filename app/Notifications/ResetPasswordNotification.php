@@ -6,7 +6,6 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\URL;
 
 class ResetPasswordNotification extends Notification
 {
@@ -23,8 +22,8 @@ class ResetPasswordNotification extends Notification
 
     public function toBrevo($notifiable): void
     {
-        $resetUrl = URL::route('password.reset', [
-            'token' => $this->token,
+        $frontendUrl = rtrim(env('FRONTEND_URL', config('app.url')), '/');
+        $resetUrl = $frontendUrl . '/reset-password/' . $this->token . '?' . http_build_query([
             'email' => $notifiable->getEmailForPasswordReset(),
         ]);
 

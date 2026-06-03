@@ -7,6 +7,7 @@ use App\Http\Requests\Api\RegisterRequest;
 use App\Models\PersonalAccessToken;
 use App\Models\User;
 use App\Services\CloudinaryService;
+use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -14,6 +15,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Str;
 
 class AuthController extends Controller
 {
@@ -228,6 +230,75 @@ class AuthController extends Controller
                 ? 'Link reset password telah dikirim ke email Anda.'
                 : 'Email tidak ditemukan.',
         ], $status === Password::RESET_LINK_SENT ? 200 : 404);
+    }
+
+    public function resetPassword(Request $request): JsonResponse
+    {
+        $request->validate([
+            'token' => ['required', 'string'],
+            'email' => ['required', 'email'],
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
+        ]);
+
+        $status = Password::reset(
+            $request->only('email', 'password', 'password_confirmation', 'token'),
+            function (User $user, string $password) {
+                $user->forceFill([
+                    'password' => Hash::make($password),
+                    'remember_token' => Str::random(60),
+                ])->save();
+
+                event(new PasswordReset($user));
+            }
+        );
+
+        return response()->json([
+            'success' => $status === Password::PASSWORD_RESET,
+            'message' => $status === Password::PASSWORD_RESET
+                ? 'Password berhasil direset. Silakan login dengan password baru.'
+                : 'Token reset tidak valid atau sudah kedaluwarsa.',
+        ], $status === Password::PASSWORD_RESET ? 200 : 422);
+    }
+
+    public function resendVerification(Request $request): JsonResponse
+    {
+        $request->validate(['email' => ['required', 'email']]);
+
+        $user = User::where('email', $request->email)->first();
+
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Email tidak ditemukan.',
+            ], 404);
+        }
+
+        if ($user->hasVerifiedEmail()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Email sudah terverifikasi. Silakan login.',
+            ]);
+        }
+
+        try {
+            $user->sendEmailVerificationNotification();
+        } catch (\Throwable $e) {
+            Log::warning('Verification email resend failed.', [
+                'user_id' => (string) $user->getKey(),
+                'email' => $user->email,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengirim email verifikasi. Coba lagi nanti.',
+            ], 500);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Link verifikasi sudah dikirim ulang. Cek inbox atau folder spam.',
+        ]);
     }
 
     private function userResource(User $user): array
